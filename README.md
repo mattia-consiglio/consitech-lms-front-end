@@ -9,4 +9,4 @@ The objective of this project is to develop an e-learning platform dedicated to 
 - Redux Toolkit
 - Tailwind CSS
 
-The project also have a back-end for storing data on a database and for the REST API. You can find it here: [https://github.com/mattia-consiglio/consitech-lms-back-end](https://github.com/mattia-consiglio/consitech-lms-back-end)
+You can look at project's back-end [here](https://github.com/mattia-consiglio/consitech-lms-back-end).
