@@ -1,5 +1,5 @@
 import React from 'react'
 
-export default function Course() {
+export default function CoursesPage() {
 	return <div>Course</div>
 }
