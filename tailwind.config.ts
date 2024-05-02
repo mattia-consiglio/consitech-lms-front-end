@@ -45,6 +45,10 @@ const config: Config = {
 			borderWidth: {
 				3: '3px',
 			},
+			transitionDuration: {
+				150: '150ms',
+				250: '250ms',
+			},
 		},
 	},
 	plugins: [flowbite.plugin()],

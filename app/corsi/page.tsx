@@ -4,12 +4,12 @@ import { setSubheaderTitle } from '@/redux/reducers/pageReducer'
 import { useAppDispatch } from '@/redux/store'
 import React, { useEffect } from 'react'
 import MainWrapper from '../components/MainWrapper'
-import CourseBlock from './components/CourseBlock'
+import CourseBlock from './CourseBlock'
 
 export default function CoursesPage() {
 	return (
 		<MainWrapper subheaderTitle='Corsi'>
-			<div className='w-full flex justify-center'>
+			<div className='flex justify-center'>
 				<div className='w-2/3'>
 					<p className='text-center'>
 						Con questi corsi potrai imparare a fare il tuo sito web scrivendolo. Ti consiglio di
@@ -21,7 +21,7 @@ export default function CoursesPage() {
 					</p>
 				</div>
 			</div>
-			<div className='w-full grid grid-cols-1 md:grid-cols-3 gap-x-2 gap-y-4 mt-4'>
+			<div className='grid grid-cols-1 md:grid-cols-3 gap-x-2 gap-y-4 mt-4'>
 				<CourseBlock
 					title='HTML'
 					description="Aggiungi stile alle tue pagine con colori, font, layout. Impara ad arricchire la struttura dell'HTML"

@@ -14,7 +14,7 @@ export default function MainWrapper({
 		<main>
 			{subheaderTitle && <Subheader title={subheaderTitle} />}
 			<div className='max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4'>
-				{children}
+				<div className='w-full'>{children}</div>
 			</div>
 		</main>
 	)
