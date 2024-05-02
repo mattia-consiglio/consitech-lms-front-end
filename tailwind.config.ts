@@ -1,8 +1,10 @@
 import type { Config } from 'tailwindcss'
 const colors = require('tailwindcss/colors')
+const flowbite = require('flowbite-react/tailwind')
 
 const config: Config = {
 	content: [
+		flowbite.content(),
 		'./pages/**/*.{js,ts,jsx,tsx,mdx}',
 		'./components/**/*.{js,ts,jsx,tsx,mdx}',
 		'./app/**/*.{js,ts,jsx,tsx,mdx}',
@@ -11,7 +13,7 @@ const config: Config = {
 		extend: {
 			colors: {
 				primary: '#f49819',
-				body_light: colors.neutral[200],
+				body_light: colors.neutral[50],
 				body_dark: colors.neutral[900],
 				invert_light: {
 					DEFAULT: colors.neutral[900],
@@ -42,6 +44,6 @@ const config: Config = {
 			},
 		},
 	},
-	plugins: [],
+	plugins: [flowbite.plugin()],
 }
 export default config

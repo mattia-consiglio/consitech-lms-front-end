@@ -2,6 +2,8 @@ import type { Metadata } from 'next'
 import './globals.css'
 import Navbar from './components/Navbar'
 import { inconsolata } from './fonts'
+import Footer from './components/Footer'
+import { DarkThemeToggle, Flowbite, ThemeModeScript } from 'flowbite-react'
 
 export const metadata: Metadata = {
 	title: 'Create Next App',
@@ -15,13 +17,20 @@ export default function RootLayout({
 }>) {
 	return (
 		<html lang='it'>
-			<body className={inconsolata.className}>
-				<header className='sticky top-0 z-50'>
-					<Navbar />
-				</header>
-				<main>{children}</main>
-				<footer></footer>
-			</body>
+			<head>
+				<ThemeModeScript mode='auto' />
+			</head>
+			<Flowbite>
+				<body
+					className={`${inconsolata.className} bg-body_light dark:bg-body_dark text-invert_light dark:text-invert_dark`}
+				>
+					<header className='sticky top-0 z-50'>
+						<Navbar />
+					</header>
+					<main>{children}</main>
+					<Footer />
+				</body>
+			</Flowbite>
 		</html>
 	)
 }

@@ -4,11 +4,10 @@ import Link from 'next/link'
 import React, { useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { IoPerson } from 'react-icons/io5'
+import { DarkThemeToggle } from 'flowbite-react'
 
 function Navbar() {
 	const pathname = usePathname()
-
-	console.log(pathname)
 	const [menuOpen, setMenuOpen] = useState(false)
 	const [userMenuOpen, setUserMenuOpen] = useState(false)
 
@@ -38,34 +37,42 @@ function Navbar() {
 	return (
 		<nav className='bg-body_light dark:bg-body_dark w-full z-20 top-0 start-0 border-b-0 md:border-invert_light-400 dark:border-invert_light-600 md:border-b'>
 			<div className='max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4'>
-				<Link href='/' className='flex items-center space-x-3 rtl:space-x-reverse'>
-					<Image
-						src='consitech-logo-full.svg'
-						className='h-12 block dark:hidden'
-						alt='Consitech Logo'
-						width={84.8}
-						height={48}
-					/>
-					<Image
-						src='consitech-logo-full-light.svg'
-						className='h-12 hidden dark:block'
-						alt='Consitech Logo'
-						width={84.8}
-						height={48}
-					/>
-				</Link>
+				<div>
+					<Link href='/' className='flex items-center space-x-3 rtl:space-x-reverse'>
+						<Image
+							src='consitech-logo-full.svg'
+							className='h-12 block dark:hidden'
+							alt='Consitech Logo'
+							width={84.8}
+							height={48}
+						/>
+					</Link>
+					<Link href='/' className='flex items-center space-x-3 rtl:space-x-reverse'>
+						<Image
+							src='consitech-logo-full-light.svg'
+							className='h-12 hidden dark:block'
+							alt='Consitech Logo'
+							width={84.8}
+							height={48}
+						/>
+					</Link>
+				</div>
 				<div className='flex md:order-2 space-x-3 md:space-x-0 rtl:space-x-reverse items-center'>
+					<DarkThemeToggle className='rounded-none ' />
 					<button
 						type='button'
-						className=' border-solid border-spacing-2 border-2 border-current rounded-full flex w-8 h-8 items-center justify-center hover:text-primary'
+						className=' border-solid border-spacing-2 border-2 border-current rounded-full flex w-8 h-8 items-center justify-center hover:text-primary !ml-4'
 						onClick={() => {
 							setUserMenuOpen(!userMenuOpen)
 							setMenuOpen(false)
 						}}
+						data-collapse-toggle='navbar-user'
+						aria-controls='navbar-user'
 					>
 						<IoPerson />
 						<span className='sr-only'>Apri menu utente</span>
 					</button>
+
 					<button
 						data-collapse-toggle='navbar-sticky'
 						type='button'
@@ -127,6 +134,7 @@ function Navbar() {
 					className={`w-full items-center justify-between md:order-2  ${
 						userMenuOpen ? 'block' : 'hidden'
 					}`}
+					id='navbar-user'
 				>
 					<ul className='flex flex-col p-4 md:p-0 mt-4 font-medium border border-gray-100 bg-invert_light-100 md:space-x-8 rtl:space-x-reverse  text-center dark:border-invert_light-600 dark:bg-invert_light-800'>
 						<li className='relative'>
