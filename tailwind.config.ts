@@ -13,6 +13,8 @@ const config: Config = {
 		extend: {
 			colors: {
 				primary: '#f49819',
+				primary_lighter: '#f8b852',
+				primary_darker: '#c36c00',
 				body_light: colors.neutral[50],
 				body_dark: colors.neutral[900],
 				invert_light: {

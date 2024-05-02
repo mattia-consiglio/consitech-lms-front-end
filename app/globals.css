@@ -23,4 +23,7 @@ body {
 	.text-balance {
 		text-wrap: balance;
 	}
+	h2 {
+		@apply text-xl font-bold;
+	}
 }

@@ -26,7 +26,7 @@ export default function CourseBlock({ title, description, img, slug }: CourseBlo
 				height={80}
 				className='max-w-20 h-auto w-full object-contain'
 			/>
-			<h2 className={`${titillium_web.className} text-xl text-bold mb-2 mt-3`}>{title}</h2>
+			<h2 className={`${titillium_web.className} mb-2 mt-3`}>{title}</h2>
 			<p className='text-center'>{description}</p>
 		</Link>
 	)
