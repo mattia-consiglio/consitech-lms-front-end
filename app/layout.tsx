@@ -24,7 +24,7 @@ export default function RootLayout({
 			</head>
 			<Flowbite>
 				<body
-					className={`${inconsolata.className} bg-body_light dark:bg-body_dark text-invert_light dark:text-invert_dark`}
+					className={`${inconsolata.className} bg-body_light dark:bg-body_dark text-invert_light dark:text-invert_dark selection:bg-primary_lighter dark:selection:bg-primary_darker`}
 				>
 					<header className='sticky top-0 z-50'>
 						<Navbar />
