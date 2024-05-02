@@ -4,7 +4,7 @@ import Link from 'next/link'
 import React, { useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { IoPerson } from 'react-icons/io5'
-import { DarkThemeToggle } from 'flowbite-react'
+import { DarkThemeToggle, Dropdown } from 'flowbite-react'
 
 function Navbar() {
 	const pathname = usePathname()
@@ -38,41 +38,48 @@ function Navbar() {
 		<nav className='bg-body_light dark:bg-body_dark w-full z-20 top-0 start-0 border-b-0 md:border-invert_light-400 dark:border-invert_light-600 md:border-b'>
 			<div className='max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4'>
 				<div>
-					<Link href='/' className='flex items-center space-x-3 rtl:space-x-reverse'>
+					<Link href='/' className='items-center space-x-3 rtl:space-x-reverse flex dark:hidden'>
 						<Image
-							src='consitech-logo-full.svg'
-							className='h-12 block dark:hidden'
+							src='/consitech-logo-full.svg'
+							className='h-12 '
 							alt='Consitech Logo'
 							width={84.8}
 							height={48}
 						/>
 					</Link>
-					<Link href='/' className='flex items-center space-x-3 rtl:space-x-reverse'>
+					<Link href='/' className='items-center space-x-3 rtl:space-x-reverse hidden dark:flex'>
 						<Image
-							src='consitech-logo-full-light.svg'
-							className='h-12 hidden dark:block'
+							src='/consitech-logo-full-light.svg'
+							className='h-12'
 							alt='Consitech Logo'
 							width={84.8}
 							height={48}
 						/>
 					</Link>
 				</div>
+
 				<div className='flex md:order-2 space-x-3 md:space-x-0 rtl:space-x-reverse items-center'>
 					<DarkThemeToggle className='rounded-none ' />
-					<button
-						type='button'
-						className=' border-solid border-spacing-2 border-2 border-current rounded-full flex w-8 h-8 items-center justify-center hover:text-primary !ml-4'
-						onClick={() => {
-							setUserMenuOpen(!userMenuOpen)
-							setMenuOpen(false)
-						}}
-						data-collapse-toggle='navbar-user'
-						aria-controls='navbar-user'
+					{/* User menu */}
+					<Dropdown
+						label=''
+						dismissOnClick={false}
+						renderTrigger={() => (
+							<button
+								type='button'
+								className=' border-solid border-spacing-2 border-2 border-current rounded-full flex w-8 h-8 items-center justify-center hover:text-primary !ml-4'
+							>
+								<IoPerson />
+								<span className='sr-only'>Apri menu utente</span>
+							</button>
+						)}
 					>
-						<IoPerson />
-						<span className='sr-only'>Apri menu utente</span>
-					</button>
+						<Dropdown.Item>Dashboard</Dropdown.Item>
+						<Dropdown.Item>Impostazioni</Dropdown.Item>
+						<Dropdown.Item>Esci</Dropdown.Item>
+					</Dropdown>
 
+					{/* Hamburger menu */}
 					<button
 						data-collapse-toggle='navbar-sticky'
 						type='button'
@@ -128,18 +135,6 @@ function Navbar() {
 								</Link>
 							</li>
 						))}
-					</ul>
-				</div>
-				<div
-					className={`w-full items-center justify-between md:order-2  ${
-						userMenuOpen ? 'block' : 'hidden'
-					}`}
-					id='navbar-user'
-				>
-					<ul className='flex flex-col p-4 md:p-0 mt-4 font-medium border border-gray-100 bg-invert_light-100 md:space-x-8 rtl:space-x-reverse  text-center dark:border-invert_light-600 dark:bg-invert_light-800'>
-						<li className='relative'>
-							<Link href='/profilo'>Profilo</Link>
-						</li>
 					</ul>
 				</div>
 			</div>
