@@ -13,6 +13,15 @@ interface CourseBlockProps {
 	slug: string
 }
 
+/**
+ * Renders a course block component with an image, title, and description.
+ *
+ * @param title - The title of the course.
+ * @param description - The description of the course.
+ * @param img - An object containing the source and alt text for the course image.
+ * @param slug - The URL slug for the course.
+ * @returns A React component that renders a course block.
+ */
 export default function CourseBlock({ title, description, img, slug }: CourseBlockProps) {
 	return (
 		<Link

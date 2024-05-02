@@ -15,6 +15,17 @@ interface LessonBlockProps {
 	couseSlug: string
 }
 
+/**
+ * Renders a lesson block component that displays information about a lesson, including the lesson title, description, and an image.
+ * The component is wrapped in a link that navigates to the lesson page when clicked.
+ *
+ * @param title - The title of the lesson.
+ * @param description - The description of the lesson.
+ * @param img - An object containing the source and alt text of the lesson image.
+ * @param lessonSlug - The slug of the lesson.
+ * @param couseSlug - The slug of the course.
+ * @returns A React component that renders the lesson block.
+ */
 export default function LessonBlock({
 	title,
 	description,
@@ -38,7 +49,10 @@ export default function LessonBlock({
 				<h2 className={`${titillium_web.className}`}>{title}</h2>
 				<p className='text-neutral-500 dark:text-neutral-400'>{description}</p>
 			</div>
-			<IoCaretForward className='text-2xl grow min-w-[24px] group-hover:text-neutral-500 dark:group-hover:text-neutral-400 transition-colors duration-250 ease-in-out' />
+			<IoCaretForward
+				data-testid='caret-forward-icon'
+				className='text-2xl grow min-w-[24px] group-hover:text-neutral-500 dark:group-hover:text-neutral-400 transition-colors duration-250 ease-in-out'
+			/>
 		</Link>
 	)
 }
