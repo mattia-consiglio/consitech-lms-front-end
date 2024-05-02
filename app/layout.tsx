@@ -3,7 +3,9 @@ import './globals.css'
 import Navbar from './components/Navbar'
 import { inconsolata } from './fonts'
 import Footer from './components/Footer'
-import { DarkThemeToggle, Flowbite, ThemeModeScript } from 'flowbite-react'
+import { Flowbite, ThemeModeScript } from 'flowbite-react'
+import MainWrapper from './components/MainWrapper'
+import { useAppSelector } from '@/redux/store'
 
 export const metadata: Metadata = {
 	title: 'Create Next App',
@@ -27,7 +29,7 @@ export default function RootLayout({
 					<header className='sticky top-0 z-50'>
 						<Navbar />
 					</header>
-					<main>{children}</main>
+					{children}
 					<Footer />
 				</body>
 			</Flowbite>

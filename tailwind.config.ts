@@ -42,6 +42,9 @@ const config: Config = {
 					900: colors.neutral[900],
 				},
 			},
+			borderWidth: {
+				3: '3px',
+			},
 		},
 	},
 	plugins: [flowbite.plugin()],
