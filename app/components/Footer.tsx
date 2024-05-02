@@ -19,10 +19,10 @@ import {
 } from 'react-icons/bs'
 export default function MyFooter() {
 	return (
-		<Footer container className='bg-neutral-200 dark:bg-neutral-600 mt-6'>
+		<Footer container className='bg-neutral-200 dark:bg-neutral-600 mt-6 rounded-none'>
 			<div className='w-full'>
 				<div className='grid w-full justify-center sm:flex md:flex md:grid-cols-1'>
-					<div className='grid grid-cols-1 gap-8 sm:mt-4 sm:grid-cols-3 sm:gap-6'>
+					<div className='grid grid-cols-1 gap-8 sm:mt-4 sm:grid-cols-2 sm:gap-6'>
 						<div>
 							<FooterTitle title='Seguimi' />
 							<FooterLinkGroup col>
