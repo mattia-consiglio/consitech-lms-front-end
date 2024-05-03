@@ -63,7 +63,7 @@ function Navbar() {
 					{/* User menu */}
 					<Dropdown
 						label=''
-						dismissOnClick={false}
+						dismissOnClick={true}
 						renderTrigger={() => (
 							<button
 								type='button'
@@ -74,9 +74,15 @@ function Navbar() {
 							</button>
 						)}
 					>
+						<Dropdown.Header>
+							<span className='block text-sm'>Bonnie Green</span>
+							<span className='block truncate text-sm font-medium'>bonnie@flowbite.com</span>
+						</Dropdown.Header>
 						<Dropdown.Item>Dashboard</Dropdown.Item>
 						<Dropdown.Item>Impostazioni</Dropdown.Item>
-						<Dropdown.Item>Esci</Dropdown.Item>
+						<Dropdown.Item as={Link} href='/login-register'>
+							Logout
+						</Dropdown.Item>
 					</Dropdown>
 
 					{/* Hamburger menu */}
