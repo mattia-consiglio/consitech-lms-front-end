@@ -37,7 +37,7 @@ body {
 		&[type='text'],
 		&[type='password'],
 		&[type='email'] {
-			@apply border-0 border-b-2 focus:ring-0 focus-visible:ring-primary focus:border-primary dark:bg-neutral-800 placeholder:text-neutral-400 dark:placeholder:text-neutral-400;
+			@apply border-0 border-b-2 focus:ring-0 focus-visible:ring-primary bg-transparent focus:border-primary placeholder:text-neutral-400 dark:placeholder:text-neutral-400;
 		}
 	}
 }
