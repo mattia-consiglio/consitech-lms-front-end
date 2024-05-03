@@ -26,4 +26,18 @@ body {
 	h2 {
 		@apply text-xl font-bold;
 	}
+
+	body {
+		@apply flex flex-col min-h-screen;
+	}
+	main {
+		@apply grow;
+	}
+	input {
+		&[type='text'],
+		&[type='password'],
+		&[type='email'] {
+			@apply border-0 border-b-2 focus:ring-0 focus-visible:ring-primary focus:border-primary dark:bg-neutral-800 placeholder:text-neutral-400 dark:placeholder:text-neutral-400;
+		}
+	}
 }
