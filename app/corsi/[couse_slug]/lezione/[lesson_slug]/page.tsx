@@ -1,11 +1,14 @@
+import MainWrapper from '@/app/components/MainWrapper'
+import VideoPlayer from './VideoPlayer'
+
 export default function LessonsPage({
 	params,
 }: {
 	params: { couse_slug: string; lesson_slug: string }
 }) {
 	return (
-		<div>
-			Course slug: {params.couse_slug}, Lesson slug: {params.lesson_slug}
-		</div>
+		<MainWrapper subheaderTitle={params.lesson_slug}>
+			<VideoPlayer videoId='iRtC3YOktr4' />
+		</MainWrapper>
 	)
 }
