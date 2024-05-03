@@ -17,11 +17,19 @@ export const customTabsTheme: CustomFlowbiteTheme['tabs'] = {
 	},
 }
 export const customButtonTheme: CustomFlowbiteTheme['button'] = {
+	// 'label':
+	// 	'ml-2 inline-flex h-4 w-4 items-center justify-center rounded-none bg-cyan-200 text-xs font-semibold text-cyan-800',
 	outline: {
 		color: {
 			default:
-				'border-primary enabled:hover:bg-primary dark:enabled:hover:bg-primary focus:bg-primary focus:ring-0  focus-visible:bg-primary bg-primary hover:bg-primary dark:bg-primary',
+				'rounded-none border-primary enabled:hover:bg-primary dark:enabled:hover:bg-primary focus:bg-primary focus:ring-0  focus-visible:bg-primary bg-primary hover:bg-primary dark:bg-primary',
 		},
-		on: 'flex w-full justify-center bg-white text-primary transition-all duration-75 ease-in group-enabled:group-hover:bg-opacity-0  group-enabled:group-focus-visible:bg-opacity-0 group-enabled:group-focus-visible:text-white group-enabled:group-hover:text-inherit dark:bg-gray-900 dark:text-white',
+		on: 'flex w-full justify-center bg-white text-invert_light transition-all duration-75 ease-in group-enabled:group-hover:bg-opacity-0  group-enabled:group-focus-visible:bg-opacity-0 group-enabled:group-focus-visible:text-white group-enabled:group-hover:text-inherit dark:bg-gray-900 dark:text-white',
+		pill: {
+			off: 'rounded-none',
+		},
+	},
+	pill: {
+		off: 'rounded-none',
 	},
 }

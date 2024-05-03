@@ -77,7 +77,7 @@ export default function LoginRegisterPage() {
 									value={loginData.password}
 									onChange={e => setLoginData({ ...loginData, password: e.target.value })}
 								/>
-								<Button type='submit' outline color='warning' className='w-full'>
+								<Button type='submit' outline className='w-full' theme={customButtonTheme}>
 									Login
 								</Button>
 								<p>
