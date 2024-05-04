@@ -83,6 +83,7 @@ $primary-color: theme('colors.primary');
 		.controls {
 			display: flex;
 			justify-content: space-between;
+			align-items: center;
 			position: absolute;
 			bottom: 0;
 			width: calc(100% - 20px);
@@ -91,6 +92,7 @@ $primary-color: theme('colors.primary');
 
 			.left {
 				display: flex;
+				align-items: center;
 				gap: 5px;
 
 				button {

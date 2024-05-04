@@ -22,22 +22,24 @@ export default function VideoControls({
 	setCurrentTime,
 	playerState,
 }: VideoProgressBarProps) {
-	const [currentTimeText, setCurrentTimeText] = useState(formatTime(currentTime))
+	const formatTime = (time: number) => {
+		const minutes = Math.floor(time / 60)
+		let seconds = Math.floor(time % 60)
+		const secondsText = seconds < 10 ? `0${seconds}` : seconds
+		return `${minutes}:${secondsText}`
+	}
+
+	const formatPercTime = (perc: number) => {
+		const time = (perc / 100) * duration
+		return formatTime(time)
+	}
+	const [currentTimeText, setCurrentTimeText] = useState(formatPercTime(currentTime))
 	const [isHovering, setIsHovering] = useState(false)
 	const progressBar = useRef<HTMLDivElement>(null)
 	const HoverPercentage = useRef(0)
 	const isDragging = useRef(false)
-	const [playerControlsHeigh, setPlayerControlsHeight] = useState('0%')
-	// const isHoveringRef = useRef(false)
 
-	function formatTime(perc: number) {
-		const time = (perc / 100) * duration
-		const minutes = Math.floor(time / 60)
-		const seconds = Math.floor(time % 60)
-		return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`
-	}
-
-	function getCursorPosition(e: MouseEvent) {
+	const getCursorPosition = (e: MouseEvent) => {
 		if (!progressBar.current) return 0
 		const rect = progressBar.current.getBoundingClientRect()
 		const offsetX = e.clientX - rect.left
@@ -50,7 +52,7 @@ export default function VideoControls({
 	const handleMouseMove = (e: MouseEvent) => {
 		const percentage = getCursorPosition(e)
 		HoverPercentage.current = percentage
-		setCurrentTimeText(formatTime(percentage))
+		setCurrentTimeText(formatPercTime(percentage))
 		// isHoveringRef.current = true
 		setIsHovering(true)
 		if (isDragging.current) {
@@ -171,6 +173,9 @@ export default function VideoControls({
 					>
 						5s <IoChevronForwardSharp />
 					</button>
+					<div>
+						{formatTime(currentTime)} / {formatTime(duration)}
+					</div>
 				</div>
 			</div>
 		</div>
