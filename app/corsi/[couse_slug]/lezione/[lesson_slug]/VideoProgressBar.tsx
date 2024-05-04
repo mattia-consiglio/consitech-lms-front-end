@@ -87,7 +87,10 @@ export default function VideoProgressBar({ duration, currentTime, onSeek }: Vide
 				onMouseDown={handleMouseDown}
 				ref={progressBar}
 			>
-				<div className='circle' style={{ left: `${(currentTime / duration) * 100}%` }}></div>
+				<div
+					className={`circle${isHovering || isDragging.current ? ' active' : ''}`}
+					style={{ left: `${(currentTime / duration) * 100}%` }}
+				></div>
 				<div className='progress' style={{ width: `${(currentTime / duration) * 100}%` }} />
 				<div
 					className='time-hover-text'

@@ -37,15 +37,9 @@ $primary-color: theme('colors.primary');
 			opacity: 1; // for debug purposes
 			transition: all 100ms ease-in-out;
 			transition-property: height, opacity;
-			$circle-size: 0;
 
 			&:hover {
 				height: 7px;
-
-				.circle {
-					height: 15px;
-					width: 15px;
-				}
 			}
 
 			.progress,
@@ -63,11 +57,16 @@ $primary-color: theme('colors.primary');
 			.circle {
 				bottom: 50%;
 				transform: translate(-50%, 50%);
-				height: $circle-size;
-				width: $circle-size;
+				height: 0;
+				width: 0;
 				border-radius: 50%;
 				transition: all 150ms ease-in-out;
 				transition-property: height, width;
+
+				&.active {
+					height: 15px;
+					width: 15px;
+				}
 			}
 
 			.time-hover-text {
