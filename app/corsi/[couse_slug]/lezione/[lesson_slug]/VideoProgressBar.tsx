@@ -1,5 +1,4 @@
-import React, { useEffect, useState } from 'react'
-import './videoPlayer.scss'
+import React, { useEffect, useRef, useState } from 'react'
 
 interface VideoProgressBarProps {
 	duration: number
@@ -9,8 +8,13 @@ interface VideoProgressBarProps {
 
 export default function VideoProgressBar({ duration, currentTime, onSeek }: VideoProgressBarProps) {
 	const [currentTimeText, setCurrentTimeText] = useState(formatTime(currentTime))
-	const [hoverPercentage, setHoverPercentage] = useState(0)
-	const [isHovering, setIsHovering] = useState(false)
+	// const [hoverPercentage, setHoverPercentage] = useState(0)
+	// const [isHovering, setIsHovering] = useState(false)
+	// const [isDragging, setIsDragging] = useState(false)
+	const progressBarRef = useRef<HTMLDivElement>(null)
+	const percentageRef = useRef(0)
+	const isDraggingRef = useRef(false)
+	const isHovering = useRef(false)
 
 	function formatTime(perc: number) {
 		const time = (perc / 100) * duration
@@ -19,47 +23,87 @@ export default function VideoProgressBar({ duration, currentTime, onSeek }: Vide
 		return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`
 	}
 
-	function getCursorPosition(e: React.MouseEvent<HTMLDivElement>) {
-		const target = e.currentTarget.closest('.progress-bar-wrapper') as HTMLDivElement
-		const percentage =
-			(e.nativeEvent.offsetX / (e.currentTarget as HTMLDivElement).offsetWidth) * 100
+	function getCursorPosition(e: MouseEvent) {
+		if (!progressBarRef.current) return 0
+		const rect = progressBarRef.current.getBoundingClientRect()
+		const offsetX = e.clientX - rect.left
+		const percentage = (offsetX / rect.width) * 100
 		return percentage
 	}
 
 	// update percentage on mouse hover
 
-	const handleMouseHover = (e: React.MouseEvent<HTMLDivElement>) => {
+	const handleMouseMove = (e: MouseEvent) => {
+		// console.log('move', isDragging)
+
 		const percentage = getCursorPosition(e)
-		setHoverPercentage(percentage)
+		percentageRef.current = percentage
+		// setHoverPercentage(percentage)
 		setCurrentTimeText(formatTime(percentage))
-		setIsHovering(true)
+		// setIsHovering(true)
+		isHovering.current = true
+		if (isDraggingRef.current) {
+			console.log('drag', isDraggingRef.current)
+			// setHoverPercentage(percentage)
+			seek()
+		}
 	}
+
 	const handleMouseLeave = () => {
-		setIsHovering(false)
+		if (!isDraggingRef) {
+			// setIsHovering(false)
+			isHovering.current = false
+		}
+	}
+
+	const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+		// console.warn('down', isDraggingRef)
+		// setIsDragging(true)
+		isDraggingRef.current = true
+		const nativeEvent = e.nativeEvent as MouseEvent
+		handleMouseMove(nativeEvent)
+		window.addEventListener('mousemove', handleMouseMove)
+		window.addEventListener('mouseup', handleMouseUp)
+	}
+
+	const handleMouseUp = () => {
+		console.warn('up', isDraggingRef.current)
+		// setIsDragging(false)
+		// setIsHovering(false)
+		isHovering.current = false
+		isDraggingRef.current = false
+		window.removeEventListener('mousemove', handleMouseMove)
+		window.removeEventListener('mouseup', handleMouseUp)
+		seek()
+	}
+
+	const seek = () => {
+		console.log(percentageRef.current)
+		const seconds = (percentageRef.current / 100) * duration
+		onSeek(seconds)
 	}
 
 	return (
-		<div
-			className='progress-bar-wrapper'
-			onMouseMove={handleMouseHover}
-			onMouseOver={handleMouseHover}
-			onMouseLeave={handleMouseLeave}
-			onClick={() => {
-				const seconds = (hoverPercentage / 100) * duration
-				onSeek(seconds)
-			}}
-		>
-			<div className='progress' style={{ width: `${(currentTime / duration) * 100}%` }} />
-			<div className='circle' style={{ left: `${(currentTime / duration) * 100}%` }}></div>
-			{/* <div className='time-text'>{currentTimeText}</div> */}
+		<div className='player-controls' style={{ height: isDraggingRef.current ? '100%' : '0%' }}>
 			<div
-				className='time-hover-text'
-				style={{
-					left: `${hoverPercentage}%`,
-					visibility: isHovering ? 'visible' : 'hidden',
-				}}
+				className='progress-bar-wrapper'
+				onMouseMove={e => handleMouseMove(e.nativeEvent)}
+				onMouseLeave={handleMouseLeave}
+				onMouseDown={handleMouseDown}
+				ref={progressBarRef}
 			>
-				{currentTimeText}
+				<div className='circle' style={{ left: `${(currentTime / duration) * 100}%` }}></div>
+				<div className='progress' style={{ width: `${(currentTime / duration) * 100}%` }} />
+				<div
+					className='time-hover-text'
+					style={{
+						left: `${percentageRef.current}%`,
+						visibility: isHovering.current ? 'visible' : 'hidden',
+					}}
+				>
+					{currentTimeText}
+				</div>
+				<h1>{isHovering.current ? 'true' : 'false'}</h1>
 			</div>
 		</div>
 	)

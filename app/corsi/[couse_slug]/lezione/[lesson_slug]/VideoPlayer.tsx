@@ -6,6 +6,7 @@ import VideoProgressBar from './VideoProgressBar'
 import { customButtonTheme } from '@/app/flowbite.themes'
 import { IoPauseSharp, IoPlaySharp } from 'react-icons/io5'
 import { log } from 'console'
+import './videoPlayer.scss'
 
 interface VideoPlayerProps {
 	videoId: string
@@ -28,7 +29,11 @@ export default function VideoPlayer({ videoId }: VideoPlayerProps) {
 		if (player) {
 			if (player.getPlayerState() === 1) {
 				player.pauseVideo()
+				setCurrentTime(player.getCurrentTime())
+				seekTo(player.getCurrentTime())
 			} else {
+				setCurrentTime(player.getCurrentTime())
+				seekTo(player.getCurrentTime())
 				player.playVideo()
 			}
 		}
@@ -45,12 +50,11 @@ export default function VideoPlayer({ videoId }: VideoPlayerProps) {
 		setPlayerState(state.data)
 		if (state.data === 0) {
 			setCurrentTime(0)
-		}
-		if (state.data === 1) {
+		} else if (state.data === 1) {
 			setIntervalID(
 				setInterval(() => {
-					// console.log(player?.getCurrentTime())
 					setCurrentTime(player.getCurrentTime() || 0)
+					setPlayerState(state.data)
 				}, 100)
 			)
 		} else {
