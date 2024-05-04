@@ -2,7 +2,7 @@
 import { Button } from 'flowbite-react'
 import React, { useEffect, useRef, useState } from 'react'
 import YouTube, { YouTubeEvent, YouTubePlayer, YouTubeProps } from 'react-youtube'
-import VideoProgressBar from './VideoProgressBar'
+import VideoControls from './VideoControls'
 import { customButtonTheme } from '@/app/flowbite.themes'
 import { IoPauseSharp, IoPlaySharp } from 'react-icons/io5'
 import { log } from 'console'
@@ -23,20 +23,6 @@ export default function VideoPlayer({ videoId }: VideoPlayerProps) {
 		setPlayer(event.target)
 		setDuration(event.target.getDuration())
 		setCurrentTime(event.target.getCurrentTime())
-	}
-
-	const playPause = () => {
-		if (player) {
-			if (player.getPlayerState() === 1) {
-				player.pauseVideo()
-				setCurrentTime(player.getCurrentTime())
-				seekTo(player.getCurrentTime())
-			} else {
-				setCurrentTime(player.getCurrentTime())
-				seekTo(player.getCurrentTime())
-				player.playVideo()
-			}
-		}
 	}
 
 	const seekTo = (seconds: number) => {
@@ -69,8 +55,8 @@ export default function VideoPlayer({ videoId }: VideoPlayerProps) {
 			autoplay: 0,
 			controls: 0,
 			enablejsapi: true,
-			modestbranding: true,
 			rel: 0,
+			disablekb: 0,
 		},
 	}
 
@@ -83,13 +69,13 @@ export default function VideoPlayer({ videoId }: VideoPlayerProps) {
 					onReady={onPlayerReady}
 					onStateChange={onStateChange}
 				/>
-				<VideoProgressBar duration={duration} currentTime={currentTime} onSeek={seekTo} />
-			</div>
-			<div className='mt-20'>
-				<Button onClick={playPause} theme={customButtonTheme}>
-					{playerState === 1 ? <IoPauseSharp /> : <IoPlaySharp />}
-				</Button>
-				<Button onClick={() => console.log(player.getIframe())}>Get DOM</Button>
+				<VideoControls
+					duration={duration}
+					currentTime={currentTime}
+					player={player}
+					setCurrentTime={setCurrentTime}
+					playerState={playerState}
+				/>
 			</div>
 		</div>
 	)

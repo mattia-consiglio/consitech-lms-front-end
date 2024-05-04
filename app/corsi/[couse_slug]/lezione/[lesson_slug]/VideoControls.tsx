@@ -1,17 +1,33 @@
 import React, { useEffect, useRef, useState } from 'react'
+import {
+	IoChevronBackSharp,
+	IoChevronForwardSharp,
+	IoPauseSharp,
+	IoPlaySharp,
+} from 'react-icons/io5'
+import { YouTubePlayer } from 'react-youtube'
 
 interface VideoProgressBarProps {
 	duration: number
 	currentTime: number
-	onSeek: (percentage: number) => void
+	player: YouTubePlayer
+	setCurrentTime: (time: number) => void
+	playerState: number
 }
 
-export default function VideoProgressBar({ duration, currentTime, onSeek }: VideoProgressBarProps) {
+export default function VideoControls({
+	duration,
+	currentTime,
+	player,
+	setCurrentTime,
+	playerState,
+}: VideoProgressBarProps) {
 	const [currentTimeText, setCurrentTimeText] = useState(formatTime(currentTime))
 	const [isHovering, setIsHovering] = useState(false)
 	const progressBar = useRef<HTMLDivElement>(null)
 	const HoverPercentage = useRef(0)
 	const isDragging = useRef(false)
+	const [playerControlsHeigh, setPlayerControlsHeight] = useState('0%')
 	// const isHoveringRef = useRef(false)
 
 	function formatTime(perc: number) {
@@ -70,15 +86,39 @@ export default function VideoProgressBar({ duration, currentTime, onSeek }: Vide
 		seek()
 	}
 
-	const seek = () => {
-		const seconds = (HoverPercentage.current / 100) * duration
-		onSeek(seconds)
+	const seek = (seconds?: number) => {
+		seconds = seconds !== undefined ? seconds : (HoverPercentage.current / 100) * duration
+		if (player) {
+			player.seekTo(seconds)
+			setCurrentTime(seconds)
+		}
+	}
+
+	const playPause = () => {
+		if (player) {
+			if (player.getPlayerState() === 1) {
+				player.pauseVideo()
+				setCurrentTime(player.getCurrentTime())
+				seek(player.getCurrentTime())
+			} else {
+				setCurrentTime(player.getCurrentTime())
+				seek(player.getCurrentTime())
+				player.playVideo()
+			}
+		}
 	}
 
 	return (
 		<div
 			className='player-controls'
-			style={{ height: isDragging.current ? '100%' : '0%', cursor: 'default' }}
+			style={{
+				height: isDragging.current ? '100%' : '',
+				opacity: isDragging.current ? 1 : '',
+				cursor: 'default',
+			}}
+			onClick={e => {
+				playPause()
+			}}
 		>
 			<div
 				className='progress-bar-wrapper'
@@ -100,6 +140,37 @@ export default function VideoProgressBar({ duration, currentTime, onSeek }: Vide
 					}}
 				>
 					{currentTimeText}
+				</div>
+			</div>
+			<div className='controls'>
+				<div className='left'>
+					<button
+						onClick={e => {
+							e.stopPropagation()
+							seek(player.getCurrentTime() - 5)
+						}}
+						className='text-xl'
+					>
+						<IoChevronBackSharp /> 5s
+					</button>
+					<button
+						onClick={e => {
+							e.stopPropagation()
+							playPause()
+						}}
+						className='text-3xl'
+					>
+						{playerState === 1 ? <IoPauseSharp /> : <IoPlaySharp />}
+					</button>
+					<button
+						onClick={e => {
+							e.stopPropagation()
+							seek(player.getCurrentTime() + 5)
+						}}
+						className='text-xl'
+					>
+						5s <IoChevronForwardSharp />
+					</button>
 				</div>
 			</div>
 		</div>
