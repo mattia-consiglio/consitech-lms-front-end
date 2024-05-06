@@ -6,6 +6,7 @@ import { useRef, useState } from 'react'
 import { customButtonTheme, customTabsTheme } from '@/app/flowbite.themes'
 import { titillium_web } from '../fonts'
 import { useSearchParams } from 'next/navigation'
+import styles from './login.module.scss'
 
 export default function LoginRegisterPage() {
 	const tabsRef = useRef<TabsRef>(null)
@@ -44,7 +45,7 @@ export default function LoginRegisterPage() {
 	}, [tabQuery])
 
 	return (
-		<MainWrapper>
+		<MainWrapper className={styles.main}>
 			<div className='max-w-screen-sm mx-auto'>
 				<div className='flex flex-col gap-3 '>
 					<Tabs
@@ -80,7 +81,7 @@ export default function LoginRegisterPage() {
 								<Button type='submit' outline className='w-full' theme={customButtonTheme}>
 									Login
 								</Button>
-								<p>
+								<p className='text-center'>
 									Non sei registrato?{' '}
 									<span
 										className='text-primary underline cursor-pointer'
@@ -135,7 +136,7 @@ export default function LoginRegisterPage() {
 								>
 									Registrati
 								</Button>
-								<p>
+								<p className='text-center'>
 									Sei già registrato? Effettua il{' '}
 									<span
 										className='text-primary underline cursor-pointer'
