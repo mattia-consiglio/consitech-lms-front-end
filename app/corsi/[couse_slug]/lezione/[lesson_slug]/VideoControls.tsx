@@ -59,16 +59,12 @@ export default function VideoControls({
 			console.log('drag', isDragging.current)
 			seek()
 		}
-		// console.log('handleMouseMove', isHoveringRef.current)
 	}
 
 	const handleMouseLeave = () => {
 		if (!isDragging.current) {
-			console.log('handleMouseLeave in')
-			// isHoveringRef.current = false
 			setIsHovering(false)
 		}
-		// console.log('handleMouseLeave end', isHoveringRef.current)
 	}
 
 	const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -80,7 +76,6 @@ export default function VideoControls({
 	}
 
 	const handleMouseUp = () => {
-		// isHoveringRef.current = false
 		setIsHovering(false)
 		isDragging.current = false
 		window.removeEventListener('mousemove', handleMouseMove)
@@ -128,6 +123,7 @@ export default function VideoControls({
 				onMouseLeave={handleMouseLeave}
 				onMouseDown={handleMouseDown}
 				ref={progressBar}
+				style={{ opacity: isDragging.current ? 1 : '' }}
 			>
 				<div
 					className={`circle${isHovering || isDragging.current ? ' active' : ''}`}

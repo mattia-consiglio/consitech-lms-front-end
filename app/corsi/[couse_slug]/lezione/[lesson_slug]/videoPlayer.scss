@@ -105,11 +105,12 @@ $primary-color: theme('colors.primary');
 
 	&:hover {
 		.progress-bar-wrapper {
-			opacity: 1.2;
+			opacity: 1;
 		}
 
 		.player-controls {
-			height: 50%;
+			height: calc(100% - 60.168px);
+			background: linear-gradient(0deg, rgba(0, 0, 0, 0.8) 0%, transparent 30%);
 			opacity: 1;
 		}
 	}
