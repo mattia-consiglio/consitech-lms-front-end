@@ -1,4 +1,5 @@
 import { titillium_web } from '@/app/fonts'
+import { Media } from '@/utils/types'
 import Image from 'next/image'
 import Link from 'next/link'
 import React from 'react'
@@ -6,10 +7,7 @@ import React from 'react'
 interface CourseBlockProps {
 	title: string
 	description: string
-	img: {
-		src: string
-		alt: string
-	} | null
+	img: Media | null
 	slug: string
 }
 
@@ -32,10 +30,10 @@ export default function CourseBlock({ title, description, img, slug }: CourseBlo
 				''
 			) : (
 				<Image
-					src={img.src}
+					src={img.url}
 					alt={img.alt}
-					width={80}
-					height={80}
+					width={img.width}
+					height={img.height}
 					className='max-w-20 h-auto w-full object-contain'
 				/>
 			)}
