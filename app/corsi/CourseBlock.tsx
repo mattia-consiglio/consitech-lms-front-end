@@ -9,6 +9,7 @@ interface CourseBlockProps {
 	description: string
 	img: Media | null
 	slug: string
+	displayOrder: number
 }
 
 /**
@@ -20,14 +21,22 @@ interface CourseBlockProps {
  * @param slug - The URL slug for the course.
  * @returns A React component that renders a course block.
  */
-export default function CourseBlock({ title, description, img, slug }: CourseBlockProps) {
+export default function CourseBlock({
+	title,
+	description,
+	img,
+	slug,
+	displayOrder,
+}: CourseBlockProps) {
 	return (
 		<Link
 			className='flex flex-col items-center border-3 border-transparent hover:border-neutral-300 hover:bg-neutral-100 dark:hover:border-neutral-700 dark:hover:bg-neutral-800 cursor-pointer p-4 transition-colors duration-250 ease-in-out'
 			href={'/corsi/' + slug}
 		>
 			{img === null ? (
-				''
+				<div className='w-[100px] h-[100px] bg-primary flex justify-center items-center text-2xl font-bold'>
+					<span>{displayOrder}</span>
+				</div>
 			) : (
 				<Image
 					src={img.url}

@@ -25,6 +25,16 @@ export interface AbstactContent {
 	thumbnail: null | Media
 	seo: SEO
 }
+export interface Course extends AbstactContent {
+	enrolledStudents: number
+}
+
+export interface Lesson extends AbstactContent {
+	liveEditor: null
+	videoId: null
+	videoThumbnail: null
+	content: null
+}
 
 export interface Media {
 	id: string
@@ -35,10 +45,6 @@ export interface Media {
 	width: number
 	height: number
 	mainColor: string
-}
-
-export interface Course extends AbstactContent {
-	enrolledStudents: number
 }
 
 export interface MainLanguage {

@@ -33,6 +33,7 @@ export default async function CoursesPage() {
 							description={course.description}
 							img={course.thumbnail}
 							slug={course.slug}
+							displayOrder={course.displayOrder}
 						/>
 					))}
 				</Suspense>

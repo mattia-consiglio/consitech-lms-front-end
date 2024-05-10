@@ -1,49 +1,24 @@
 import MainWrapper from '@/app/components/MainWrapper'
 import LessonBlock from './LessonBlock'
+import { API } from '@/utils/api'
+import { Course, Lesson } from '@/utils/types'
 
-export default function CourseSingle({ params }: { params: { couse_slug: string } }) {
+export default async function CourseSingle({ params }: { params: { couse_slug: string } }) {
+	const course: Course = await API.get('public/courses/slug/' + params.couse_slug)
+	const lessons: Lesson[] = await API.get('public/courses/slug/' + params.couse_slug + '/lessons')
 	return (
-		<MainWrapper subheaderTitle={params.couse_slug}>
-			<LessonBlock
-				title='Lezione 1'
-				description='Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.'
-				img={{
-					src: 'https://res.cloudinary.com/dqayns3d7/image/upload/v1714663974/Lazione-2-HTML-Blog_lrsozb.png',
-					alt: 'Lezione 1',
-				}}
-				lessonSlug='lezione-1'
-				couseSlug={params.couse_slug}
-			/>
-			<LessonBlock
-				title='Lezione 1'
-				description='Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.'
-				img={{
-					src: 'https://res.cloudinary.com/dqayns3d7/image/upload/v1714663974/Lazione-2-HTML-Blog_lrsozb.png',
-					alt: 'Lezione 1',
-				}}
-				lessonSlug='lezione-1'
-				couseSlug={params.couse_slug}
-			/>
-			<LessonBlock
-				title='Lezione 1'
-				description='Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.'
-				img={{
-					src: 'https://res.cloudinary.com/dqayns3d7/image/upload/v1714663974/Lazione-2-HTML-Blog_lrsozb.png',
-					alt: 'Lezione 1',
-				}}
-				lessonSlug='lezione-1'
-				couseSlug={params.couse_slug}
-			/>
-			<LessonBlock
-				title='Lezione 1'
-				description='Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.'
-				img={{
-					src: 'https://res.cloudinary.com/dqayns3d7/image/upload/v1714663974/Lazione-2-HTML-Blog_lrsozb.png',
-					alt: 'Lezione 1',
-				}}
-				lessonSlug='lezione-1'
-				couseSlug={params.couse_slug}
-			/>
+		<MainWrapper subheaderTitle={course.title}>
+			{lessons.map(lesson => (
+				<LessonBlock
+					key={lesson.id}
+					title={lesson.title}
+					description={lesson.description}
+					img={lesson.thumbnail}
+					lessonSlug={lesson.slug}
+					couseSlug={params.couse_slug}
+					displayOrder={lesson.displayOrder}
+				/>
+			))}
 		</MainWrapper>
 	)
 }

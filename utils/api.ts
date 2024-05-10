@@ -15,18 +15,18 @@ export class API {
 	}
 
 	static async get(endpoint: string) {
-		return await this.request(endpoint, 'GET')
+		return await API.request(endpoint, 'GET')
 	}
 
 	static async post(endpoint: string, body: any) {
-		return await this.request(endpoint, 'POST', body)
+		return await API.request(endpoint, 'POST', body)
 	}
 
 	static async put(endpoint: string, body: any) {
-		return await this.request(endpoint, 'PUT', body)
+		return await API.request(endpoint, 'PUT', body)
 	}
 
 	static async delete(endpoint: string) {
-		return await this.request(endpoint, 'DELETE')
+		return await API.request(endpoint, 'DELETE')
 	}
 }
