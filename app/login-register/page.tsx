@@ -1,17 +1,45 @@
 'use client'
-import React, { useEffect } from 'react'
 import MainWrapper from '../components/MainWrapper'
 import { Button, Tabs, TabsRef } from 'flowbite-react'
-import { useRef, useState } from 'react'
+import React, { useRef, useState } from 'react'
 import { customButtonTheme, customTabsTheme } from '@/app/flowbite.themes'
 import { titillium_web } from '../fonts'
 import { useSearchParams } from 'next/navigation'
 import styles from './login.module.scss'
 
-export default function LoginRegisterPage() {
+const getInitalTab = (tabQuery: string | null) => {
+	let tab = 0
+	if (tabQuery) {
+		switch (tabQuery) {
+			case '0':
+			case 'login':
+			default:
+				tab = 0
+				break
+			case '1':
+			case 'register':
+				tab = 1
+				break
+		}
+		return tab
+	}
+}
+
+export default function LoginRegisterPage({
+	searchParams,
+}: {
+	searchParams?: { [key: string]: string | string[] | undefined }
+}) {
+	const tabQuery: string | null = searchParams?.tab
+		? Array.isArray(searchParams.tab)
+			? null
+			: searchParams.tab
+		: null
+	// console.log(tabQuery)
+
+	// let activeTab = getInitalTab(tabQuery)
 	const tabsRef = useRef<TabsRef>(null)
-	const [activeTab, setActiveTab] = useState(0)
-	const searchParams = useSearchParams()
+	const [activeTab, setActiveTab] = useState(getInitalTab(tabQuery))
 
 	const [loginData, setLoginData] = useState({
 		usernameEmail: '',
@@ -24,25 +52,9 @@ export default function LoginRegisterPage() {
 		password: '',
 	})
 
-	const tabQuery = searchParams.get('tab')
-
-	useEffect(() => {
-		let tab = 0
-		if (tabQuery) {
-			switch (tabQuery) {
-				case '0':
-				case 'login':
-				default:
-					tab = 0
-					break
-				case '1':
-				case 'register':
-					tab = 1
-					break
-			}
-			tabsRef.current?.setActiveTab(tab)
-		}
-	}, [tabQuery])
+	const isActiveTab = (tab: number) => {
+		return activeTab === tab
+	}
 
 	return (
 		<MainWrapper className={styles.main}>
@@ -51,12 +63,12 @@ export default function LoginRegisterPage() {
 					<Tabs
 						aria-label='Login / Registrazione'
 						style='default'
-						theme={customTabsTheme}
 						ref={tabsRef}
+						theme={customTabsTheme}
 						onActiveTabChange={tab => setActiveTab(tab)}
 						className='justify-center'
 					>
-						<Tabs.Item active title='Login'>
+						<Tabs.Item active={isActiveTab(0)} title='Login'>
 							<h2 className={`${titillium_web.className} text-center`}>Login</h2>
 							<form
 								className='mt-4 flex flex-col items-center gap-y-2'
@@ -92,7 +104,7 @@ export default function LoginRegisterPage() {
 								</p>
 							</form>
 						</Tabs.Item>
-						<Tabs.Item title='Registrati'>
+						<Tabs.Item active={isActiveTab(1)} title='Registrati'>
 							<h2 className={`${titillium_web.className} text-center`}>Registrati</h2>
 							<form
 								className='mt-4 flex flex-col items-center gap-y-2'

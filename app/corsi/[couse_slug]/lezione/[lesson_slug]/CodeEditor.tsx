@@ -1,15 +1,20 @@
 'use client'
-import { Editor } from '@monaco-editor/react'
 import React from 'react'
+import dynamic from 'next/dynamic'
+import { loader, Editor } from '@monaco-editor/react'
 
-export default function CodeEditor() {
+interface CodeEditorProps {
+	code?: string
+}
+
+export default function CodeEditor({ code }: CodeEditorProps) {
 	return (
-		<div>
+		<div className='min-h-[300px] h-[300px] w-full'>
 			<Editor
-				height='300px'
+				height='100%'
 				width='100%'
 				defaultLanguage='html'
-				defaultValue='<html></html>'
+				defaultValue={code ? code : '<!-- divertiti con il codice --!>'}
 				theme='vs-dark'
 			/>
 		</div>

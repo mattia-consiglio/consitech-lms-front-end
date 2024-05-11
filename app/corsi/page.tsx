@@ -1,12 +1,15 @@
-'use client'
-
 import { setSubheaderTitle } from '@/redux/reducers/pageReducer'
 import { useAppDispatch } from '@/redux/store'
-import React, { useEffect } from 'react'
+import React, { Suspense, useEffect, useState } from 'react'
 import MainWrapper from '../components/MainWrapper'
 import CourseBlock from './CourseBlock'
+import { PagableContent, Course } from '@/utils/types'
+import { API } from '@/utils/api'
 
-export default function CoursesPage() {
+export default async function CoursesPage() {
+	const data: PagableContent<Course> = await API.get('public/courses')
+	const courses = data?.content
+
 	return (
 		<MainWrapper subheaderTitle='Corsi'>
 			<div className='flex justify-center'>
@@ -22,87 +25,18 @@ export default function CoursesPage() {
 				</div>
 			</div>
 			<div className='grid grid-cols-1 md:grid-cols-3 gap-x-2 gap-y-4 mt-4'>
-				<CourseBlock
-					title='HTML'
-					description="Aggiungi stile alle tue pagine con colori, font, layout. Impara ad arricchire la struttura dell'HTML"
-					img={{
-						src: 'https://res.cloudinary.com/dqayns3d7/image/upload/v1714646312/css-logo.png',
-						alt: 'CSS logo',
-					}}
-					slug='html'
-				/>
-				<CourseBlock
-					title='CSS'
-					description="Aggiungi stile alle tue pagine con colori, font, layout. Impara ad arricchire la struttura dell'HTML"
-					img={{
-						src: 'https://res.cloudinary.com/dqayns3d7/image/upload/v1714646312/css-logo.png',
-						alt: 'CSS logo',
-					}}
-					slug='css'
-				/>
-				<CourseBlock
-					title='CSS'
-					description="Aggiungi stile alle tue pagine con colori, font, layout. Impara ad arricchire la struttura dell'HTML"
-					img={{
-						src: 'https://res.cloudinary.com/dqayns3d7/image/upload/v1714646312/css-logo.png',
-						alt: 'CSS logo',
-					}}
-					slug='#'
-				/>
-				<CourseBlock
-					title='CSS'
-					description="Aggiungi stile alle tue pagine con colori, font, layout. Impara ad arricchire la struttura dell'HTML"
-					img={{
-						src: 'https://res.cloudinary.com/dqayns3d7/image/upload/v1714646312/css-logo.png',
-						alt: 'CSS logo',
-					}}
-					slug='#'
-				/>
-				<CourseBlock
-					title='CSS'
-					description="Aggiungi stile alle tue pagine con colori, font, layout. Impara ad arricchire la struttura dell'HTML"
-					img={{
-						src: 'https://res.cloudinary.com/dqayns3d7/image/upload/v1714646312/css-logo.png',
-						alt: 'CSS logo',
-					}}
-					slug='#'
-				/>
-				<CourseBlock
-					title='CSS'
-					description="Aggiungi stile alle tue pagine con colori, font, layout. Impara ad arricchire la struttura dell'HTML"
-					img={{
-						src: 'https://res.cloudinary.com/dqayns3d7/image/upload/v1714646312/css-logo.png',
-						alt: 'CSS logo',
-					}}
-					slug='#'
-				/>
-				<CourseBlock
-					title='CSS'
-					description="Aggiungi stile alle tue pagine con colori, font, layout. Impara ad arricchire la struttura dell'HTML"
-					img={{
-						src: 'https://res.cloudinary.com/dqayns3d7/image/upload/v1714646312/css-logo.png',
-						alt: 'CSS logo',
-					}}
-					slug='#'
-				/>
-				<CourseBlock
-					title='CSS'
-					description="Aggiungi stile alle tue pagine con colori, font, layout. Impara ad arricchire la struttura dell'HTML"
-					img={{
-						src: 'https://res.cloudinary.com/dqayns3d7/image/upload/v1714646312/css-logo.png',
-						alt: 'CSS logo',
-					}}
-					slug='#'
-				/>
-				<CourseBlock
-					title='CSS'
-					description="Aggiungi stile alle tue pagine con colori, font, layout. Impara ad arricchire la struttura dell'HTML"
-					img={{
-						src: 'https://res.cloudinary.com/dqayns3d7/image/upload/v1714646312/css-logo.png',
-						alt: 'CSS logo',
-					}}
-					slug='#'
-				/>
+				<Suspense fallback={'Caricamento'}>
+					{courses.map(course => (
+						<CourseBlock
+							key={course.id}
+							title={course.title}
+							description={course.description}
+							img={course.thumbnail}
+							slug={course.slug}
+							displayOrder={course.displayOrder}
+						/>
+					))}
+				</Suspense>
 			</div>
 		</MainWrapper>
 	)
