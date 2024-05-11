@@ -9,11 +9,11 @@ const CodeEditor = dynamic(() => import('./CodeEditor'), {
 	ssr: false,
 })
 
-export default async function LessonsPage({
-	params,
-}: {
+interface LessonsPageProps {
 	params: { couse_slug: string; lesson_slug: string }
-}) {
+}
+
+export default async function LessonsPage({ params }: LessonsPageProps) {
 	const lesson: Lesson = await API.get('public/lessons/slug/' + params.lesson_slug)
 	const content: string = lesson.content ? lesson.content : ''
 	const safeHTML = DOMPurify.sanitize(content)
@@ -24,7 +24,7 @@ export default async function LessonsPage({
 				lesson.liveEditor ? (
 					<div className='grid grid-cols-1 gap-4 md:grid-cols-2 items-center'>
 						<VideoPlayer videoId={lesson.videoId} />
-						<CodeEditor />
+						<CodeEditor code={lesson.liveEditor} />
 					</div>
 				) : (
 					<div className=''>

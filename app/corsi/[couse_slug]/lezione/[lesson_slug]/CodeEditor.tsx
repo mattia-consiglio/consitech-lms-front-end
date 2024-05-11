@@ -14,7 +14,7 @@ export default function CodeEditor({ code }: CodeEditorProps) {
 				height='100%'
 				width='100%'
 				defaultLanguage='html'
-				defaultValue='<html></html>'
+				defaultValue={code ? code : '<!-- divertiti con il codice --!>'}
 				theme='vs-dark'
 			/>
 		</div>
