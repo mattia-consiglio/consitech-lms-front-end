@@ -10,8 +10,6 @@ interface MainWrapperProps {
 }
 
 export default function MainWrapper({ children, subheaderTitle, className }: MainWrapperProps) {
-	console.log('subheader', subheaderTitle)
-
 	return (
 		<main className={className}>
 			{subheaderTitle && <Subheader title={subheaderTitle} />}

@@ -4,12 +4,18 @@ import Link from 'next/link'
 import React, { useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { IoPerson } from 'react-icons/io5'
-import { DarkThemeToggle, Dropdown } from 'flowbite-react'
+import { Button, DarkThemeToggle, Dropdown } from 'flowbite-react'
+import { useAppDispatch, useAppSelector } from '@/redux/store'
+import { customButtonTheme } from '../flowbite.themes'
+import { userLogout } from '@/redux/reducers/userSlice'
 
 function Navbar() {
 	const pathname = usePathname()
 	const [menuOpen, setMenuOpen] = useState(false)
 	const [userMenuOpen, setUserMenuOpen] = useState(false)
+
+	const user = useAppSelector(state => state.user)
+	const dispatch = useAppDispatch()
 
 	const menuItems = [
 		{
@@ -61,29 +67,35 @@ function Navbar() {
 				<div className='flex md:order-2 space-x-3 md:space-x-0 rtl:space-x-reverse items-center'>
 					<DarkThemeToggle className='rounded-none ' />
 					{/* User menu */}
-					<Dropdown
-						label=''
-						dismissOnClick={true}
-						renderTrigger={() => (
-							<button
-								type='button'
-								className=' border-solid border-spacing-2 border-2 border-current rounded-full flex w-8 h-8 items-center justify-center hover:text-primary !ml-4'
-							>
-								<IoPerson />
-								<span className='sr-only'>Apri menu utente</span>
-							</button>
-						)}
-					>
-						<Dropdown.Header>
-							<span className='block text-sm'>Bonnie Green</span>
-							<span className='block truncate text-sm font-medium'>bonnie@flowbite.com</span>
-						</Dropdown.Header>
-						<Dropdown.Item>Dashboard</Dropdown.Item>
-						<Dropdown.Item>Impostazioni</Dropdown.Item>
-						<Dropdown.Item as={Link} href='/login-register'>
-							Logout
-						</Dropdown.Item>
-					</Dropdown>
+					{!user.loggedIn ? (
+						<Link href='/login-register' passHref>
+							<Button theme={customButtonTheme} outline>
+								Entra/Registrati
+							</Button>
+						</Link>
+					) : (
+						<Dropdown
+							label=''
+							dismissOnClick={true}
+							renderTrigger={() => (
+								<button
+									type='button'
+									className=' border-solid border-spacing-2 border-2 border-current rounded-full flex w-8 h-8 items-center justify-center hover:text-primary !ml-4'
+								>
+									<IoPerson />
+									<span className='sr-only'>Apri menu utente</span>
+								</button>
+							)}
+						>
+							<Dropdown.Header>
+								<span className='block text-sm'>{user.data.username}</span>
+								<span className='block truncate text-sm font-medium'>{user.data.email}</span>
+							</Dropdown.Header>
+							<Dropdown.Item>Dashboard</Dropdown.Item>
+							<Dropdown.Item>Impostazioni</Dropdown.Item>
+							<Dropdown.Item onClick={() => dispatch(userLogout())}>Logout</Dropdown.Item>
+						</Dropdown>
+					)}
 
 					{/* Hamburger menu */}
 					<button

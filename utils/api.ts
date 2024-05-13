@@ -4,12 +4,18 @@ export class API {
 	static async request(endpoint: string, method: string, body?: any) {
 		endpoint = endpoint.indexOf('/') === 0 ? endpoint.substring(1) : endpoint
 		endpoint = endpoint.indexOf('/') === endpoint.length - 1 ? endpoint.substring(0, -1) : endpoint
+		const headers: { [key: string]: string } = {}
+		const jwt = typeof window !== 'undefined' ? localStorage.getItem('token') : null
+
+		headers['Content-Type'] = `application/json`
+
+		if (jwt) {
+			headers['Authorization'] = `Bearer ${jwt}`
+		}
 		const res = await fetch(`${this.baseURL}/${endpoint}`, {
 			method,
 			body: JSON.stringify(body),
-			headers: {
-				'Content-Type': 'application/json',
-			},
+			headers,
 		})
 		return res.json()
 	}
