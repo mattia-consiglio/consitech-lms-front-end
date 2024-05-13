@@ -1,16 +1,15 @@
 import { useDispatch, useSelector, useStore } from 'react-redux'
-import pageReducer from '../reducers/pageReducer'
 import { combineReducers, configureStore } from '@reduxjs/toolkit'
 import exp from 'constants'
 import userSlice from '../reducers/userSlice'
 
 const rootReducer = combineReducers({
-	page: pageReducer,
+	user: userSlice,
 })
 
 export const makeStore = () => {
 	return configureStore({
-		reducer: { rootReducer, userSlice },
+		reducer: rootReducer,
 	})
 }
 

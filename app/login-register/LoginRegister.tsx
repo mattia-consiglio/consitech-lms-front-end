@@ -16,6 +16,7 @@ import { Authorization, ResponseError, User } from '@/utils/types'
 import StoreProvider from '@/redux/StoreProvider'
 import { useAppDispatch } from '@/redux/store'
 import { getUserAction } from '@/redux/actions/user'
+import { userLogin } from '@/redux/reducers/userSlice'
 
 const getInitalTab = (tabQuery: string | null) => {
 	let tab = 0
@@ -91,6 +92,7 @@ export default function LoginRegister({
 			setLoginData({ usernameOrEmail: '', password: '', error: false, errorMessage: '' })
 			localStorage.setItem('token', response.authorization)
 			dispatch(getUserAction())
+			dispatch(userLogin())
 			router.push('/')
 		} else {
 			formForm ??
