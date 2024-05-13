@@ -1,18 +1,24 @@
 'use client'
 import Image from 'next/image'
 import Link from 'next/link'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { IoPerson } from 'react-icons/io5'
-import { Button, DarkThemeToggle, Dropdown } from 'flowbite-react'
+import { Button, DarkThemeToggle, Dropdown, useThemeMode } from 'flowbite-react'
 import { useAppDispatch, useAppSelector } from '@/redux/store'
 import { customButtonTheme } from '../flowbite.themes'
 import { userLogout } from '@/redux/reducers/userSlice'
+import { log } from 'console'
 
 function Navbar() {
 	const pathname = usePathname()
 	const [menuOpen, setMenuOpen] = useState(false)
 	const [userMenuOpen, setUserMenuOpen] = useState(false)
+	const themeMode = useThemeMode()
+
+	//do not remove the unsed the state, makes the first client render work (I don'yt kwo how)
+	const [theme, setTheme] = useState(themeMode.mode)
+	const [logo, setLogo] = useState('/consitech-logo-full.svg')
 
 	const user = useAppSelector(state => state.user)
 	const dispatch = useAppDispatch()
@@ -40,27 +46,32 @@ function Navbar() {
 		},
 	]
 
+	const [, updateState] = useState(() => themeMode.setMode) //dummy state update to trigger re-render on external changes
+
+	useEffect(() => {
+		// console.log(themeMode)
+		// console.log(theme)
+		themeMode.setMode(themeMode.mode)
+		setTheme(themeMode.mode)
+		if (themeMode.mode === 'light') {
+			// console.log('Light mode')
+			setLogo('/consitech-logo-full.svg')
+		} else {
+			// console.log('Dark mode')
+			setLogo('/consitech-logo-full-light.svg')
+		}
+	}, [theme, themeMode])
+
+	// useEffect(() => {
+	// 	console.log('Render triggered')
+	// })
+
 	return (
 		<nav className='bg-body_light dark:bg-body_dark w-full z-20 top-0 start-0 border-b-0 md:border-invert_light-400 dark:border-invert_light-600 md:border-b'>
 			<div className='max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4'>
 				<div>
-					<Link href='/' className='items-center space-x-3 rtl:space-x-reverse flex dark:hidden'>
-						<Image
-							src='/consitech-logo-full.svg'
-							className='h-12 '
-							alt='Consitech Logo'
-							width={84.8}
-							height={48}
-						/>
-					</Link>
-					<Link href='/' className='items-center space-x-3 rtl:space-x-reverse hidden dark:flex'>
-						<Image
-							src='/consitech-logo-full-light.svg'
-							className='h-12'
-							alt='Consitech Logo'
-							width={84.8}
-							height={48}
-						/>
+					<Link href='/' className='items-center space-x-3 rtl:space-x-reverse flex'>
+						<Image src={logo} className='h-12 ' alt='Consitech Logo' width={84.8} height={48} />
 					</Link>
 				</div>
 
@@ -93,7 +104,14 @@ function Navbar() {
 							</Dropdown.Header>
 							<Dropdown.Item>Dashboard</Dropdown.Item>
 							<Dropdown.Item>Impostazioni</Dropdown.Item>
-							<Dropdown.Item onClick={() => dispatch(userLogout())}>Logout</Dropdown.Item>
+							<Dropdown.Item
+								onClick={() => {
+									dispatch(userLogout())
+									localStorage.removeItem('token')
+								}}
+							>
+								Logout
+							</Dropdown.Item>
 						</Dropdown>
 					)}
 

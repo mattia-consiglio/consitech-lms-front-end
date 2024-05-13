@@ -1,19 +1,25 @@
-import Image from 'next/image'
-import Navbar from './components/Navbar'
 import { Metadata } from 'next'
+import HeroSection from './HeroSection'
+import CousesComponent from './corsi/Couses'
+import ContentWrapper from './components/ContentWrapper'
+
 export const metadata: Metadata = {
 	title: 'Home',
 	description: 'Contetech Home',
 }
 
+import { titillium_web } from './fonts'
+
 export default function Home() {
 	return (
 		<>
-			<h1 className='text-7xl'>
-				Lorem ipsum dolor sit amet consectetur adipisicing elit. Minus cum quos atque possimus nobis
-				mollitia quidem nisi odio impedit ipsa enim asperiores inventore eum minima molestias
-				repudiandae eaque, expedita amet!
-			</h1>
+			<main>
+				<HeroSection />
+				<ContentWrapper>
+					<h1 className={`${titillium_web.className} text-center`}>Corsi disponibili</h1>
+					<CousesComponent />
+				</ContentWrapper>
+			</main>
 		</>
 	)
 }

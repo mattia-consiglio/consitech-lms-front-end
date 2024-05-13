@@ -19,7 +19,7 @@ export default function RootLayout({
 	return (
 		<html lang='it'>
 			<head>
-				<ThemeModeScript mode='auto' />
+				<ThemeModeScript mode='dark' />
 			</head>
 			<Flowbite>
 				<body

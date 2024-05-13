@@ -2,30 +2,31 @@ import React from 'react'
 import Subheader from './Subheader'
 import { Breadcrumb, BreadcrumbItem } from 'flowbite-react'
 import { HiHome } from 'react-icons/hi'
+import { IconType } from 'react-icons/lib'
+import ContentWrapper from './ContentWrapper'
 
+export interface BreadcrumbItemProp {
+	label: string
+	href?: string
+	icon?: IconType
+}
 interface MainWrapperProps {
 	children: React.ReactNode
 	subheaderTitle?: string
 	className?: string
+	braedcrumbItems?: BreadcrumbItemProp[]
 }
 
-export default function MainWrapper({ children, subheaderTitle, className }: MainWrapperProps) {
+export default function MainWrapper({
+	children,
+	subheaderTitle,
+	className,
+	braedcrumbItems,
+}: MainWrapperProps) {
 	return (
 		<main className={className}>
 			{subheaderTitle && <Subheader title={subheaderTitle} />}
-			<div
-				className='max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4'
-				style={{ minWidth: 'min(700px,calc(100vw - 1rem))' }}
-			>
-				<Breadcrumb aria-label='Default breadcrumb example'>
-					<BreadcrumbItem href='#' icon={HiHome}>
-						Home
-					</BreadcrumbItem>
-					<BreadcrumbItem href='#'>Projects</BreadcrumbItem>
-					<BreadcrumbItem>Flowbite React</BreadcrumbItem>
-				</Breadcrumb>
-				<div className='w-full'>{children}</div>
-			</div>
+			<ContentWrapper braedcrumbItems={braedcrumbItems}>{children}</ContentWrapper>
 		</main>
 	)
 }
