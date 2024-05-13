@@ -80,8 +80,13 @@ export default function LoginRegister({
 		return activeTab === tab
 	}
 
-	const login = async (formForm = false) => {
-		const response: Authorization = await API.post('auth/login', loginData)
+	interface LoginData {
+		usernameOrEmail: string
+		password: string
+	}
+
+	const login = async (data: LoginData, formForm = false) => {
+		const response: Authorization = await API.post('auth/login', data)
 		if (!('status' in response)) {
 			setLoginData({ usernameOrEmail: '', password: '', error: false, errorMessage: '' })
 			localStorage.setItem('token', response.authorization)
@@ -104,12 +109,18 @@ export default function LoginRegister({
 			return
 		}
 
-		login(true)
+		login(
+			{
+				usernameOrEmail: loginData.usernameOrEmail,
+				password: loginData.password,
+			},
+			true
+		)
 	}
 
-	const specialChars = '!@#$%^&*()-_=+{};:,<.>/?~`£€[]{}\\|"'
+	const specialChars = '!@#$%^&*()-_=+{};:,<.>/?~`£€[]\\|"\''
 	const safeRegex = (str: string) => {
-		return str.replace(']', '\\]').replace('-', '\\-')
+		return str.replace(']', '\\]').replace('-', '\\-').replace('/', '\\/')
 	}
 
 	const checkLength = () => {
@@ -191,7 +202,13 @@ export default function LoginRegister({
 						error: false,
 						errorMessage: '',
 					})
-					login(false)
+					login(
+						{
+							usernameOrEmail: restOfData.email,
+							password: restOfData.password,
+						},
+						false
+					)
 					setRegistrationData({
 						username: '',
 						email: '',

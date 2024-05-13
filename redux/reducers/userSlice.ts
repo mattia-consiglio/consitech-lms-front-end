@@ -21,9 +21,11 @@ const userReducer = createSlice({
 	initialState,
 	reducers: {
 		setUser(state, action: PayloadAction<User>) {
-			state.id = action.payload.id
-			state.username = action.payload.username
-			state.role = action.payload.role
+			const { id, username, role, email } = action.payload
+			state.id = id
+			state.username = username
+			state.role = role
+			state.email = email
 		},
 		setUserError(state, action: PayloadAction<boolean>) {
 			state.error = action.payload
