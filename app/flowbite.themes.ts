@@ -31,3 +31,19 @@ export const customButtonTheme: CustomFlowbiteTheme['button'] = {
 		off: 'rounded-none',
 	},
 }
+
+export const customBreadcrumbTheme: CustomFlowbiteTheme['breadcrumb'] = {
+	'root': {
+		'base': '',
+		'list': 'flex items-center',
+	},
+	'item': {
+		'base': 'group flex items-center',
+		'chevron': 'mx-1 h-4 w-4 group-first:hidden md:mx-2',
+		'href': {
+			'off': 'flex items-center text-sm font-medium text-neutral-50 dark:text-neutral-800',
+			'on': 'flex items-center text-sm font-medium text-neutral-50 dark:text-neutral-800 hover:text-primary dark:hover:text-primary_darker',
+		},
+		'icon': 'mr-2 h-4 w-4',
+	},
+}

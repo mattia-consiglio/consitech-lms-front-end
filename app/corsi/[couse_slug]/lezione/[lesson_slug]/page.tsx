@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic'
 import { API } from '@/utils/api'
 import { Lesson } from '@/utils/types'
 import DOMPurify from 'isomorphic-dompurify'
+import { HiHome } from 'react-icons/hi'
 
 const CodeEditor = dynamic(() => import('./CodeEditor'), {
 	ssr: false,
@@ -19,7 +20,15 @@ export default async function LessonsPage({ params }: LessonsPageProps) {
 	const safeHTML = DOMPurify.sanitize(content)
 
 	return (
-		<MainWrapper subheaderTitle={lesson.title}>
+		<MainWrapper
+			subheaderTitle={lesson.title}
+			braedcrumbItems={[
+				{ icon: HiHome, label: 'Home', href: '/' },
+				{ label: 'Corsi', href: '/corsi' },
+				{ label: lesson.course.title, href: '/corsi/' + lesson.course.slug },
+				{ label: lesson.title },
+			]}
+		>
 			{lesson.videoId ? (
 				lesson.liveEditor ? (
 					<div className='grid grid-cols-1 gap-4 md:grid-cols-2 items-center'>

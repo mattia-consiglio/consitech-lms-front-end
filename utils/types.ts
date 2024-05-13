@@ -34,6 +34,7 @@ export interface Lesson extends AbstactContent {
 	videoId: null
 	videoThumbnail: null
 	content: null
+	course: Course
 }
 
 export interface Media {

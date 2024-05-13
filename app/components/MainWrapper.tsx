@@ -25,8 +25,8 @@ export default function MainWrapper({
 }: MainWrapperProps) {
 	return (
 		<main className={className}>
-			{subheaderTitle && <Subheader title={subheaderTitle} />}
-			<ContentWrapper braedcrumbItems={braedcrumbItems}>{children}</ContentWrapper>
+			{subheaderTitle && <Subheader title={subheaderTitle} braedcrumbItems={braedcrumbItems} />}
+			<ContentWrapper>{children}</ContentWrapper>
 		</main>
 	)
 }

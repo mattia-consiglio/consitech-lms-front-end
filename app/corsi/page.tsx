@@ -4,13 +4,17 @@ import CourseBlock from './CourseBlock'
 import { PagableContent, Course } from '@/utils/types'
 import { API } from '@/utils/api'
 import CousesComponent from './Couses'
+import { HiHome } from 'react-icons/hi'
 
 export default async function CoursesPage() {
 	const data: PagableContent<Course> = await API.get('public/courses')
 	const courses = data?.content
 
 	return (
-		<MainWrapper subheaderTitle='Corsi'>
+		<MainWrapper
+			subheaderTitle='Corsi'
+			braedcrumbItems={[{ icon: HiHome, label: 'Home', href: '/' }, { label: 'Corsi' }]}
+		>
 			<div className='flex justify-center'>
 				<div className='lg:w-2/3 w-full'>
 					<p className='text-center'>
