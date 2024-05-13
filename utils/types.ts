@@ -76,3 +76,21 @@ export interface Sort {
 	unsorted: boolean
 	sorted: boolean
 }
+
+export interface ResponseError {
+	timestamp: string
+	message: string
+	status: number
+	error: string
+}
+
+export interface Authorization {
+	authorization: string
+}
+
+export interface User {
+	id: string
+	username: string
+	email: string
+	role: 'ADMIN' | 'USER'
+}
