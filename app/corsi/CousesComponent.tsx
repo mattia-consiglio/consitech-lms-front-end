@@ -1,9 +1,16 @@
 import React, { Suspense } from 'react'
 import CourseBlock from './CourseBlock'
-import { PagableContent, Course } from '@/utils/types'
+import { PagableContent, Course, User } from '@/utils/types'
 import { API } from '@/utils/api'
+import { UserState } from '@/redux/reducers/userSlice'
+
+// interface CousesComponentProps {
+// user: UserState
+// }
 
 export default async function CousesComponent() {
+	// const data: PagableContent<Course> =
+	// user && user.loggedIn ? await API.get('courses') : await API.get('public/courses')
 	const data: PagableContent<Course> = await API.get('public/courses')
 	const courses = data?.content
 	return (

@@ -1,24 +1,24 @@
 'use client'
 import Image from 'next/image'
 import Link from 'next/link'
-import React, { useEffect, useState } from 'react'
+import React, { use, useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { IoPerson } from 'react-icons/io5'
 import { Button, DarkThemeToggle, Dropdown, useThemeMode } from 'flowbite-react'
 import { useAppDispatch, useAppSelector } from '@/redux/store'
 import { customButtonTheme } from '../flowbite.themes'
-import { userLogout } from '@/redux/reducers/userSlice'
+import { userLogin, userLogout } from '@/redux/reducers/userSlice'
 import { log } from 'console'
+import { getUserAction } from '@/redux/actions/user'
 
 function Navbar() {
 	const pathname = usePathname()
 	const [menuOpen, setMenuOpen] = useState(false)
-	const [userMenuOpen, setUserMenuOpen] = useState(false)
 	const themeMode = useThemeMode()
 
-	//do not remove the unsed the state, makes the first client render work (I don'yt kwo how)
 	const [theme, setTheme] = useState(themeMode.mode)
 	const [logo, setLogo] = useState('/consitech-logo-full.svg')
+	const [loggedIn, setLoggedIn] = useState(false)
 
 	const user = useAppSelector(state => state.user)
 	const dispatch = useAppDispatch()
@@ -46,25 +46,24 @@ function Navbar() {
 		},
 	]
 
-	const [, updateState] = useState(() => themeMode.setMode) //dummy state update to trigger re-render on external changes
-
 	useEffect(() => {
-		// console.log(themeMode)
-		// console.log(theme)
 		themeMode.setMode(themeMode.mode)
 		setTheme(themeMode.mode)
 		if (themeMode.mode === 'light') {
-			// console.log('Light mode')
 			setLogo('/consitech-logo-full.svg')
 		} else {
-			// console.log('Dark mode')
 			setLogo('/consitech-logo-full-light.svg')
 		}
 	}, [theme, themeMode])
 
-	// useEffect(() => {
-	// 	console.log('Render triggered')
-	// })
+	useEffect(() => {
+		if (user.loggedIn) {
+			setLoggedIn(true)
+			dispatch(getUserAction())
+		} else {
+			setLoggedIn(false)
+		}
+	}, [dispatch, user])
 
 	return (
 		<nav className='bg-body_light dark:bg-body_dark w-full z-20 top-0 start-0 border-b-0 md:border-invert_light-400 dark:border-invert_light-600 md:border-b'>
@@ -78,7 +77,7 @@ function Navbar() {
 				<div className='flex md:order-2 space-x-3 md:space-x-0 rtl:space-x-reverse items-center'>
 					<DarkThemeToggle className='rounded-none ' />
 					{/* User menu */}
-					{!user.loggedIn ? (
+					{!loggedIn ? (
 						<Link href='/login-register' passHref>
 							<Button theme={customButtonTheme} outline>
 								Entra/Registrati
@@ -124,7 +123,6 @@ function Navbar() {
 						aria-expanded={menuOpen}
 						onClick={() => {
 							setMenuOpen(!menuOpen)
-							setUserMenuOpen(false)
 						}}
 					>
 						<span className='sr-only'>Apri menu principale</span>

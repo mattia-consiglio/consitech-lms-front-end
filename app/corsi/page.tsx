@@ -1,15 +1,15 @@
+// 'use client'
 import React, { Suspense, useEffect, useState } from 'react'
 import MainWrapper from '../components/MainWrapper'
 import CourseBlock from './CourseBlock'
 import { PagableContent, Course } from '@/utils/types'
 import { API } from '@/utils/api'
-import CousesComponent from './Couses'
+import CousesComponent from './CousesComponent'
 import { HiHome } from 'react-icons/hi'
+import { useAppSelector } from '@/redux/store'
 
-export default async function CoursesPage() {
-	const data: PagableContent<Course> = await API.get('public/courses')
-	const courses = data?.content
-
+export default function CoursesPage() {
+	// const user = useAppSelector(state => state.user)
 	return (
 		<MainWrapper
 			subheaderTitle='Corsi'

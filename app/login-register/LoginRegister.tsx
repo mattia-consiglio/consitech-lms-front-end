@@ -13,7 +13,6 @@ import {
 	HiOutlineX,
 } from 'react-icons/hi'
 import { Authorization, ResponseError, User } from '@/utils/types'
-import StoreProvider from '@/redux/StoreProvider'
 import { useAppDispatch } from '@/redux/store'
 import { getUserAction } from '@/redux/actions/user'
 import { userLogin } from '@/redux/reducers/userSlice'
@@ -93,7 +92,7 @@ export default function LoginRegister({
 			localStorage.setItem('token', response.authorization)
 			dispatch(getUserAction())
 			dispatch(userLogin())
-			router.push('/')
+			router.back()
 		} else {
 			formForm ??
 				setLoginData({ ...loginData, error: true, errorMessage: 'Credenziali non valide' })
