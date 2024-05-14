@@ -1,3 +1,5 @@
+import { getCookie } from '@/app/actions'
+
 export class API {
 	static baseURL: string = 'http://localhost:3001/api/v1'
 
@@ -5,12 +7,12 @@ export class API {
 		endpoint = endpoint.indexOf('/') === 0 ? endpoint.substring(1) : endpoint
 		endpoint = endpoint.indexOf('/') === endpoint.length - 1 ? endpoint.substring(0, -1) : endpoint
 		const headers: { [key: string]: string } = {}
-		const jwt = typeof window !== 'undefined' ? localStorage.getItem('token') : null
+		const jwt = await getCookie('token')
 
 		headers['Content-Type'] = `application/json`
 
 		if (jwt) {
-			headers['Authorization'] = `Bearer ${jwt}`
+			headers['Authorization'] = `Bearer ${jwt.value}`
 		}
 		const res = await fetch(`${this.baseURL}/${endpoint}`, {
 			method,

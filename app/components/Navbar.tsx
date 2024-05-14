@@ -10,6 +10,13 @@ import { customButtonTheme } from '../flowbite.themes'
 import { userLogin, userLogout } from '@/redux/reducers/userSlice'
 import { log } from 'console'
 import { getUserAction } from '@/redux/actions/user'
+import { getCookie, removeCookie } from '../actions'
+
+const isLoggedIn = async () => {
+	const cookie = await getCookie('token')
+	console.log(cookie)
+	return cookie ? true : false
+}
 
 function Navbar() {
 	const pathname = usePathname()
@@ -56,6 +63,13 @@ function Navbar() {
 		}
 	}, [theme, themeMode])
 
+	// useEffect(() => {
+	// 	isLoggedIn().then(res => {
+	// 		console.log(res)
+	// 		setIsLoggedIn(res)
+	// 	})
+	// }, [isLoggedIn])
+
 	useEffect(() => {
 		if (user.loggedIn) {
 			setLoggedIn(true)
@@ -75,7 +89,7 @@ function Navbar() {
 				</div>
 
 				<div className='flex md:order-2 space-x-3 md:space-x-0 rtl:space-x-reverse items-center'>
-					<DarkThemeToggle className='rounded-none ' />
+					<DarkThemeToggle className='rounded-none ' onClick={() => console.log('clicked')} />
 					{/* User menu */}
 					{!loggedIn ? (
 						<Link href='/login-register' passHref>
@@ -104,9 +118,11 @@ function Navbar() {
 							<Dropdown.Item>Dashboard</Dropdown.Item>
 							<Dropdown.Item>Impostazioni</Dropdown.Item>
 							<Dropdown.Item
-								onClick={() => {
+								onClick={async () => {
 									dispatch(userLogout())
-									localStorage.removeItem('token')
+									// localStorage.removeItem('token')
+									await removeCookie('token')
+									setLoggedIn(false)
 								}}
 							>
 								Logout

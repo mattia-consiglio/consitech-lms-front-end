@@ -2,16 +2,23 @@ import React, { Suspense } from 'react'
 import CourseBlock from './CourseBlock'
 import { PagableContent, Course, User } from '@/utils/types'
 import { API } from '@/utils/api'
-import { UserState } from '@/redux/reducers/userSlice'
+import { cookies } from 'next/headers'
 
-// interface CousesComponentProps {
-// user: UserState
-// }
+export default async function ServerCousesComponent() {
+	const nextCookies = cookies()
+	const token = nextCookies.get('token')?.value
+	const user: User = await API.get('users/me')
+	const role = user.role
 
-export default async function CousesComponent() {
-	// const data: PagableContent<Course> =
-	// user && user.loggedIn ? await API.get('courses') : await API.get('public/courses')
-	const data: PagableContent<Course> = await API.get('public/courses')
+	let data: PagableContent<Course>
+
+	if (token) {
+		// L'utente è loggato, chiama l'endpoint protetto
+		data = await API.get('courses')
+	} else {
+		// L'utente non è loggato, chiama l'endpoint pubblico
+		data = await API.get('public/courses')
+	}
 	const courses = data?.content
 	return (
 		<div className='grid grid-cols-1 md:grid-cols-3 gap-x-2 gap-y-4 mt-4'>

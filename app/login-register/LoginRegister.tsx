@@ -16,6 +16,8 @@ import { Authorization, ResponseError, User } from '@/utils/types'
 import { useAppDispatch } from '@/redux/store'
 import { getUserAction } from '@/redux/actions/user'
 import { userLogin } from '@/redux/reducers/userSlice'
+import { setCookie } from '../actions'
+import { goBackAndReload } from '@/utils/utils'
 
 const getInitalTab = (tabQuery: string | null) => {
 	let tab = 0
@@ -89,10 +91,11 @@ export default function LoginRegister({
 		const response: Authorization = await API.post('auth/login', data)
 		if (!('status' in response)) {
 			setLoginData({ usernameOrEmail: '', password: '', error: false, errorMessage: '' })
-			localStorage.setItem('token', response.authorization)
+			// localStorage.setItem('token', response.authorization)
+			setCookie('token', response.authorization)
 			dispatch(getUserAction())
 			dispatch(userLogin())
-			router.back()
+			goBackAndReload(router)
 		} else {
 			formForm ??
 				setLoginData({ ...loginData, error: true, errorMessage: 'Credenziali non valide' })
@@ -217,7 +220,7 @@ export default function LoginRegister({
 						error: false,
 						errorMessage: '',
 					})
-					router.push('/')
+					goBackAndReload(router)
 				} else {
 					setRegistrationData({ ...registrationData, error: true, errorMessage: response.message })
 				}

@@ -1,15 +1,10 @@
-// 'use client'
-import React, { Suspense, useEffect, useState } from 'react'
+import React from 'react'
 import MainWrapper from '../components/MainWrapper'
-import CourseBlock from './CourseBlock'
-import { PagableContent, Course } from '@/utils/types'
-import { API } from '@/utils/api'
-import CousesComponent from './CousesComponent'
+import ServerCousesComponent from './components/ServerCousesComponent'
 import { HiHome } from 'react-icons/hi'
-import { useAppSelector } from '@/redux/store'
+import PathName from '../components/PathName'
 
 export default function CoursesPage() {
-	// const user = useAppSelector(state => state.user)
 	return (
 		<MainWrapper
 			subheaderTitle='Corsi'
@@ -27,7 +22,8 @@ export default function CoursesPage() {
 					</p>
 				</div>
 			</div>
-			<CousesComponent />
+			<ServerCousesComponent />
+			<PathName />
 		</MainWrapper>
 	)
 }

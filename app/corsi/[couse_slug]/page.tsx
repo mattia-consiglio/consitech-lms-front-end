@@ -3,6 +3,7 @@ import LessonBlock from './LessonBlock'
 import { API } from '@/utils/api'
 import { Course, Lesson } from '@/utils/types'
 import { HiHome } from 'react-icons/hi'
+import PathName from '@/app/components/PathName'
 
 export default async function CourseSingle({ params }: { params: { couse_slug: string } }) {
 	const course: Course = await API.get('public/courses/slug/' + params.couse_slug)
@@ -27,6 +28,7 @@ export default async function CourseSingle({ params }: { params: { couse_slug: s
 					displayOrder={lesson.displayOrder}
 				/>
 			))}
+			<PathName />
 		</MainWrapper>
 	)
 }

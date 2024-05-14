@@ -5,6 +5,7 @@ import { API } from '@/utils/api'
 import { Lesson } from '@/utils/types'
 import DOMPurify from 'isomorphic-dompurify'
 import { HiHome } from 'react-icons/hi'
+import PathName from '@/app/components/PathName'
 
 const CodeEditor = dynamic(() => import('./CodeEditor'), {
 	ssr: false,
@@ -51,6 +52,7 @@ export default async function LessonsPage({ params }: LessonsPageProps) {
 				<h3 className='text-primary_darker dark:text-primary text-2xl'>Lezione</h3>
 				<div dangerouslySetInnerHTML={{ __html: safeHTML }}></div>
 			</div>
+			<PathName />
 		</MainWrapper>
 	)
 }
