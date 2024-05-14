@@ -6,6 +6,7 @@ import { Lesson } from '@/utils/types'
 import DOMPurify from 'isomorphic-dompurify'
 import { HiHome } from 'react-icons/hi'
 import PathName from '@/app/components/PathName'
+import { redirect } from 'next/navigation'
 
 const CodeEditor = dynamic(() => import('./CodeEditor'), {
 	ssr: false,
@@ -16,8 +17,10 @@ interface LessonsPageProps {
 }
 
 export default async function LessonsPage({ params }: LessonsPageProps) {
-	const lesson: Lesson = await API.get('public/lessons/slug/' + params.lesson_slug)
-	const content: string = lesson.content ? lesson.content : ''
+	const response = await API.get<Lesson>('public/lessons/slug/' + params.lesson_slug)
+	if ('error' in response) return redirect('/404')
+	const lesson = response as Lesson
+	const content = 'content' in lesson && lesson.content ? lesson.content : ''
 	const safeHTML = DOMPurify.sanitize(content)
 
 	return (

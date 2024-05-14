@@ -89,7 +89,7 @@ function Navbar() {
 				</div>
 
 				<div className='flex md:order-2 space-x-3 md:space-x-0 rtl:space-x-reverse items-center'>
-					<DarkThemeToggle className='rounded-none ' onClick={() => console.log('clicked')} />
+					<DarkThemeToggle className='rounded-none ' />
 					{/* User menu */}
 					{!loggedIn ? (
 						<Link href='/login-register' passHref>

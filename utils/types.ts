@@ -12,6 +12,11 @@ export interface PagableContent<T> {
 	empty: boolean
 }
 
+export enum PublishStatus {
+	PUBLIC = 'PUBLIC',
+	DRAFT = 'DRAFT',
+}
+
 export interface AbstactContent {
 	id: string
 	mainLanguage: MainLanguage
@@ -19,7 +24,7 @@ export interface AbstactContent {
 	title: string
 	slug: string
 	description: string
-	publishStatus: 'PUBLIC' | 'DRAFT'
+	publishStatus: PublishStatus
 	createdAt: Date
 	displayOrder: number
 	thumbnail: null | Media
@@ -89,9 +94,14 @@ export interface Authorization {
 	authorization: string
 }
 
+export enum UserRole {
+	ADMIN = 'ADMIN',
+	USER = 'USER',
+}
+
 export interface User {
 	id: string
 	username: string
 	email: string
-	role: 'ADMIN' | 'USER'
+	role: UserRole
 }

@@ -88,8 +88,8 @@ export default function LoginRegister({
 	}
 
 	const login = async (data: LoginData, formForm = false) => {
-		const response: Authorization = await API.post('auth/login', data)
-		if (!('status' in response)) {
+		const response = await API.post<Authorization>('auth/login', data)
+		if (!('error' in response)) {
 			setLoginData({ usernameOrEmail: '', password: '', error: false, errorMessage: '' })
 			// localStorage.setItem('token', response.authorization)
 			setCookie('token', response.authorization)
