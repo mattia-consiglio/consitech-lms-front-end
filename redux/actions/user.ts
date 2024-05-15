@@ -1,7 +1,7 @@
 import { API } from '@/utils/api'
 import { AppDispatch, RootState } from '../store'
 import { ResponseError, User } from '@/utils/types'
-import { setUser, setUserError, userLogout } from '../reducers/userSlice'
+import { setUser, setUserError, userLogin, userLogout } from '../reducers/userSlice'
 
 export const getUserAction = () => {
 	return async (dispatch: AppDispatch, getState: () => RootState) => {
@@ -19,6 +19,8 @@ export const getUserAction = () => {
 					email: response.email,
 				})
 			)
+			dispatch(setUserError(false))
+			dispatch(userLogin())
 		}
 	}
 }

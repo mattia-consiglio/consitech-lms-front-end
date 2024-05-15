@@ -105,3 +105,10 @@ export interface User {
 	email: string
 	role: UserRole
 }
+
+export interface JWT {
+	iat: number
+	exp: number
+	sub: string
+	iss: string
+}

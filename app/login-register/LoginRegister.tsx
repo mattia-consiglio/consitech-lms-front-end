@@ -12,12 +12,12 @@ import {
 	HiOutlineEyeOff,
 	HiOutlineX,
 } from 'react-icons/hi'
-import { Authorization, ResponseError, User } from '@/utils/types'
+import { Authorization, JWT, ResponseError, User } from '@/utils/types'
 import { useAppDispatch } from '@/redux/store'
 import { getUserAction } from '@/redux/actions/user'
 import { userLogin } from '@/redux/reducers/userSlice'
 import { setCookie } from '../actions'
-import { goBackAndReload } from '@/utils/utils'
+import { goBackAndReload, parseJwt } from '@/utils/utils'
 
 const getInitalTab = (tabQuery: string | null) => {
 	let tab = 0
@@ -91,13 +91,14 @@ export default function LoginRegister({
 		const response = await API.post<Authorization>('auth/login', data)
 		if (!('error' in response)) {
 			setLoginData({ usernameOrEmail: '', password: '', error: false, errorMessage: '' })
-			// localStorage.setItem('token', response.authorization)
-			setCookie('token', response.authorization)
-			dispatch(getUserAction())
+			const token: JWT = parseJwt(response.authorization)
+
+			setCookie('token', response.authorization, token.exp * 1000 - Date.now())
 			dispatch(userLogin())
-			goBackAndReload(router)
+
+			// goBackAndReload(router)
 		} else {
-			formForm ??
+			formForm &&
 				setLoginData({ ...loginData, error: true, errorMessage: 'Credenziali non valide' })
 		}
 	}
@@ -260,7 +261,6 @@ export default function LoginRegister({
 									value={loginData.password}
 									required
 									onChange={e => {
-										console.log(e.target.value)
 										if (e.target.value.length > 0) {
 											setLoginData({ ...loginData, password: e.target.value })
 										}

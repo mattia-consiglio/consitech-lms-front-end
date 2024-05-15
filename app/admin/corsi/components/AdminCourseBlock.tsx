@@ -19,16 +19,15 @@ export default function AdminCourseBlock({
 	publishStatus,
 	id,
 }: AdminCourseBlockProps) {
+	const handleDelete = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
+		e.preventDefault()
+	}
+
 	return (
-		<Link
-			className={`border-3 border-transparent hover:border-neutral-300 hover:bg-neutral-100 dark:hover:border-neutral-700 dark:hover:bg-neutral-800 cursor-pointer p-4 transition-colors duration-250 ease-in-out relative group`}
-			href={'/corsi/' + slug}
+		<div
+			className={`border-3 border-transparent hover:border-neutral-300 hover:bg-neutral-100 dark:hover:border-neutral-700 dark:hover:bg-neutral-800 p-4 transition-colors duration-250 ease-in-out relative group`}
 		>
-			<div
-				className={`flex flex-col items-center ${
-					publishStatus === PublishStatus.DRAFT ? 'opacity-50' : 'opacity-100'
-				}`}
-			>
+			<div className={`grid grid-cols-1 md:grid-cols-[100px_1fr_auto] items-center`}>
 				{thumbnail === null ? (
 					<div className='w-[100px] h-[100px] bg-primary flex justify-center items-center text-2xl font-bold'>
 						<span>{displayOrder}</span>
@@ -42,21 +41,33 @@ export default function AdminCourseBlock({
 						className='max-w-20 h-auto w-full object-contain'
 					/>
 				)}
-				<h2 className={`${titillium_web.className} mb-2 mt-3`}>{title}</h2>
-				<p className='text-center'>{description}</p>
+				<div className='ml-4'>
+					<div className='pl-2'>
+						<h2 className={`${titillium_web.className} mb-2 mt-3`}>{title}</h2>
+						<p>{description}</p>
+					</div>
+					<p className='mt-2 opacity-0 group-hover:opacity-100'>
+						<Link
+							href={`/admin/corsi/${id}`}
+							className='hover:bg-primary focus-within:bg-primary hover:text-white  py-1 px-2'
+						>
+							Modifica
+						</Link>{' '}
+						-{' '}
+						<a
+							href='#'
+							onClick={handleDelete}
+							className='hover:bg-red-600 focus-within:bg-red-600 hover:text-white focus-within:text-white py-1 px-2	'
+						>
+							Cestina
+						</a>
+					</p>
+				</div>
+				<div className='flex-grow flex flex-col items-end justify-end'>
+					<p>Stato</p>
+					<p>{publishStatus}</p>
+				</div>
 			</div>
-
-			<button
-				className='absolute top-4 right-4 w-10 h-10 flex items-center justify-center  opacity-0 group-hover:opacity-100 hover:bg-primary hover:text-white transition-all duration-250 ease-in-out'
-				type='button'
-				aria-label='Modifica corso'
-				onClick={e => {
-					e.preventDefault()
-					redirect('/admin/corsi/' + id)
-				}}
-			>
-				<HiOutlinePencil />
-			</button>
-		</Link>
+		</div>
 	)
 }

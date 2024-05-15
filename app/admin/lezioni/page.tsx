@@ -1,12 +1,12 @@
 import React from 'react'
-import AdminDashboard from './components/AdminDashboard'
+import AdminLessons from './components/AdminLessons'
 import { getAuthAndRedirectLogin } from '@/app/actions'
 
-export default async function AdminDashboardPage() {
+export default async function AdminLessonsPage() {
 	await getAuthAndRedirectLogin()
 	return (
 		<>
-			<AdminDashboard />
+			<AdminLessons />
 		</>
 	)
 }
