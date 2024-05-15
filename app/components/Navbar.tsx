@@ -11,6 +11,7 @@ import { userLogin, userLogout } from '@/redux/reducers/userSlice'
 import { log } from 'console'
 import { getUserAction } from '@/redux/actions/user'
 import { getCookie, removeCookie } from '../actions'
+import { UserRole } from '@/utils/types'
 
 const isLoggedIn = async () => {
 	const cookie = await getCookie('token')
@@ -115,7 +116,11 @@ function Navbar() {
 								<span className='block text-sm'>{user.data.username}</span>
 								<span className='block truncate text-sm font-medium'>{user.data.email}</span>
 							</Dropdown.Header>
-							<Dropdown.Item>Dashboard</Dropdown.Item>
+							{user.data.role === UserRole.ADMIN && (
+								<Dropdown.Item as={Link} href='/admin/dashboard' passHref>
+									Dashboard
+								</Dropdown.Item>
+							)}
 							<Dropdown.Item>Impostazioni</Dropdown.Item>
 							<Dropdown.Item
 								onClick={async () => {

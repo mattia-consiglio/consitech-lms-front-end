@@ -9,6 +9,7 @@ export const metadata: Metadata = {
 }
 
 import { titillium_web } from './fonts'
+import PathName from './components/PathName'
 
 export default function Home() {
 	return (
@@ -20,6 +21,7 @@ export default function Home() {
 					<ServerCousesComponent />
 				</ContentWrapper>
 			</main>
+			<PathName />
 		</>
 	)
 }

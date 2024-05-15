@@ -3,7 +3,7 @@ import { titillium_web } from '@/app/fonts'
 import { Course, PublishStatus, UserRole } from '@/utils/types'
 import Image from 'next/image'
 import Link from 'next/link'
-import { redirect } from 'next/navigation'
+import { redirect, useRouter } from 'next/navigation'
 import React from 'react'
 import { HiOutlinePencil } from 'react-icons/hi'
 
@@ -34,6 +34,7 @@ export default function CourseBlock({
 	publishStatus,
 	id,
 }: CourseBlockProps) {
+	const router = useRouter()
 	return (
 		<Link
 			className={`border-3 border-transparent hover:border-neutral-300 hover:bg-neutral-100 dark:hover:border-neutral-700 dark:hover:bg-neutral-800 cursor-pointer p-4 transition-colors duration-250 ease-in-out relative group`}
@@ -65,9 +66,13 @@ export default function CourseBlock({
 					className='absolute top-4 right-4 w-10 h-10 flex items-center justify-center  opacity-0 group-hover:opacity-100 hover:bg-primary hover:text-white transition-all duration-250 ease-in-out'
 					type='button'
 					aria-label='Modifica corso'
+					onMouseEnter={e => {
+						e.preventDefault()
+						router.prefetch('/admin/corsi/' + id)
+					}}
 					onClick={e => {
 						e.preventDefault()
-						redirect('/admin/corsi/' + id)
+						router.push('/admin/corsi/' + id)
 					}}
 				>
 					<HiOutlinePencil />
