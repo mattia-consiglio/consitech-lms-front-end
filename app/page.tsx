@@ -1,6 +1,6 @@
 import { Metadata } from 'next'
 import HeroSection from './HeroSection'
-import ServerCousesComponent from './corsi/components/ServerCoursesComponent'
+import ServerCorsesComponent from './corsi/components/ServerCoursesComponent'
 import ContentWrapper from './components/ContentWrapper'
 
 export const metadata: Metadata = {
@@ -18,7 +18,7 @@ export default function Home() {
 				<HeroSection />
 				<ContentWrapper>
 					<h1 className={`${titillium_web.className} text-center`}>Corsi disponibili</h1>
-					<ServerCousesComponent />
+					<ServerCorsesComponent />
 				</ContentWrapper>
 			</main>
 			<PathName />

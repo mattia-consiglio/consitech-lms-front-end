@@ -5,7 +5,7 @@ import { setUser, setUserError, userLogin, userLogout } from '../reducers/userRe
 
 export const getUserAction = () => {
 	return async (dispatch: AppDispatch, getState: () => RootState) => {
-		const response = await API.get<User>('users/me')
+		await API.get<User>('users/me')
 			.then(response => {
 				dispatch(
 					setUser({

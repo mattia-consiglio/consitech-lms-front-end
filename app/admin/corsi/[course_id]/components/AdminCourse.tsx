@@ -13,6 +13,7 @@ import Image from 'next/image'
 import toast from 'react-hot-toast'
 import MediaManager from '@/app/admin/media/components/MediaManager'
 import { useAppSelector } from '@/redux/store'
+import { generateSlug } from '@/utils/utils'
 interface AdminCourseProps {
 	courseId: string
 }
@@ -28,6 +29,7 @@ export default function AdminCourse({ courseId }: AdminCourseProps) {
 
 	const getCourse = useCallback(async () => {
 		if (courseId === 'new') return
+
 		API.get<Course>(`courses/${courseId}`)
 			.then(response => {
 				setCourse(response)
@@ -42,7 +44,6 @@ export default function AdminCourse({ courseId }: AdminCourseProps) {
 	}, [getCourse])
 
 	const handleChange = (e: ChangeEvent) => {
-		console.log(e.target.name, e.target.value)
 		if (e.target.name.startsWith('seo.')) {
 			setCourse({
 				...course,
@@ -56,44 +57,61 @@ export default function AdminCourse({ courseId }: AdminCourseProps) {
 	const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault()
 
-		const coursePayload = {
-			title,
-			slug,
-			description,
-			publishStatus,
-			thumbnailId: thumbnail ? thumbnail.id : null,
-		}
-
-		const seoPayload = {
-			title: course.seo.title,
-			description: course.seo.description,
-			ldJSON: course.seo.ldJSON,
-		}
-
 		setLoading(true)
 
-		const saveCoursePromise = API.put<Course>(`courses/${courseId}`, coursePayload)
-			.then(json => {
-				setCourse(json)
-			})
-			.catch((err: Error) => {
-				return err.message
-			})
-
-		const saveSeoPromise = API.put<SEO>(`seo/${course.seo.id}`, seoPayload)
-			.then(json => {
-				setCourse({ ...course, seo: json })
-			})
-			.catch((err: Error) => {
-				return err.message
-			})
-
-		const saveAll = async () => {
-			await Promise.all([saveCoursePromise, saveSeoPromise]).finally(() => {
-				setLoading(false)
-			})
+		const saveCoursePromise = async () => {
+			const coursePayload = {
+				title,
+				slug,
+				description,
+				publishStatus,
+				thumbnailId: thumbnail ? thumbnail.id : null,
+			}
+			if (courseId === 'new') {
+				API.post<Course>(`courses`, coursePayload)
+					.then(json => {
+						setCourse(json)
+						router.push(`/admin/corsi/${json.id}`)
+					})
+					.catch((err: Error) => {
+						return err.message
+					})
+			} else {
+				API.put<Course>(`courses/${course.id}`, coursePayload)
+					.then(json => {
+						setCourse(json)
+					})
+					.catch((err: Error) => {
+						return err.message
+					})
+			}
 		}
 
+		const saveSeoPromise = async () => {
+			const seoPayload = {
+				title: course.seo.title,
+				description: course.seo.description,
+				ldJSON: course.seo.ldJSON,
+			}
+			await API.put<SEO>(`seo/${course.seo.id}`, seoPayload)
+				.then(json => {
+					setCourse({ ...course, seo: json })
+				})
+				.catch((err: Error) => {
+					return err.message
+				})
+		}
+
+		const saveAll = async () => {
+			if (courseId === 'new') {
+				await Promise.all([saveCoursePromise])
+
+				router.replace(`/admin/corsi/${course.id}`)
+			} else {
+				await Promise.all([saveCoursePromise(), saveSeoPromise()])
+			}
+			setLoading(false)
+		}
 		toast.promise(saveAll(), {
 			loading: 'Salvataggio in corso...',
 			success: 'Corso salvato correttamente!',
@@ -123,10 +141,18 @@ export default function AdminCourse({ courseId }: AdminCourseProps) {
 								type='text'
 								value={slug}
 								onChange={handleChange}
+								onFocus={() => {
+									!slug && setCourse({ ...course, slug: generateSlug(title) })
+								}}
 								className={adminStyles.input}
 								id='slug'
 							/>
-							<Button type='button' theme={customButtonTheme} outline>
+							<Button
+								type='button'
+								theme={customButtonTheme}
+								outline
+								onClick={() => setCourse({ ...course, slug: generateSlug(title) })}
+							>
 								<HiOutlineRefresh />
 							</Button>
 						</div>
@@ -145,8 +171,10 @@ export default function AdminCourse({ courseId }: AdminCourseProps) {
 						<div>
 							{'seo' in course ? (
 								<SEOComponent content={course} handleChange={handleChange} />
-							) : (
+							) : courseId !== 'new' ? (
 								<p>SEO in caricamento</p>
+							) : (
+								<p>SEO non presente, verrà generato in automatico</p>
 							)}
 						</div>
 					</div>

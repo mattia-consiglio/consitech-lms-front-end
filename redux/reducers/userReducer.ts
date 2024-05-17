@@ -36,9 +36,13 @@ const userReducer = createSlice({
 		userLogin(state) {
 			state.loggedIn = true
 		},
+		setUserLoginStatus(state, action: PayloadAction<boolean>) {
+			state.loggedIn = action.payload
+		},
 	},
 })
 
-export const { setUser, setUserError, userLogin, userLogout } = userReducer.actions
+export const { setUser, setUserError, userLogin, userLogout, setUserLoginStatus } =
+	userReducer.actions
 
 export default userReducer.reducer

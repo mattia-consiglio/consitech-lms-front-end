@@ -1,18 +1,21 @@
 import React, { Suspense } from 'react'
 import CourseBlock from './CourseBlock'
-import { PageableContent, Course, User } from '@/utils/types'
+import { PageableContent, Course, User, UserRole } from '@/utils/types'
 import { API } from '@/utils/api'
 import { cookies } from 'next/headers'
 import CourseModal from './CourseModal'
 import { redirect } from 'next/navigation'
 import toast from 'react-hot-toast'
 
-export default async function ServerCousesComponent() {
+export default async function ServerCorsesComponent() {
 	const nextCookies = cookies()
 	const token = nextCookies.get('token')?.value
 	const response = await API.get<User>('users/me')
-	const user = response as User
-	const role = user.role
+		.then(res => res)
+		.catch(error => {
+			return false
+		})
+	const role = response ? (response !== true ? response.role : UserRole.USER) : UserRole.USER
 
 	let responseCourses: PageableContent<Course>
 

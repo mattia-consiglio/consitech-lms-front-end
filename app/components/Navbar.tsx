@@ -7,7 +7,7 @@ import { IoPerson } from 'react-icons/io5'
 import { Button, DarkThemeToggle, Dropdown, useThemeMode } from 'flowbite-react'
 import { useAppDispatch, useAppSelector } from '@/redux/store'
 import { customButtonTheme } from '../flowbite.themes'
-import { userLogin, userLogout } from '@/redux/reducers/userReducer'
+import { setUserLoginStatus, userLogin, userLogout } from '@/redux/reducers/userReducer'
 import { log } from 'console'
 import { getUserAction } from '@/redux/actions/user'
 import { getCookie, removeCookie } from '../actions'
@@ -15,7 +15,6 @@ import { UserRole } from '@/utils/types'
 
 const isLoggedIn = async () => {
 	const cookie = await getCookie('token')
-	console.log(cookie)
 	return cookie ? true : false
 }
 
@@ -26,7 +25,7 @@ function Navbar() {
 
 	const [theme, setTheme] = useState(themeMode.mode)
 	const [logo, setLogo] = useState('/consitech-logo-full.svg')
-	const [loggedIn, setLoggedIn] = useState(false)
+	// const [loggedIn, setLoggedIn] = useState(false)
 
 	const user = useAppSelector(state => state.user)
 	const dispatch = useAppDispatch()
@@ -72,12 +71,18 @@ function Navbar() {
 	// }, [isLoggedIn])
 
 	useEffect(() => {
-		if (user.loggedIn) {
-			setLoggedIn(true)
-			dispatch(getUserAction())
-		} else {
-			setLoggedIn(false)
-		}
+		isLoggedIn()
+			.then(res => {
+				console.log(res)
+				dispatch(setUserLoginStatus(res))
+				if (res) {
+					// setLoggedIn(true)
+					dispatch(getUserAction())
+				}
+			})
+			.catch(e => {
+				console.log(e)
+			})
 	}, [dispatch, user])
 
 	return (
@@ -92,9 +97,9 @@ function Navbar() {
 				<div className='flex md:order-2 space-x-3 md:space-x-0 rtl:space-x-reverse items-center'>
 					<DarkThemeToggle className='rounded-none ' />
 					{/* User menu */}
-					{!loggedIn ? (
+					{!user.loggedIn ? (
 						<Link href='/login-register' passHref>
-							<Button theme={customButtonTheme} outline>
+							<Button theme={customButtonTheme} outline className='ml-2'>
 								Entra/Registrati
 							</Button>
 						</Link>
@@ -125,9 +130,8 @@ function Navbar() {
 							<Dropdown.Item
 								onClick={async () => {
 									dispatch(userLogout())
-									// localStorage.removeItem('token')
 									await removeCookie('token')
-									setLoggedIn(false)
+									dispatch(userLogout())
 								}}
 							>
 								Logout

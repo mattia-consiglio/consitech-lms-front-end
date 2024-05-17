@@ -14,3 +14,14 @@ export const goBackAndReload = (router: AppRouterInstance) => {
 export const parseJwt = (token: string): JWT => {
 	return JSON.parse(atob(token.split('.')[1]))
 }
+
+export const generateSlug = (title: string) => {
+	return title
+		.toLowerCase()
+		.trim()
+		.normalize('NFD')
+		.replace(/\p{Diacritic}/gu, '')
+		.replace(/[^a-z0-9]+/g, '-')
+		.replace(/^-+|-+$/g, '')
+		.replace(/-{2,}/g, '')
+}

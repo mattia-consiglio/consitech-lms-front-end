@@ -55,7 +55,7 @@ export default function CourseBlock({
 						alt={thumbnail.alt}
 						width={thumbnail.width}
 						height={thumbnail.height}
-						className='max-w-[150px] h-auto w-full object-contain'
+						className='max-w-[90px] h-auto w-full object-contain'
 					/>
 				)}
 				<h2 className={`${titillium_web.className} mb-2 mt-3`}>{title}</h2>
