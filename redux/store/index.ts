@@ -1,9 +1,10 @@
 import { useDispatch, useSelector, useStore } from 'react-redux'
 import { combineReducers, configureStore } from '@reduxjs/toolkit'
-import userSlice from '../reducers/userSlice'
+import userSlice from '../reducers/userReducer'
 import { persistReducer } from 'redux-persist'
 import createWebStorage from 'redux-persist/lib/storage/createWebStorage'
-import modalsSlice from '../reducers/modalsSlice'
+import modalsSlice from '../reducers/modalsReducer'
+import mediaReducer from '../reducers/mediaReducer'
 
 const createNoopStorage = () => {
 	return {
@@ -30,6 +31,7 @@ const userPersistConfig = {
 const rootReducer = combineReducers({
 	user: persistReducer(userPersistConfig, userSlice),
 	modals: modalsSlice,
+	media: mediaReducer,
 })
 
 export const store = configureStore({
