@@ -3,7 +3,7 @@ import MainWrapper from '@/app/components/MainWrapper'
 import { customButtonTheme, customSpinnerTheme, customTabsTheme } from '@/app/flowbite.themes'
 import { API } from '@/utils/api'
 import { ChangeEvent, Course, PublishStatus, SEO } from '@/utils/types'
-import { Button, Spinner } from 'flowbite-react'
+import { Button, Modal, Spinner } from 'flowbite-react'
 import { useRouter } from 'next/navigation'
 import React, { Suspense, useCallback, useEffect, useState } from 'react'
 import { HiOutlineRefresh } from 'react-icons/hi'
@@ -11,6 +11,8 @@ import SEOComponent from './SEOComponent'
 import adminStyles from '@/app/admin/styles/admin.module.scss'
 import Image from 'next/image'
 import toast from 'react-hot-toast'
+import MediaManager from '@/app/admin/media/components/MediaManager'
+import { useAppSelector } from '@/redux/store'
 interface AdminCourseProps {
 	courseId: string
 }
@@ -20,10 +22,12 @@ export default function AdminCourse({ courseId }: AdminCourseProps) {
 	const router = useRouter()
 	const [loading, setLoading] = useState(false)
 	const [error, setError] = useState<string>()
+	const [openModal, setOpenModal] = useState(false)
 	const { title, description, slug, publishStatus, thumbnail, displayOrder } = course
+	const selectedMedia = useAppSelector(state => state.media.selected)
 
 	const getCourse = useCallback(async () => {
-		console.log('Fetching course', courseId)
+		if (courseId === 'new') return
 		API.get<Course>(`courses/${courseId}`)
 			.then(response => {
 				setCourse(response)
@@ -170,14 +174,15 @@ export default function AdminCourse({ courseId }: AdminCourseProps) {
 								))}
 							</select>
 						</div>
-						<div className='flex justify-center'>
+						<button
+							type='button'
+							className='flex justify-center'
+							onClick={() => setOpenModal(true)}
+						>
 							{thumbnail === null || thumbnail === undefined ? (
-								<button
-									type='button'
-									className='w-[100px] h-[100px] bg-primary flex justify-center items-center text-2xl font-bold'
-								>
+								<div className='w-[100px] h-[100px] bg-primary flex justify-center items-center text-2xl font-bold'>
 									<span>{displayOrder}</span>
-								</button>
+								</div>
 							) : (
 								<Image
 									src={thumbnail.url}
@@ -187,7 +192,7 @@ export default function AdminCourse({ courseId }: AdminCourseProps) {
 									className='max-w-20 h-auto w-full object-contain'
 								/>
 							)}
-						</div>
+						</button>
 						<div>
 							<Button
 								type='submit'
@@ -204,6 +209,32 @@ export default function AdminCourse({ courseId }: AdminCourseProps) {
 					</div>
 				</form>
 			</Suspense>
+			<Modal show={openModal} onClose={() => setOpenModal(false)}>
+				<Modal.Header>Media</Modal.Header>
+				<Modal.Body>
+					<MediaManager displayTitle={false} />
+				</Modal.Body>
+				<Modal.Footer>
+					<Button
+						onClick={() => {
+							setOpenModal(false)
+							setCourse({ ...course, thumbnail: selectedMedia })
+						}}
+						outline
+						theme={customButtonTheme}
+					>
+						Seleziona
+					</Button>
+					<Button
+						color='gray'
+						onClick={() => setOpenModal(false)}
+						outline
+						theme={customButtonTheme}
+					>
+						Annulla
+					</Button>
+				</Modal.Footer>
+			</Modal>
 		</MainWrapper>
 	)
 }

@@ -35,9 +35,7 @@ export class API {
 					: body
 				: undefined,
 		}
-		console.log(contentType, headers)
 
-		console.log(options)
 		const res = await fetch(`${this.baseURL}/${endpoint}`, options)
 		if (res.ok) {
 			if (res.status === 204) {

@@ -11,7 +11,7 @@ import { Button } from 'flowbite-react'
 import { HiOutlineTrash } from 'react-icons/hi'
 import { customButtonTheme } from '@/app/flowbite.themes'
 
-export default function MediaManager() {
+export default function MediaManager({ displayTitle = true }: { displayTitle?: boolean }) {
 	const selected = useAppSelector(state => state.media.selected)
 	const dispatch = useAppDispatch()
 	const [search, setSearch] = useState('')
@@ -120,7 +120,7 @@ export default function MediaManager() {
 	return (
 		<>
 			<div>
-				<h1>Media manager</h1>
+				{displayTitle && <h1>Media manager</h1>}
 				<Button as='label' theme={customButtonTheme} outline htmlFor='file'>
 					Carica media
 				</Button>
