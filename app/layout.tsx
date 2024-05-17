@@ -3,8 +3,10 @@ import './globals.scss'
 import Navbar from './components/Navbar'
 import { inconsolata } from './fonts'
 import Footer from './components/Footer'
-import { Flowbite, ThemeModeScript } from 'flowbite-react'
+import { Flowbite, ThemeModeScript, ToastToggle } from 'flowbite-react'
 import StoreProvider from '@/redux/StoreProvider'
+import toast, { Toaster, ToastBar } from 'react-hot-toast'
+import ToasterWrpper from './ToasterWrpper'
 
 export const metadata: Metadata = {
 	title: 'Consitech',
@@ -29,6 +31,7 @@ export default function RootLayout({
 						<header className='sticky top-0 z-50'>
 							<Navbar />
 						</header>
+						<ToasterWrpper />
 						{children}
 						<Footer />
 					</StoreProvider>

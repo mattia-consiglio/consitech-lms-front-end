@@ -1,20 +1,23 @@
 'use client'
 import MainWrapper from '@/app/components/MainWrapper'
 import { API } from '@/utils/api'
-import { Course, PagableContent, UserRole } from '@/utils/types'
+import { Course, PageableContent, UserRole } from '@/utils/types'
 import { Button } from 'flowbite-react'
 import React, { Suspense, useEffect, useState } from 'react'
 import AdminCourseBlock from './AdminCourseBlock'
 import { customButtonTheme } from '@/app/flowbite.themes'
 import { HiOutlinePlusSm } from 'react-icons/hi'
+import { error } from 'console'
 
 export default function AdminCourses() {
 	const [courses, setCourses] = useState<Course[]>([])
 
 	const getCourses = async () => {
-		const response = await API.get<PagableContent<Course>>('courses')
-		console.log(response)
-		if ('content' in response) setCourses(response.content)
+		API.get<PageableContent<Course>>('courses')
+			.then(response => {
+				setCourses(response.content)
+			})
+			.catch(error => {})
 	}
 
 	useEffect(() => {

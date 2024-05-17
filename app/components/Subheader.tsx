@@ -6,17 +6,17 @@ import { customBreadcrumbTheme } from '../flowbite.themes'
 
 interface SubheaderProps {
 	title: string
-	braedcrumbItems?: BreadcrumbItemProp[]
+	breadcrumbItems?: BreadcrumbItemProp[]
 }
 
-export default function Subheader({ title, braedcrumbItems }: SubheaderProps) {
+export default function Subheader({ title, breadcrumbItems: breadcrumbItems }: SubheaderProps) {
 	return (
 		<div className='w-full py-4 text-center bg-neutral-800 dark:bg-neutral-300 text-neutral-50 dark:text-neutral-800'>
 			<h1 className={`${titillium_web.className} text-3xl font-bold`}>{title}</h1>
 			<div className='flex justify-center mt-4'>
-				{braedcrumbItems ? (
+				{breadcrumbItems ? (
 					<Breadcrumb aria-label='Breadcrumb' theme={customBreadcrumbTheme?.root}>
-						{braedcrumbItems.map(item => (
+						{breadcrumbItems.map(item => (
 							<BreadcrumbItem
 								key={item.label}
 								href={item.href}

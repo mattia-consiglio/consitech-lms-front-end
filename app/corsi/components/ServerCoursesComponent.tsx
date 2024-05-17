@@ -1,10 +1,11 @@
 import React, { Suspense } from 'react'
 import CourseBlock from './CourseBlock'
-import { PagableContent, Course, User } from '@/utils/types'
+import { PageableContent, Course, User } from '@/utils/types'
 import { API } from '@/utils/api'
 import { cookies } from 'next/headers'
 import CourseModal from './CourseModal'
 import { redirect } from 'next/navigation'
+import toast from 'react-hot-toast'
 
 export default async function ServerCousesComponent() {
 	const nextCookies = cookies()
@@ -13,16 +14,23 @@ export default async function ServerCousesComponent() {
 	const user = response as User
 	const role = user.role
 
-	let data
+	let responseCourses: PageableContent<Course>
 
 	if (token) {
 		// L'utente è loggato, chiama l'endpoint protetto
-		data = await API.get<PagableContent<Course>>('courses')
+		responseCourses = await API.get<PageableContent<Course>>('courses').catch(error => {
+			toast.error(error.message)
+			return {} as PageableContent<Course>
+		})
 	} else {
 		// L'utente non è loggato, chiama l'endpoint pubblico
-		data = await API.get<PagableContent<Course>>('public/courses')
+		responseCourses = await API.get<PageableContent<Course>>('public/courses').catch(error => {
+			toast.error(error.message)
+			return {} as PageableContent<Course>
+		})
 	}
-	const courses = 'content' in data ? data?.content : null
+	const courses = responseCourses.content
+
 	return (
 		<>
 			<div className='grid grid-cols-1 md:grid-cols-3 gap-x-2 gap-y-4 mt-4'>

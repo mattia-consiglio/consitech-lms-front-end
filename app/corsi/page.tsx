@@ -1,6 +1,6 @@
 import React from 'react'
 import MainWrapper from '../components/MainWrapper'
-import ServerCousesComponent from './components/ServerCousesComponent'
+import ServerCoursesComponent from './components/ServerCoursesComponent'
 import { HiHome } from 'react-icons/hi'
 import PathName from '../components/PathName'
 
@@ -8,7 +8,7 @@ export default function CoursesPage() {
 	return (
 		<MainWrapper
 			subheaderTitle='Corsi'
-			braedcrumbItems={[{ icon: HiHome, label: 'Home', href: '/' }, { label: 'Corsi' }]}
+			breadcrumbItems={[{ icon: HiHome, label: 'Home', href: '/' }, { label: 'Corsi' }]}
 		>
 			<div className='flex justify-center'>
 				<div className='lg:w-2/3 w-full'>
@@ -22,7 +22,7 @@ export default function CoursesPage() {
 					</p>
 				</div>
 			</div>
-			<ServerCousesComponent />
+			<ServerCoursesComponent />
 			<PathName />
 		</MainWrapper>
 	)

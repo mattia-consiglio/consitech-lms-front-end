@@ -1,6 +1,6 @@
 import { Metadata } from 'next'
 import HeroSection from './HeroSection'
-import ServerCousesComponent from './corsi/components/ServerCousesComponent'
+import ServerCousesComponent from './corsi/components/ServerCoursesComponent'
 import ContentWrapper from './components/ContentWrapper'
 
 export const metadata: Metadata = {

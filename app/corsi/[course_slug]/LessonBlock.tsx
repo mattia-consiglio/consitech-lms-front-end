@@ -10,7 +10,7 @@ interface LessonBlockProps {
 	description: string
 	img: Media | null
 	lessonSlug: string
-	couseSlug: string
+	courseSlug: string
 	displayOrder: number
 }
 
@@ -22,7 +22,7 @@ interface LessonBlockProps {
  * @param description - The description of the lesson.
  * @param img - An object containing the source and alt text of the lesson image.
  * @param lessonSlug - The slug of the lesson.
- * @param couseSlug - The slug of the course.
+ * @param courseSlug - The slug of the course.
  * @returns A React component that renders the lesson block.
  */
 export default function LessonBlock({
@@ -30,12 +30,12 @@ export default function LessonBlock({
 	description,
 	img,
 	lessonSlug,
-	couseSlug,
+	courseSlug,
 	displayOrder,
 }: LessonBlockProps) {
 	return (
 		<Link
-			href={'/corsi/' + couseSlug + '/lezione/' + lessonSlug}
+			href={'/corsi/' + courseSlug + '/lezione/' + lessonSlug}
 			className='group flex items-center justify-between border-b-2 border-transparent border-neutral-500 hover:border-neutral-300 hover:bg-neutral-100 dark:hover:border-neutral-600 dark:hover:bg-neutral-800 cursor-pointer p-4 transition-colors duration-250 ease-in-out'
 		>
 			<div className='flex items-center'>

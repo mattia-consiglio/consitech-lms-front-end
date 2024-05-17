@@ -1,5 +1,5 @@
 'use client'
-import { closeModal, openModal } from '@/redux/reducers/modalsSlice'
+import { closeModal, openModal } from '@/redux/reducers/modalsReducer'
 import { useAppDispatch, useAppSelector } from '@/redux/store'
 import { Modal, Button } from 'flowbite-react'
 import React from 'react'
