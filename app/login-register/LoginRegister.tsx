@@ -15,7 +15,7 @@ import {
 import { Authorization, JWT, ResponseError, User } from '@/utils/types'
 import { useAppDispatch } from '@/redux/store'
 import { getUserAction } from '@/redux/actions/user'
-import { userLogin } from '@/redux/reducers/userSlice'
+import { userLogin } from '@/redux/reducers/userReducer'
 import { setCookie } from '../actions'
 import { goBackAndReload, parseJwt } from '@/utils/utils'
 
@@ -88,19 +88,20 @@ export default function LoginRegister({
 	}
 
 	const login = async (data: LoginData, formForm = false) => {
-		const response = await API.post<Authorization>('auth/login', data)
-		if (!('error' in response)) {
-			setLoginData({ usernameOrEmail: '', password: '', error: false, errorMessage: '' })
-			const token: JWT = parseJwt(response.authorization)
+		await API.post<Authorization>('auth/login', data)
+			.then(response => {
+				setLoginData({ usernameOrEmail: '', password: '', error: false, errorMessage: '' })
+				const token: JWT = parseJwt(response.authorization)
 
-			setCookie('token', response.authorization, token.exp * 1000 - Date.now())
-			dispatch(userLogin())
+				setCookie('token', response.authorization, token.exp * 1000 - Date.now())
+				dispatch(userLogin())
 
-			// goBackAndReload(router)
-		} else {
-			formForm &&
-				setLoginData({ ...loginData, error: true, errorMessage: 'Credenziali non valide' })
-		}
+				goBackAndReload(router)
+			})
+			.catch(_ => {
+				formForm &&
+					setLoginData({ ...loginData, error: true, errorMessage: 'Credenziali non valide' })
+			})
 	}
 
 	const loginForm = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -125,6 +126,7 @@ export default function LoginRegister({
 
 	const specialChars = '!@#$%^&*()-_=+{};:,<.>/?~`£€[]\\|"\''
 	const safeRegex = (str: string) => {
+		// deepcode ignore GlobalReplacementRegex: <I need to replace only the first occurrence of each special character>
 		return str.replace(']', '\\]').replace('-', '\\-').replace('/', '\\/')
 	}
 
@@ -199,32 +201,33 @@ export default function LoginRegister({
 			const passwordStrength = checkPassword()
 			if (passwordStrength) {
 				const { error, errorMessage, ...restOfData } = registrationData
-				const response: ResponseError | User = await API.post('auth/register', restOfData)
-				if (!('status' in response)) {
-					setLoginData({
-						usernameOrEmail: restOfData.email,
-						password: restOfData.password,
-						error: false,
-						errorMessage: '',
-					})
-					login(
-						{
+				await API.post<User>('auth/register', restOfData)
+					.then(_ => {
+						setLoginData({
 							usernameOrEmail: restOfData.email,
 							password: restOfData.password,
-						},
-						false
-					)
-					setRegistrationData({
-						username: '',
-						email: '',
-						password: '',
-						error: false,
-						errorMessage: '',
+							error: false,
+							errorMessage: '',
+						})
+						login(
+							{
+								usernameOrEmail: restOfData.email,
+								password: restOfData.password,
+							},
+							false
+						)
+						setRegistrationData({
+							username: '',
+							email: '',
+							password: '',
+							error: false,
+							errorMessage: '',
+						})
+						goBackAndReload(router)
 					})
-					goBackAndReload(router)
-				} else {
-					setRegistrationData({ ...registrationData, error: true, errorMessage: response.message })
-				}
+					.catch(error => {
+						setRegistrationData({ ...registrationData, error: true, errorMessage: error.message })
+					})
 			}
 		}
 	}

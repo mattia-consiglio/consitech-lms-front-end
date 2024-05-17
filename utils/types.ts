@@ -1,4 +1,4 @@
-export interface PagableContent<T> {
+export interface PageableContent<T> {
 	content: T[]
 	pageable: Pageable
 	last: boolean
@@ -15,9 +15,10 @@ export interface PagableContent<T> {
 export enum PublishStatus {
 	PUBLIC = 'PUBLIC',
 	DRAFT = 'DRAFT',
+	TRASHED = 'TRASHED',
 }
 
-export interface AbstactContent {
+export interface AbstractContent {
 	id: string
 	mainLanguage: MainLanguage
 	translations: any[]
@@ -30,11 +31,11 @@ export interface AbstactContent {
 	thumbnail: null | Media
 	seo: SEO
 }
-export interface Course extends AbstactContent {
+export interface Course extends AbstractContent {
 	enrolledStudents: number
 }
 
-export interface Lesson extends AbstactContent {
+export interface Lesson extends AbstractContent {
 	liveEditor: null
 	videoId: null
 	videoThumbnail: null
@@ -112,3 +113,8 @@ export interface JWT {
 	sub: string
 	iss: string
 }
+
+export type ChangeEvent =
+	| React.ChangeEvent<HTMLInputElement>
+	| React.ChangeEvent<HTMLSelectElement>
+	| React.ChangeEvent<HTMLTextAreaElement>

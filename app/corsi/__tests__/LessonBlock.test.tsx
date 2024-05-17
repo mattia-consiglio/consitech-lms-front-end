@@ -1,15 +1,28 @@
 import React from 'react'
 import { render, screen } from '@testing-library/react'
-import LessonBlock from '../[couse_slug]/LessonBlock'
+import LessonBlock from '../[course_slug]/LessonBlock'
 
 describe('LessonBlock', () => {
 	it('renders the lesson block with correct title, description, image, and link', () => {
 		const lesson = {
 			title: 'Test Lesson',
 			description: 'This is a test lesson description.',
-			img: { src: '/test-lesson-image.png', alt: 'Test Lesson Image' },
+			img: {
+				src: '/test-lesson-image.png',
+				alt: 'Test Lesson Image',
+				id: '',
+				url: '',
+				type: '',
+				createdAt: new Date(),
+				updatedAt: new Date(),
+				mimeType: '',
+				size: 0,
+				width: 0,
+				height: 0,
+				mainColor: '',
+			},
 			lessonSlug: 'test-lesson',
-			couseSlug: 'test-course',
+			courseSlug: 'test-course',
 		}
 		render(
 			<LessonBlock
@@ -17,7 +30,8 @@ describe('LessonBlock', () => {
 				description={lesson.description}
 				img={lesson.img}
 				lessonSlug={lesson.lessonSlug}
-				couseSlug={lesson.couseSlug}
+				courseSlug={lesson.courseSlug}
+				displayOrder={0}
 			/>
 		)
 
@@ -29,7 +43,7 @@ describe('LessonBlock', () => {
 		)
 		expect(screen.getByRole('link')).toHaveAttribute(
 			'href',
-			`/corsi/${lesson.couseSlug}/lezione/${lesson.lessonSlug}`
+			`/corsi/${lesson.courseSlug}/lezione/${lesson.lessonSlug}`
 		)
 	})
 
@@ -37,9 +51,21 @@ describe('LessonBlock', () => {
 		const lesson = {
 			title: 'Test Lesson',
 			description: 'This is a test lesson description.',
-			img: { src: '/test-lesson-image.png', alt: 'Test Lesson Image' },
+			img: {
+				src: '/test-lesson-image.png',
+				alt: 'Test Lesson Image',
+				id: 'test',
+				url: '/test-lesson-image.png',
+				type: 'image/png',
+				createdAt: new Date(),
+				updatedAt: new Date(),
+				caption: '',
+				width: 100,
+				height: 100,
+				mainColor: '#000000',
+			},
 			lessonSlug: 'test-lesson',
-			couseSlug: 'test-course',
+			courseSlug: 'test-course',
 		}
 		render(
 			<LessonBlock
@@ -47,7 +73,8 @@ describe('LessonBlock', () => {
 				description={lesson.description}
 				img={lesson.img}
 				lessonSlug={lesson.lessonSlug}
-				couseSlug={lesson.couseSlug}
+				courseSlug={lesson.courseSlug}
+				displayOrder={0}
 			/>
 		)
 
