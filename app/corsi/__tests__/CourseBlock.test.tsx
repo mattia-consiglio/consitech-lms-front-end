@@ -1,6 +1,6 @@
 import React from 'react'
 import { render, screen } from '@testing-library/react'
-import CourseBlock from '../CourseBlock'
+import CourseBlock from '../components/CourseBlock'
 
 describe('CourseBlock', () => {
 	it('renders the course block with correct title, description, image, and link', () => {

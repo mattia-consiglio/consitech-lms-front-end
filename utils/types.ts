@@ -1,4 +1,4 @@
-export interface PagableContent<T> {
+export interface PageableContent<T> {
 	content: T[]
 	pageable: Pageable
 	last: boolean
@@ -12,24 +12,30 @@ export interface PagableContent<T> {
 	empty: boolean
 }
 
-export interface AbstactContent {
+export enum PublishStatus {
+	PUBLIC = 'PUBLIC',
+	DRAFT = 'DRAFT',
+	TRASHED = 'TRASHED',
+}
+
+export interface AbstractContent {
 	id: string
-	mainLanguage: MainLanguage
+	mainLanguage: Language
 	translations: any[]
 	title: string
 	slug: string
 	description: string
-	publishStatus: 'PUBLIC' | 'DRAFT'
+	publishStatus: PublishStatus
 	createdAt: Date
 	displayOrder: number
 	thumbnail: null | Media
 	seo: SEO
 }
-export interface Course extends AbstactContent {
+export interface Course extends AbstractContent {
 	enrolledStudents: number
 }
 
-export interface Lesson extends AbstactContent {
+export interface Lesson extends AbstractContent {
 	liveEditor: null
 	videoId: null
 	videoThumbnail: null
@@ -48,7 +54,7 @@ export interface Media {
 	mainColor: string
 }
 
-export interface MainLanguage {
+export interface Language {
 	id: string
 	code: string
 	language: string
@@ -56,7 +62,7 @@ export interface MainLanguage {
 
 export interface SEO {
 	id: string
-	mainLanguage: MainLanguage
+	mainLanguage: Language
 	translations: any[]
 	title: string
 	description: string
@@ -89,9 +95,26 @@ export interface Authorization {
 	authorization: string
 }
 
+export enum UserRole {
+	ADMIN = 'ADMIN',
+	USER = 'USER',
+}
+
 export interface User {
 	id: string
 	username: string
 	email: string
-	role: 'ADMIN' | 'USER'
+	role: UserRole
 }
+
+export interface JWT {
+	iat: number
+	exp: number
+	sub: string
+	iss: string
+}
+
+export type ChangeEvent =
+	| React.ChangeEvent<HTMLInputElement>
+	| React.ChangeEvent<HTMLSelectElement>
+	| React.ChangeEvent<HTMLTextAreaElement>

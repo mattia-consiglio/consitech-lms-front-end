@@ -14,18 +14,18 @@ interface MainWrapperProps {
 	children: React.ReactNode
 	subheaderTitle?: string
 	className?: string
-	braedcrumbItems?: BreadcrumbItemProp[]
+	breadcrumbItems?: BreadcrumbItemProp[]
 }
 
 export default function MainWrapper({
 	children,
 	subheaderTitle,
 	className,
-	braedcrumbItems,
+	breadcrumbItems,
 }: MainWrapperProps) {
 	return (
 		<main className={className}>
-			{subheaderTitle && <Subheader title={subheaderTitle} braedcrumbItems={braedcrumbItems} />}
+			{subheaderTitle && <Subheader title={subheaderTitle} breadcrumbItems={breadcrumbItems} />}
 			<ContentWrapper>{children}</ContentWrapper>
 		</main>
 	)

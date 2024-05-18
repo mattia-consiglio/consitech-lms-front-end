@@ -5,10 +5,7 @@
 :root {
 	--foreground: theme('colors.invert_light.DEFAULT');
 	--background: theme('colors.body_light');
-}
-
-@media (prefers-color-scheme: dark) {
-	:root {
+	@media (prefers-color-scheme: dark) {
 		--foreground: theme('colors.invert_dark.DEFAULT');
 		--background: theme('colors.body_dark');
 	}
@@ -21,6 +18,17 @@
 body {
 	color: var(--foreground);
 	background: var(--background);
+}
+
+.toast {
+	padding: 10px !important;
+	background-color: theme('colors.body_light') !important;
+	color: currentColor !important;
+	border-radius: 0 !important;
+
+	.dark & {
+		background-color: theme('colors.body_dark') !important;
+	}
 }
 
 @layer utilities {
@@ -40,11 +48,23 @@ body {
 	main {
 		@apply grow;
 	}
+	@mixin input {
+		@apply border-0 border-b-2 focus:ring-0 focus-visible:ring-primary bg-transparent focus:border-primary placeholder:text-neutral-400 dark:placeholder:text-neutral-400;
+	}
+
 	input {
 		&[type='text'],
 		&[type='password'],
-		&[type='email'] {
-			@apply border-0 border-b-2 focus:ring-0 focus-visible:ring-primary bg-transparent focus:border-primary placeholder:text-neutral-400 dark:placeholder:text-neutral-400;
+		&[type='email'],
+		&[type='search'] {
+			@include input();
+		}
+	}
+	textarea,
+	select {
+		@include input();
+		option {
+			@apply text-neutral-500 dark:text-neutral-400 focus:bg-primary;
 		}
 	}
 }

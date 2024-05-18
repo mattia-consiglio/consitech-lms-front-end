@@ -47,3 +47,10 @@ export const customBreadcrumbTheme: CustomFlowbiteTheme['breadcrumb'] = {
 		'icon': 'mr-2 h-4 w-4',
 	},
 }
+
+export const customSpinnerTheme: CustomFlowbiteTheme['spinner'] = {
+	'base': 'inline animate-spin text-gray-200',
+	'color': {
+		'primary': 'fill-primary',
+	},
+}

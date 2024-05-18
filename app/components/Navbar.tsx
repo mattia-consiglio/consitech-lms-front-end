@@ -1,24 +1,31 @@
 'use client'
 import Image from 'next/image'
 import Link from 'next/link'
-import React, { useEffect, useState } from 'react'
+import React, { use, useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { IoPerson } from 'react-icons/io5'
 import { Button, DarkThemeToggle, Dropdown, useThemeMode } from 'flowbite-react'
 import { useAppDispatch, useAppSelector } from '@/redux/store'
 import { customButtonTheme } from '../flowbite.themes'
-import { userLogout } from '@/redux/reducers/userSlice'
+import { setUserLoginStatus, userLogin, userLogout } from '@/redux/reducers/userReducer'
 import { log } from 'console'
+import { getUserAction } from '@/redux/actions/user'
+import { getCookie, removeCookie, setCookie } from '../actions'
+import { UserRole } from '@/utils/types'
 
-function Navbar() {
+const isLoggedIn = async () => {
+	const cookie = await getCookie('token')
+	return cookie ? true : false
+}
+
+function Navbar({ defaultTheme }: { defaultTheme: string }) {
 	const pathname = usePathname()
 	const [menuOpen, setMenuOpen] = useState(false)
-	const [userMenuOpen, setUserMenuOpen] = useState(false)
 	const themeMode = useThemeMode()
 
-	//do not remove the unsed the state, makes the first client render work (I don'yt kwo how)
-	const [theme, setTheme] = useState(themeMode.mode)
+	const [theme, setTheme] = useState(defaultTheme)
 	const [logo, setLogo] = useState('/consitech-logo-full.svg')
+	const [isMounted, setIsMounted] = useState(false)
 
 	const user = useAppSelector(state => state.user)
 	const dispatch = useAppDispatch()
@@ -46,45 +53,54 @@ function Navbar() {
 		},
 	]
 
-	const [, updateState] = useState(() => themeMode.setMode) //dummy state update to trigger re-render on external changes
+	useEffect(() => {
+		setIsMounted(true)
+	}, [])
 
 	useEffect(() => {
-		// console.log(themeMode)
-		// console.log(theme)
-		themeMode.setMode(themeMode.mode)
 		setTheme(themeMode.mode)
-		if (themeMode.mode === 'light') {
-			// console.log('Light mode')
-			setLogo('/consitech-logo-full.svg')
-		} else {
-			// console.log('Dark mode')
-			setLogo('/consitech-logo-full-light.svg')
-		}
-	}, [theme, themeMode])
+		setCookie('theme', themeMode.mode)
+	}, [theme, themeMode.mode])
 
-	// useEffect(() => {
-	// 	console.log('Render triggered')
-	// })
+	useEffect(() => {
+		isLoggedIn()
+			.then(res => {
+				dispatch(setUserLoginStatus(res))
+				if (res) {
+					dispatch(getUserAction())
+				}
+			})
+			.catch(_ => {})
+	}, [dispatch, user])
 
 	return (
 		<nav className='bg-body_light dark:bg-body_dark w-full z-20 top-0 start-0 border-b-0 md:border-invert_light-400 dark:border-invert_light-600 md:border-b'>
 			<div className='max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4'>
 				<div>
 					<Link href='/' className='items-center space-x-3 rtl:space-x-reverse flex'>
-						<Image src={logo} className='h-12 ' alt='Consitech Logo' width={84.8} height={48} />
+						<Image
+							src={
+								theme === 'light' ? '/consitech-logo-full.svg' : '/consitech-logo-full-light.svg'
+							}
+							className='h-12 w-auto'
+							alt='Consitech Logo'
+							width={84.8}
+							height={48}
+						/>
 					</Link>
 				</div>
 
 				<div className='flex md:order-2 space-x-3 md:space-x-0 rtl:space-x-reverse items-center'>
 					<DarkThemeToggle className='rounded-none ' />
 					{/* User menu */}
-					{!user.loggedIn ? (
+					{!user.loggedIn && isMounted && (
 						<Link href='/login-register' passHref>
-							<Button theme={customButtonTheme} outline>
+							<Button theme={customButtonTheme} outline className='ml-2'>
 								Entra/Registrati
 							</Button>
 						</Link>
-					) : (
+					)}
+					{user.loggedIn && isMounted && (
 						<Dropdown
 							label=''
 							dismissOnClick={true}
@@ -102,19 +118,23 @@ function Navbar() {
 								<span className='block text-sm'>{user.data.username}</span>
 								<span className='block truncate text-sm font-medium'>{user.data.email}</span>
 							</Dropdown.Header>
-							<Dropdown.Item>Dashboard</Dropdown.Item>
+							{user.data.role === UserRole.ADMIN && (
+								<Dropdown.Item as={Link} href='/admin/dashboard' passHref>
+									Dashboard
+								</Dropdown.Item>
+							)}
 							<Dropdown.Item>Impostazioni</Dropdown.Item>
 							<Dropdown.Item
-								onClick={() => {
+								onClick={async () => {
 									dispatch(userLogout())
-									localStorage.removeItem('token')
+									await removeCookie('token')
+									dispatch(userLogout())
 								}}
 							>
 								Logout
 							</Dropdown.Item>
 						</Dropdown>
 					)}
-
 					{/* Hamburger menu */}
 					<button
 						data-collapse-toggle='navbar-sticky'
@@ -124,7 +144,6 @@ function Navbar() {
 						aria-expanded={menuOpen}
 						onClick={() => {
 							setMenuOpen(!menuOpen)
-							setUserMenuOpen(false)
 						}}
 					>
 						<span className='sr-only'>Apri menu principale</span>

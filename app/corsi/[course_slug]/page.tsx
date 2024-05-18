@@ -3,14 +3,22 @@ import LessonBlock from './LessonBlock'
 import { API } from '@/utils/api'
 import { Course, Lesson } from '@/utils/types'
 import { HiHome } from 'react-icons/hi'
+import PathName from '@/app/components/PathName'
+import { redirect } from 'next/navigation'
 
-export default async function CourseSingle({ params }: { params: { couse_slug: string } }) {
-	const course: Course = await API.get('public/courses/slug/' + params.couse_slug)
-	const lessons: Lesson[] = await API.get('public/courses/slug/' + params.couse_slug + '/lessons')
+export default async function CourseSingle({ params }: { params: { course_slug: string } }) {
+	const course = await API.get<Course>('public/courses/slug/' + params.course_slug).catch(_ => {
+		redirect('/404')
+	})
+
+	const lessons = await API.get<Lesson[]>(
+		'public/courses/slug/' + params.course_slug + '/lessons'
+	).catch(_ => [])
+
 	return (
 		<MainWrapper
 			subheaderTitle={course.title}
-			braedcrumbItems={[
+			breadcrumbItems={[
 				{ icon: HiHome, label: 'Home', href: '/' },
 				{ label: 'Corsi', href: '/corsi' },
 				{ label: course.title },
@@ -23,10 +31,11 @@ export default async function CourseSingle({ params }: { params: { couse_slug: s
 					description={lesson.description}
 					img={lesson.thumbnail}
 					lessonSlug={lesson.slug}
-					couseSlug={params.couse_slug}
+					courseSlug={params.course_slug}
 					displayOrder={lesson.displayOrder}
 				/>
 			))}
+			<PathName />
 		</MainWrapper>
 	)
 }

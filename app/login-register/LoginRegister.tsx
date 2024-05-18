@@ -12,11 +12,12 @@ import {
 	HiOutlineEyeOff,
 	HiOutlineX,
 } from 'react-icons/hi'
-import { Authorization, ResponseError, User } from '@/utils/types'
-import StoreProvider from '@/redux/StoreProvider'
+import { Authorization, JWT, ResponseError, User } from '@/utils/types'
 import { useAppDispatch } from '@/redux/store'
 import { getUserAction } from '@/redux/actions/user'
-import { userLogin } from '@/redux/reducers/userSlice'
+import { userLogin } from '@/redux/reducers/userReducer'
+import { setCookie } from '../actions'
+import { goBackAndReload, parseJwt } from '@/utils/utils'
 
 const getInitalTab = (tabQuery: string | null) => {
 	let tab = 0
@@ -87,17 +88,20 @@ export default function LoginRegister({
 	}
 
 	const login = async (data: LoginData, formForm = false) => {
-		const response: Authorization = await API.post('auth/login', data)
-		if (!('status' in response)) {
-			setLoginData({ usernameOrEmail: '', password: '', error: false, errorMessage: '' })
-			localStorage.setItem('token', response.authorization)
-			dispatch(getUserAction())
-			dispatch(userLogin())
-			router.push('/')
-		} else {
-			formForm ??
-				setLoginData({ ...loginData, error: true, errorMessage: 'Credenziali non valide' })
-		}
+		await API.post<Authorization>('auth/login', data)
+			.then(response => {
+				setLoginData({ usernameOrEmail: '', password: '', error: false, errorMessage: '' })
+				const token: JWT = parseJwt(response.authorization)
+
+				setCookie('token', response.authorization, token.exp * 1000 - Date.now())
+				dispatch(userLogin())
+
+				goBackAndReload(router)
+			})
+			.catch(_ => {
+				formForm &&
+					setLoginData({ ...loginData, error: true, errorMessage: 'Credenziali non valide' })
+			})
 	}
 
 	const loginForm = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -122,6 +126,7 @@ export default function LoginRegister({
 
 	const specialChars = '!@#$%^&*()-_=+{};:,<.>/?~`£€[]\\|"\''
 	const safeRegex = (str: string) => {
+		// deepcode ignore GlobalReplacementRegex: <I need to replace only the first occurrence of each special character>
 		return str.replace(']', '\\]').replace('-', '\\-').replace('/', '\\/')
 	}
 
@@ -196,32 +201,33 @@ export default function LoginRegister({
 			const passwordStrength = checkPassword()
 			if (passwordStrength) {
 				const { error, errorMessage, ...restOfData } = registrationData
-				const response: ResponseError | User = await API.post('auth/register', restOfData)
-				if (!('status' in response)) {
-					setLoginData({
-						usernameOrEmail: restOfData.email,
-						password: restOfData.password,
-						error: false,
-						errorMessage: '',
-					})
-					login(
-						{
+				await API.post<User>('auth/register', restOfData)
+					.then(_ => {
+						setLoginData({
 							usernameOrEmail: restOfData.email,
 							password: restOfData.password,
-						},
-						false
-					)
-					setRegistrationData({
-						username: '',
-						email: '',
-						password: '',
-						error: false,
-						errorMessage: '',
+							error: false,
+							errorMessage: '',
+						})
+						login(
+							{
+								usernameOrEmail: restOfData.email,
+								password: restOfData.password,
+							},
+							false
+						)
+						setRegistrationData({
+							username: '',
+							email: '',
+							password: '',
+							error: false,
+							errorMessage: '',
+						})
+						goBackAndReload(router)
 					})
-					router.push('/')
-				} else {
-					setRegistrationData({ ...registrationData, error: true, errorMessage: response.message })
-				}
+					.catch(error => {
+						setRegistrationData({ ...registrationData, error: true, errorMessage: error.message })
+					})
 			}
 		}
 	}
@@ -258,7 +264,6 @@ export default function LoginRegister({
 									value={loginData.password}
 									required
 									onChange={e => {
-										console.log(e.target.value)
 										if (e.target.value.length > 0) {
 											setLoginData({ ...loginData, password: e.target.value })
 										}

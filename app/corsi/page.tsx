@@ -1,19 +1,14 @@
-import React, { Suspense, useEffect, useState } from 'react'
+import React from 'react'
 import MainWrapper from '../components/MainWrapper'
-import CourseBlock from './CourseBlock'
-import { PagableContent, Course } from '@/utils/types'
-import { API } from '@/utils/api'
-import CousesComponent from './Couses'
+import ServerCoursesComponent from './components/ServerCoursesComponent'
 import { HiHome } from 'react-icons/hi'
+import PathName from '../components/PathName'
 
-export default async function CoursesPage() {
-	const data: PagableContent<Course> = await API.get('public/courses')
-	const courses = data?.content
-
+export default function CoursesPage() {
 	return (
 		<MainWrapper
 			subheaderTitle='Corsi'
-			braedcrumbItems={[{ icon: HiHome, label: 'Home', href: '/' }, { label: 'Corsi' }]}
+			breadcrumbItems={[{ icon: HiHome, label: 'Home', href: '/' }, { label: 'Corsi' }]}
 		>
 			<div className='flex justify-center'>
 				<div className='lg:w-2/3 w-full'>
@@ -27,7 +22,8 @@ export default async function CoursesPage() {
 					</p>
 				</div>
 			</div>
-			<CousesComponent />
+			<ServerCoursesComponent />
+			<PathName />
 		</MainWrapper>
 	)
 }
