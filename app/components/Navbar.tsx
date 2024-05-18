@@ -10,7 +10,7 @@ import { customButtonTheme } from '../flowbite.themes'
 import { setUserLoginStatus, userLogin, userLogout } from '@/redux/reducers/userReducer'
 import { log } from 'console'
 import { getUserAction } from '@/redux/actions/user'
-import { getCookie, removeCookie } from '../actions'
+import { getCookie, removeCookie, setCookie } from '../actions'
 import { UserRole } from '@/utils/types'
 
 const isLoggedIn = async () => {
@@ -18,12 +18,12 @@ const isLoggedIn = async () => {
 	return cookie ? true : false
 }
 
-function Navbar() {
+function Navbar({ defaultTheme }: { defaultTheme: string }) {
 	const pathname = usePathname()
 	const [menuOpen, setMenuOpen] = useState(false)
 	const themeMode = useThemeMode()
 
-	const [theme, setTheme] = useState(themeMode.mode)
+	const [theme, setTheme] = useState(defaultTheme)
 	const [logo, setLogo] = useState('/consitech-logo-full.svg')
 	const [isMounted, setIsMounted] = useState(false)
 
@@ -58,14 +58,9 @@ function Navbar() {
 	}, [])
 
 	useEffect(() => {
-		themeMode.setMode(themeMode.mode)
 		setTheme(themeMode.mode)
-		if (themeMode.mode === 'light') {
-			setLogo('/consitech-logo-full.svg')
-		} else {
-			setLogo('/consitech-logo-full-light.svg')
-		}
-	}, [theme, themeMode])
+		setCookie('theme', themeMode.mode)
+	}, [theme, themeMode.mode])
 
 	useEffect(() => {
 		isLoggedIn()
@@ -84,7 +79,9 @@ function Navbar() {
 				<div>
 					<Link href='/' className='items-center space-x-3 rtl:space-x-reverse flex'>
 						<Image
-							src={logo}
+							src={
+								theme === 'light' ? '/consitech-logo-full.svg' : '/consitech-logo-full-light.svg'
+							}
 							className='h-12 w-auto'
 							alt='Consitech Logo'
 							width={84.8}

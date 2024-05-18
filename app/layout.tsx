@@ -6,32 +6,32 @@ import Footer from './components/Footer'
 import { Flowbite, ThemeModeScript, ToastToggle } from 'flowbite-react'
 import StoreProvider from '@/redux/StoreProvider'
 import toast, { Toaster, ToastBar } from 'react-hot-toast'
-import ToasterWrpper from './ToasterWrpper'
+import ToasterWrapper from './ToasterWrapper'
+import { getCookie } from './actions'
 
 export const metadata: Metadata = {
 	title: 'Consitech',
-	description: 'Impara a programmare seplicente e ovunque',
+	description: 'Impara a programmare semplicemente e ovunque',
 }
 
-export default function RootLayout({
+export default async function RootLayout({
 	children,
 }: Readonly<{
 	children: React.ReactNode
 }>) {
+	const theme = await getCookie('theme')
 	return (
-		<html lang='it'>
-			<head>
-				<ThemeModeScript mode='dark' />
-			</head>
+		<html lang='it' className={theme?.value === 'dark' ? 'dark' : ''}>
+			<head></head>
 			<Flowbite>
 				<body
 					className={`${inconsolata.className} bg-body_light dark:bg-body_dark text-invert_light dark:text-invert_dark selection:bg-primary_lighter selection:text-invert_light dark:selection:bg-primary_darker dark:selection:text-invert_dark`}
 				>
 					<StoreProvider>
 						<header className='sticky top-0 z-50'>
-							<Navbar />
+							<Navbar defaultTheme={theme?.value || 'dark'} />
 						</header>
-						<ToasterWrpper />
+						<ToasterWrapper />
 						{children}
 						<Footer />
 					</StoreProvider>

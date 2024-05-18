@@ -14,17 +14,32 @@ import toast from 'react-hot-toast'
 import MediaManager from '@/app/admin/media/components/MediaManager'
 import { useAppSelector } from '@/redux/store'
 import { generateSlug } from '@/utils/utils'
+
 interface AdminCourseProps {
 	courseId: string
 }
 
 export default function AdminCourse({ courseId }: AdminCourseProps) {
-	const [course, setCourse] = useState<Course>({} as Course)
+	const [course, setCourse] = useState<Course>({
+		title: '',
+		description: '',
+		slug: '',
+		publishStatus: PublishStatus.DRAFT,
+		thumbnail: null,
+		displayOrder: 0,
+		mainLanguage: {} as Language,
+		seo: {
+			title: '',
+			description: '',
+		} as SEO,
+		enrolledStudents: 0,
+	} as Course)
 	const router = useRouter()
 	const [loading, setLoading] = useState(false)
 	const [error, setError] = useState<string>()
 	const [openModal, setOpenModal] = useState(false)
 	const [languages, setLanguages] = useState<Language[]>([])
+	const [saved, setSaved] = useState(false)
 	const { title, description, slug, publishStatus, thumbnail, displayOrder, mainLanguage } = course
 	const selectedMedia = useAppSelector(state => state.media.selected)
 
@@ -49,8 +64,32 @@ export default function AdminCourse({ courseId }: AdminCourseProps) {
 			.catch(error => {
 				toast.error('Error retrieval languages: ' + error.message)
 			})
-		console.log('getLanguages')
 	}, [])
+
+	const beforeLeave = useCallback(
+		(e?: BeforeUnloadEvent) => {
+			const doActions = () => {
+				if (e) {
+					window.close()
+				} else {
+					router.push('/admin/corsi/new')
+				}
+			}
+
+			if (saved) {
+				doActions()
+			}
+
+			if (e) {
+				e.preventDefault()
+			}
+
+			if (window.confirm('Ci sono modifiche non salvate. Continuare?')) {
+				doActions()
+			}
+		},
+		[router, saved]
+	)
 
 	useEffect(() => {
 		getLanguages()
@@ -61,13 +100,20 @@ export default function AdminCourse({ courseId }: AdminCourseProps) {
 	}, [getCourse])
 
 	useEffect(() => {
-		if (courseId === 'new' && Object.keys(course).length === 0 && languages.length) {
+		if (courseId === 'new' && Object.keys(course.mainLanguage).length === 0 && languages.length) {
 			setCourse({ ...course, publishStatus: PublishStatus.DRAFT, mainLanguage: languages[0] })
 		}
 	}, [course, courseId, languages])
 
+	useEffect(() => {
+		window.addEventListener('beforeunload', beforeLeave)
+		return () => {
+			window.removeEventListener('beforeunload', beforeLeave)
+		}
+	}, [beforeLeave])
+
 	const handleChange = (e: ChangeEvent) => {
-		// console.log('e.target.name', e.target.name)
+		setSaved(false)
 		const value = e.target.value
 		let key = e.target.name
 		if (key.startsWith('seo.')) {
@@ -137,13 +183,21 @@ export default function AdminCourse({ courseId }: AdminCourseProps) {
 			console.log('saveAll')
 			console.log('courseId', courseId)
 			if (courseId === 'new') {
-				return Promise.all([saveCoursePromise()]).catch(err => {
-					throw err
-				})
+				return Promise.all([saveCoursePromise()])
+					.then(() => {
+						setSaved(true)
+					})
+					.catch(err => {
+						throw err
+					})
 			} else {
-				return Promise.all([saveCoursePromise(), saveSeoPromise()]).catch(err => {
-					throw err
-				})
+				return Promise.all([saveCoursePromise(), saveSeoPromise()])
+					.then(() => {
+						setSaved(true)
+					})
+					.catch(err => {
+						throw err
+					})
 			}
 		}
 		toast
@@ -170,7 +224,7 @@ export default function AdminCourse({ courseId }: AdminCourseProps) {
 						<input
 							type='text'
 							name='title'
-							value={title}
+							value={title || ''}
 							onChange={handleChange}
 							className={adminStyles.input + ' mb-2'}
 						/>
@@ -179,7 +233,7 @@ export default function AdminCourse({ courseId }: AdminCourseProps) {
 							<input
 								type='text'
 								name='slug'
-								value={slug}
+								value={slug || ''}
 								onChange={handleChange}
 								onFocus={() => {
 									!slug && setCourse({ ...course, slug: generateSlug(title) })
@@ -204,7 +258,7 @@ export default function AdminCourse({ courseId }: AdminCourseProps) {
 								name='description'
 								id='description'
 								className={adminStyles.input}
-								value={description}
+								value={description || ''}
 								onChange={handleChange}
 							></textarea>
 						</div>
@@ -281,7 +335,12 @@ export default function AdminCourse({ courseId }: AdminCourseProps) {
 								theme={customButtonTheme}
 								outline
 								fullSized
-								disabled={loading || (!title && !slug && !description)}
+								disabled={
+									loading ||
+									!title ||
+									!slug ||
+									(description.length < 20 && description.length > 100)
+								}
 							>
 								<div className='flex justify-around items-center w-full'>
 									{loading && <Spinner theme={customSpinnerTheme} color='primary' />} Salva
@@ -289,11 +348,7 @@ export default function AdminCourse({ courseId }: AdminCourseProps) {
 							</Button>
 						</div>
 						<div>
-							<Button
-								theme={customButtonTheme}
-								outline
-								onClick={() => router.push('/admin/corsi/new')}
-							>
+							<Button theme={customButtonTheme} outline onClick={() => beforeLeave()}>
 								<span className='flex gap-x-2 items-center'>
 									<HiOutlinePlusSm />
 									Aggiungi nuovo corso
