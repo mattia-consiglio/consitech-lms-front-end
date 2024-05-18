@@ -20,7 +20,7 @@ export enum PublishStatus {
 
 export interface AbstractContent {
 	id: string
-	mainLanguage: MainLanguage
+	mainLanguage: Language
 	translations: any[]
 	title: string
 	slug: string
@@ -54,7 +54,7 @@ export interface Media {
 	mainColor: string
 }
 
-export interface MainLanguage {
+export interface Language {
 	id: string
 	code: string
 	language: string
@@ -62,7 +62,7 @@ export interface MainLanguage {
 
 export interface SEO {
 	id: string
-	mainLanguage: MainLanguage
+	mainLanguage: Language
 	translations: any[]
 	title: string
 	description: string

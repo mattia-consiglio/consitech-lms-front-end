@@ -2,11 +2,11 @@
 import MainWrapper from '@/app/components/MainWrapper'
 import { customButtonTheme, customSpinnerTheme, customTabsTheme } from '@/app/flowbite.themes'
 import { API } from '@/utils/api'
-import { ChangeEvent, Course, PublishStatus, SEO } from '@/utils/types'
+import { ChangeEvent, Course, Language, PublishStatus, SEO } from '@/utils/types'
 import { Button, Modal, Spinner } from 'flowbite-react'
 import { useRouter } from 'next/navigation'
-import React, { Suspense, useCallback, useEffect, useState } from 'react'
-import { HiOutlineRefresh } from 'react-icons/hi'
+import React, { Suspense, use, useCallback, useEffect, useState } from 'react'
+import { HiOutlinePlusSm, HiOutlineRefresh } from 'react-icons/hi'
 import SEOComponent from './SEOComponent'
 import adminStyles from '@/app/admin/styles/admin.module.scss'
 import Image from 'next/image'
@@ -24,12 +24,14 @@ export default function AdminCourse({ courseId }: AdminCourseProps) {
 	const [loading, setLoading] = useState(false)
 	const [error, setError] = useState<string>()
 	const [openModal, setOpenModal] = useState(false)
-	const { title, description, slug, publishStatus, thumbnail, displayOrder } = course
+	const [languages, setLanguages] = useState<Language[]>([])
+	const { title, description, slug, publishStatus, thumbnail, displayOrder, mainLanguage } = course
 	const selectedMedia = useAppSelector(state => state.media.selected)
 
 	const getCourse = useCallback(async () => {
-		if (courseId === 'new') return
-
+		if (courseId === 'new') {
+			return
+		}
 		API.get<Course>(`courses/${courseId}`)
 			.then(response => {
 				setCourse(response)
@@ -39,18 +41,43 @@ export default function AdminCourse({ courseId }: AdminCourseProps) {
 			})
 	}, [courseId])
 
+	const getLanguages = useCallback(async () => {
+		API.get<Language[]>('languages')
+			.then(response => {
+				setLanguages(response)
+			})
+			.catch(error => {
+				toast.error('Error retrieval languages: ' + error.message)
+			})
+		console.log('getLanguages')
+	}, [])
+
+	useEffect(() => {
+		getLanguages()
+	}, [getLanguages])
+
 	useEffect(() => {
 		getCourse()
 	}, [getCourse])
 
+	useEffect(() => {
+		if (courseId === 'new' && Object.keys(course).length === 0 && languages.length) {
+			setCourse({ ...course, publishStatus: PublishStatus.DRAFT, mainLanguage: languages[0] })
+		}
+	}, [course, courseId, languages])
+
 	const handleChange = (e: ChangeEvent) => {
-		if (e.target.name.startsWith('seo.')) {
+		// console.log('e.target.name', e.target.name)
+		const value = e.target.value
+		let key = e.target.name
+		if (key.startsWith('seo.')) {
+			key = e.target.name.split('.')[1]
 			setCourse({
 				...course,
-				seo: { ...course.seo, [e.target.name.split('.')[1]]: e.target.value },
+				seo: { ...course.seo, [key]: value },
 			})
 		} else {
-			setCourse({ ...course, [e.target.name]: e.target.value })
+			setCourse({ ...course, [key]: value })
 		}
 	}
 
@@ -66,23 +93,27 @@ export default function AdminCourse({ courseId }: AdminCourseProps) {
 				description,
 				publishStatus,
 				thumbnailId: thumbnail ? thumbnail.id : null,
+				mainLanguageId: mainLanguage.id,
 			}
+			console.log('coursePayload', coursePayload)
+			console.log('courseId', courseId)
 			if (courseId === 'new') {
-				API.post<Course>(`courses`, coursePayload)
+				return API.post<Course>(`courses`, coursePayload)
 					.then(json => {
+						console.log('post', json)
 						setCourse(json)
 						router.push(`/admin/corsi/${json.id}`)
 					})
 					.catch((err: Error) => {
-						return err.message
+						throw err
 					})
 			} else {
-				API.put<Course>(`courses/${course.id}`, coursePayload)
+				return API.put<Course>(`courses/${course.id}`, coursePayload)
 					.then(json => {
 						setCourse(json)
 					})
 					.catch((err: Error) => {
-						return err.message
+						throw err
 					})
 			}
 		}
@@ -93,30 +124,38 @@ export default function AdminCourse({ courseId }: AdminCourseProps) {
 				description: course.seo.description,
 				ldJSON: course.seo.ldJSON,
 			}
-			await API.put<SEO>(`seo/${course.seo.id}`, seoPayload)
+			return await API.put<SEO>(`seo/${course.seo.id}`, seoPayload)
 				.then(json => {
 					setCourse({ ...course, seo: json })
 				})
 				.catch((err: Error) => {
-					return err.message
+					throw err
 				})
 		}
 
 		const saveAll = async () => {
+			console.log('saveAll')
+			console.log('courseId', courseId)
 			if (courseId === 'new') {
-				await Promise.all([saveCoursePromise])
-
-				router.replace(`/admin/corsi/${course.id}`)
+				return Promise.all([saveCoursePromise()]).catch(err => {
+					throw err
+				})
 			} else {
-				await Promise.all([saveCoursePromise(), saveSeoPromise()])
+				return Promise.all([saveCoursePromise(), saveSeoPromise()]).catch(err => {
+					throw err
+				})
 			}
-			setLoading(false)
 		}
-		toast.promise(saveAll(), {
-			loading: 'Salvataggio in corso...',
-			success: 'Corso salvato correttamente!',
-			error: data => data.toString(),
-		})
+		toast
+			.promise(saveAll(), {
+				loading: 'Salvataggio in corso...',
+				success: 'Corso salvato correttamente!',
+				error: data => data.toString(),
+			})
+			.catch(_ => {})
+			.finally(() => {
+				setLoading(false)
+			})
 	}
 
 	return (
@@ -139,6 +178,7 @@ export default function AdminCourse({ courseId }: AdminCourseProps) {
 							<label htmlFor='slug'>Slug: </label>{' '}
 							<input
 								type='text'
+								name='slug'
 								value={slug}
 								onChange={handleChange}
 								onFocus={() => {
@@ -189,15 +229,29 @@ export default function AdminCourse({ courseId }: AdminCourseProps) {
 								id='publishStatus'
 								onChange={handleChange}
 								className={adminStyles.input}
+								value={publishStatus || PublishStatus.DRAFT}
 							>
 								{Object.values(PublishStatus).map(status => (
-									<option
-										key={status}
-										value={status}
-										selected={publishStatus === status || status === PublishStatus.DRAFT}
-										className={adminStyles.input}
-									>
+									<option key={status} value={status}>
 										{status}
+									</option>
+								))}
+							</select>
+						</div>
+						<div>
+							<label htmlFor='languages' className='block'>
+								Lingua originale
+							</label>
+							<select
+								name='mainLanguageId'
+								id='languages'
+								className={adminStyles.input}
+								value={mainLanguage ? mainLanguage.id : ''}
+								onChange={handleChange}
+							>
+								{languages.map(language => (
+									<option key={language.id} value={language.id}>
+										{language.language}
 									</option>
 								))}
 							</select>
@@ -232,6 +286,18 @@ export default function AdminCourse({ courseId }: AdminCourseProps) {
 								<div className='flex justify-around items-center w-full'>
 									{loading && <Spinner theme={customSpinnerTheme} color='primary' />} Salva
 								</div>
+							</Button>
+						</div>
+						<div>
+							<Button
+								theme={customButtonTheme}
+								outline
+								onClick={() => router.push('/admin/corsi/new')}
+							>
+								<span className='flex gap-x-2 items-center'>
+									<HiOutlinePlusSm />
+									Aggiungi nuovo corso
+								</span>
 							</Button>
 						</div>
 					</div>

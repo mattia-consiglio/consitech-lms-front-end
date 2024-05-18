@@ -14,6 +14,9 @@ export default function AdminDashboard() {
 				<Button as={Link} href='/admin/lezioni' theme={customButtonTheme} outline>
 					Lezioni
 				</Button>
+				<Button as={Link} href='/admin/media' theme={customButtonTheme} outline>
+					Media
+				</Button>
 			</div>
 		</MainWrapper>
 	)

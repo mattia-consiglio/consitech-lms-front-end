@@ -25,7 +25,7 @@ function Navbar() {
 
 	const [theme, setTheme] = useState(themeMode.mode)
 	const [logo, setLogo] = useState('/consitech-logo-full.svg')
-	// const [loggedIn, setLoggedIn] = useState(false)
+	const [isMounted, setIsMounted] = useState(false)
 
 	const user = useAppSelector(state => state.user)
 	const dispatch = useAppDispatch()
@@ -54,6 +54,10 @@ function Navbar() {
 	]
 
 	useEffect(() => {
+		setIsMounted(true)
+	}, [])
+
+	useEffect(() => {
 		themeMode.setMode(themeMode.mode)
 		setTheme(themeMode.mode)
 		if (themeMode.mode === 'light') {
@@ -63,26 +67,15 @@ function Navbar() {
 		}
 	}, [theme, themeMode])
 
-	// useEffect(() => {
-	// 	isLoggedIn().then(res => {
-	// 		console.log(res)
-	// 		setIsLoggedIn(res)
-	// 	})
-	// }, [isLoggedIn])
-
 	useEffect(() => {
 		isLoggedIn()
 			.then(res => {
-				console.log(res)
 				dispatch(setUserLoginStatus(res))
 				if (res) {
-					// setLoggedIn(true)
 					dispatch(getUserAction())
 				}
 			})
-			.catch(e => {
-				console.log(e)
-			})
+			.catch(_ => {})
 	}, [dispatch, user])
 
 	return (
@@ -90,20 +83,27 @@ function Navbar() {
 			<div className='max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4'>
 				<div>
 					<Link href='/' className='items-center space-x-3 rtl:space-x-reverse flex'>
-						<Image src={logo} className='h-12 ' alt='Consitech Logo' width={84.8} height={48} />
+						<Image
+							src={logo}
+							className='h-12 w-auto'
+							alt='Consitech Logo'
+							width={84.8}
+							height={48}
+						/>
 					</Link>
 				</div>
 
 				<div className='flex md:order-2 space-x-3 md:space-x-0 rtl:space-x-reverse items-center'>
 					<DarkThemeToggle className='rounded-none ' />
 					{/* User menu */}
-					{!user.loggedIn ? (
+					{!user.loggedIn && isMounted && (
 						<Link href='/login-register' passHref>
 							<Button theme={customButtonTheme} outline className='ml-2'>
 								Entra/Registrati
 							</Button>
 						</Link>
-					) : (
+					)}
+					{user.loggedIn && isMounted && (
 						<Dropdown
 							label=''
 							dismissOnClick={true}
@@ -138,7 +138,6 @@ function Navbar() {
 							</Dropdown.Item>
 						</Dropdown>
 					)}
-
 					{/* Hamburger menu */}
 					<button
 						data-collapse-toggle='navbar-sticky'
