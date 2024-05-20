@@ -1,14 +1,16 @@
 import { getAuthAndRedirectLogin } from '@/app/actions'
+import PathName from '@/app/components/PathName'
 import React from 'react'
 import AdminContent from '../../components/AdminContent'
-import PathName from '@/app/components/PathName'
 
-export default async function AdminCoursePage({ params }: { params: { course_id: string } }) {
+const AdminLessonPage = async ({ params }: { params: { lesson_id: string } }) => {
 	await getAuthAndRedirectLogin()
 	return (
 		<>
-			<AdminContent contentId={params.course_id} />
+			<AdminContent contentId={params.lesson_id} />
 			<PathName />
 		</>
 	)
 }
+
+export default AdminLessonPage

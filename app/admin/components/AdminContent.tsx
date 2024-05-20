@@ -2,9 +2,9 @@
 import MainWrapper from '@/app/components/MainWrapper'
 import { customButtonTheme, customSpinnerTheme, customTabsTheme } from '@/app/flowbite.themes'
 import { API } from '@/utils/api'
-import { ChangeEvent, Course, Language, PublishStatus, SEO } from '@/utils/types'
+import { ChangeEvent, Course, Language, Lesson, PublishStatus, SEO } from '@/utils/types'
 import { Button, Modal, Spinner } from 'flowbite-react'
-import { useRouter } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import React, { Suspense, use, useCallback, useEffect, useState } from 'react'
 import { HiOutlinePlusSm, HiOutlineRefresh } from 'react-icons/hi'
 import SEOComponent from './SEOComponent'
@@ -16,45 +16,69 @@ import { useAppSelector } from '@/redux/store'
 import { generateSlug } from '@/utils/utils'
 
 interface AdminCourseProps {
-	courseId: string
+	contentId: string
 }
 
-export default function AdminCourse({ courseId }: AdminCourseProps) {
-	const [course, setCourse] = useState<Course>({
-		title: '',
-		description: '',
-		slug: '',
-		publishStatus: PublishStatus.DRAFT,
-		thumbnail: null,
-		displayOrder: 0,
-		mainLanguage: {} as Language,
-		seo: {
-			title: '',
-			description: '',
-		} as SEO,
-		enrolledStudents: 0,
-	} as Course)
+export default function AdminContent({ contentId }: AdminCourseProps) {
+	const pathname = usePathname()
+	const contentType: 'corsi' | 'lezioni' = pathname.split('/')[2] as 'corsi' | 'lezioni'
+	const [content, setContent] = useState<Course | Lesson>(
+		contentType === 'corsi'
+			? ({
+					title: '',
+					description: '',
+					slug: '',
+					publishStatus: PublishStatus.DRAFT,
+					thumbnail: null,
+					displayOrder: 0,
+					mainLanguage: {} as Language,
+					seo: {
+						title: '',
+						description: '',
+					} as SEO,
+					enrolledStudents: 0,
+			  } as Course)
+			: ({
+					title: '',
+					description: '',
+					slug: '',
+					publishStatus: PublishStatus.DRAFT,
+					thumbnail: null,
+					displayOrder: 0,
+					mainLanguage: {} as Language,
+					seo: {
+						title: '',
+						description: '',
+					} as SEO,
+					course: {
+						id: '',
+					} as Course,
+			  } as Lesson)
+	)
 	const router = useRouter()
 	const [loading, setLoading] = useState(false)
 	const [error, setError] = useState<string>()
 	const [openModal, setOpenModal] = useState(false)
 	const [languages, setLanguages] = useState<Language[]>([])
-	const [saved, setSaved] = useState(false)
-	const { title, description, slug, publishStatus, thumbnail, displayOrder, mainLanguage } = course
+	const [saved, setSaved] = useState(true)
+	const [courses, setCourses] = useState<Course[]>([])
+	const { title, description, slug, publishStatus, thumbnail, displayOrder, mainLanguage } = content
 	const selectedMedia = useAppSelector(state => state.media.selected)
 
-	const getCourse = useCallback(async () => {
-		if (courseId === 'new') {
+	const getContent = useCallback(async () => {
+		if (contentId === 'new') {
 			return
 		}
-		API.get<Course>(`courses/${courseId}`)
+		API.get<Course | Lesson>(
+			contentType === 'corsi' ? `courses/${contentId}` : `lessons/${contentId}`
+		)
 			.then(response => {
-				setCourse(response)
+				setContent(response)
 			})
 			.catch(error => {
 				setError(error.message)
 			})
-	}, [courseId])
+	}, [contentId, contentType])
 
 	const getLanguages = useCallback(async () => {
 		API.get<Language[]>('languages')
@@ -66,13 +90,30 @@ export default function AdminCourse({ courseId }: AdminCourseProps) {
 			})
 	}, [])
 
+	const getCourses = useCallback(async () => {
+		API.get<Course[]>('courses/list')
+			.then(response => {
+				setCourses(response)
+			})
+			.catch(error => {
+				toast.error('Error retrieval courses: ' + error.message)
+			})
+			.finally(() => {
+				setLoading(false)
+			})
+	}, [])
+
 	const beforeLeave = useCallback(
 		(e?: BeforeUnloadEvent) => {
 			const doActions = () => {
 				if (e) {
 					window.close()
 				} else {
-					router.push('/admin/corsi/new')
+					if (contentType === 'corsi') {
+						router.push(`/admin/corsi/new`)
+					} else {
+						router.push(`/admin/lezioni/new`)
+					}
 				}
 			}
 
@@ -88,7 +129,7 @@ export default function AdminCourse({ courseId }: AdminCourseProps) {
 				doActions()
 			}
 		},
-		[router, saved]
+		[contentType, router, saved]
 	)
 
 	useEffect(() => {
@@ -96,14 +137,19 @@ export default function AdminCourse({ courseId }: AdminCourseProps) {
 	}, [getLanguages])
 
 	useEffect(() => {
-		getCourse()
-	}, [getCourse])
+		getContent()
+	}, [getContent])
 
 	useEffect(() => {
-		if (courseId === 'new' && Object.keys(course.mainLanguage).length === 0 && languages.length) {
-			setCourse({ ...course, publishStatus: PublishStatus.DRAFT, mainLanguage: languages[0] })
+		getCourses()
+	}, [getCourses])
+
+	useEffect(() => {
+		if (contentId === 'new' && Object.keys(content.mainLanguage).length === 0 && languages.length) {
+			setSaved(false)
+			setContent({ ...content, publishStatus: PublishStatus.DRAFT, mainLanguage: languages[0] })
 		}
-	}, [course, courseId, languages])
+	}, [content, contentId, languages])
 
 	useEffect(() => {
 		window.addEventListener('beforeunload', beforeLeave)
@@ -118,13 +164,23 @@ export default function AdminCourse({ courseId }: AdminCourseProps) {
 		let key = e.target.name
 		if (key.startsWith('seo.')) {
 			key = e.target.name.split('.')[1]
-			setCourse({
-				...course,
-				seo: { ...course.seo, [key]: value },
+			setContent({
+				...content,
+				seo: { ...content.seo, [key]: value },
 			})
-		} else {
-			setCourse({ ...course, [key]: value })
+			return
 		}
+
+		if (key === 'course' && 'course' in content) {
+			const course = courses.find(c => c.id === value) as Course
+			console.log('course', course)
+			setContent({
+				...content,
+				course: course,
+			})
+			return
+		}
+		setContent({ ...content, [key]: value })
 	}
 
 	const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -132,7 +188,7 @@ export default function AdminCourse({ courseId }: AdminCourseProps) {
 
 		setLoading(true)
 
-		const saveCoursePromise = async () => {
+		const saveContentPromise = async () => {
 			const coursePayload = {
 				title,
 				slug,
@@ -142,21 +198,21 @@ export default function AdminCourse({ courseId }: AdminCourseProps) {
 				mainLanguageId: mainLanguage.id,
 			}
 			console.log('coursePayload', coursePayload)
-			console.log('courseId', courseId)
-			if (courseId === 'new') {
+			console.log('courseId', contentId)
+			if (contentId === 'new') {
 				return API.post<Course>(`courses`, coursePayload)
 					.then(json => {
 						console.log('post', json)
-						setCourse(json)
+						setContent(json)
 						router.push(`/admin/corsi/${json.id}`)
 					})
 					.catch((err: Error) => {
 						throw err
 					})
 			} else {
-				return API.put<Course>(`courses/${course.id}`, coursePayload)
+				return API.put<Course>(`courses/${content.id}`, coursePayload)
 					.then(json => {
-						setCourse(json)
+						setContent(json)
 					})
 					.catch((err: Error) => {
 						throw err
@@ -166,13 +222,13 @@ export default function AdminCourse({ courseId }: AdminCourseProps) {
 
 		const saveSeoPromise = async () => {
 			const seoPayload = {
-				title: course.seo.title,
-				description: course.seo.description,
-				ldJSON: course.seo.ldJSON,
+				title: content.seo.title,
+				description: content.seo.description,
+				ldJSON: content.seo.ldJSON,
 			}
-			return await API.put<SEO>(`seo/${course.seo.id}`, seoPayload)
+			return await API.put<SEO>(`seo/${content.seo.id}`, seoPayload)
 				.then(json => {
-					setCourse({ ...course, seo: json })
+					setContent({ ...content, seo: json })
 				})
 				.catch((err: Error) => {
 					throw err
@@ -181,9 +237,9 @@ export default function AdminCourse({ courseId }: AdminCourseProps) {
 
 		const saveAll = async () => {
 			console.log('saveAll')
-			console.log('courseId', courseId)
-			if (courseId === 'new') {
-				return Promise.all([saveCoursePromise()])
+			console.log('courseId', contentId)
+			if (contentId === 'new') {
+				return Promise.all([saveContentPromise()])
 					.then(() => {
 						setSaved(true)
 					})
@@ -191,7 +247,7 @@ export default function AdminCourse({ courseId }: AdminCourseProps) {
 						throw err
 					})
 			} else {
-				return Promise.all([saveCoursePromise(), saveSeoPromise()])
+				return Promise.all([saveContentPromise(), saveSeoPromise()])
 					.then(() => {
 						setSaved(true)
 					})
@@ -200,6 +256,7 @@ export default function AdminCourse({ courseId }: AdminCourseProps) {
 					})
 			}
 		}
+
 		toast
 			.promise(saveAll(), {
 				loading: 'Salvataggio in corso...',
@@ -215,6 +272,7 @@ export default function AdminCourse({ courseId }: AdminCourseProps) {
 	return (
 		<MainWrapper>
 			<Suspense fallback='Caricamento...'>
+				<h1 className='mb-4'>{contentType === 'corsi' ? 'Corso' : 'Lezione'}</h1>
 				<form
 					onSubmit={handleSubmit}
 					className='w-full grid md:grid-cols-[1fr_auto] grid-cols-1  gap-4'
@@ -236,7 +294,7 @@ export default function AdminCourse({ courseId }: AdminCourseProps) {
 								value={slug || ''}
 								onChange={handleChange}
 								onFocus={() => {
-									!slug && setCourse({ ...course, slug: generateSlug(title) })
+									!slug && setContent({ ...content, slug: generateSlug(title) })
 								}}
 								className={adminStyles.input}
 								id='slug'
@@ -245,7 +303,7 @@ export default function AdminCourse({ courseId }: AdminCourseProps) {
 								type='button'
 								theme={customButtonTheme}
 								outline
-								onClick={() => setCourse({ ...course, slug: generateSlug(title) })}
+								onClick={() => setContent({ ...content, slug: generateSlug(title) })}
 							>
 								<HiOutlineRefresh />
 							</Button>
@@ -263,9 +321,9 @@ export default function AdminCourse({ courseId }: AdminCourseProps) {
 							></textarea>
 						</div>
 						<div>
-							{'seo' in course ? (
-								<SEOComponent content={course} handleChange={handleChange} />
-							) : courseId !== 'new' ? (
+							{'seo' in content ? (
+								<SEOComponent content={content} handleChange={handleChange} />
+							) : contentId !== 'new' ? (
 								<p>SEO in caricamento</p>
 							) : (
 								<p>SEO non presente, verrà generato in automatico</p>
@@ -310,6 +368,31 @@ export default function AdminCourse({ courseId }: AdminCourseProps) {
 								))}
 							</select>
 						</div>
+						{contentType === 'lezioni' && (
+							<div>
+								<label htmlFor='courses'>Corsi</label>
+								<select
+									name='course'
+									id='courses'
+									className={adminStyles.input}
+									value={
+										('course' in content && content.course.id) ||
+										// courses.find(c => 'course' in content && c.id === content.course.id)?.id ||
+										''
+									}
+									onChange={handleChange}
+								>
+									<option key='' value=''>
+										Seleziona corso
+									</option>
+									{courses.map(course => (
+										<option key={course.id} value={course.id}>
+											{course.title}
+										</option>
+									))}
+								</select>
+							</div>
+						)}
 						<button
 							type='button'
 							className='flex justify-center'
@@ -339,7 +422,8 @@ export default function AdminCourse({ courseId }: AdminCourseProps) {
 									loading ||
 									!title ||
 									!slug ||
-									(description.length < 20 && description.length > 100)
+									(description.length < 20 && description.length > 100) ||
+									saved
 								}
 							>
 								<div className='flex justify-around items-center w-full'>
@@ -351,7 +435,7 @@ export default function AdminCourse({ courseId }: AdminCourseProps) {
 							<Button theme={customButtonTheme} outline onClick={() => beforeLeave()}>
 								<span className='flex gap-x-2 items-center'>
 									<HiOutlinePlusSm />
-									Aggiungi nuovo corso
+									Aggiungi nuovo {contentType === 'corsi' ? 'corso' : 'lezione'}
 								</span>
 							</Button>
 						</div>
@@ -367,7 +451,7 @@ export default function AdminCourse({ courseId }: AdminCourseProps) {
 					<Button
 						onClick={() => {
 							setOpenModal(false)
-							setCourse({ ...course, thumbnail: selectedMedia })
+							setContent({ ...content, thumbnail: selectedMedia })
 						}}
 						outline
 						theme={customButtonTheme}
