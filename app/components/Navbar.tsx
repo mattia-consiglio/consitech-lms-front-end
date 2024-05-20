@@ -1,14 +1,13 @@
 'use client'
 import Image from 'next/image'
 import Link from 'next/link'
-import React, { use, useEffect, useState } from 'react'
-import { usePathname } from 'next/navigation'
+import React, { useEffect, useState } from 'react'
+import { usePathname, useRouter } from 'next/navigation'
 import { IoPerson } from 'react-icons/io5'
 import { Button, DarkThemeToggle, Dropdown, useThemeMode } from 'flowbite-react'
 import { useAppDispatch, useAppSelector } from '@/redux/store'
 import { customButtonTheme } from '../flowbite.themes'
-import { setUserLoginStatus, userLogin, userLogout } from '@/redux/reducers/userReducer'
-import { log } from 'console'
+import { setUserLoginStatus, userLogout } from '@/redux/reducers/userReducer'
 import { getUserAction } from '@/redux/actions/user'
 import { getCookie, removeCookie, setCookie } from '../actions'
 import { UserRole } from '@/utils/types'
@@ -22,13 +21,12 @@ function Navbar({ defaultTheme }: { defaultTheme: string }) {
 	const pathname = usePathname()
 	const [menuOpen, setMenuOpen] = useState(false)
 	const themeMode = useThemeMode()
-
 	const [theme, setTheme] = useState(defaultTheme)
-	const [logo, setLogo] = useState('/consitech-logo-full.svg')
 	const [isMounted, setIsMounted] = useState(false)
 
 	const user = useAppSelector(state => state.user)
 	const dispatch = useAppDispatch()
+	const router = useRouter()
 
 	const menuItems = [
 		{
@@ -119,9 +117,20 @@ function Navbar({ defaultTheme }: { defaultTheme: string }) {
 								<span className='block truncate text-sm font-medium'>{user.data.email}</span>
 							</Dropdown.Header>
 							{user.data.role === UserRole.ADMIN && (
-								<Dropdown.Item as={Link} href='/admin/dashboard' passHref>
-									Dashboard
-								</Dropdown.Item>
+								<>
+									<Dropdown.Item as={Link} href='/admin/dashboard' passHref>
+										Admin Dashboard
+									</Dropdown.Item>
+									<Dropdown.Item as={Link} href='/admin/corsi' passHref>
+										Admin Corsi
+									</Dropdown.Item>
+									<Dropdown.Item as={Link} href='/admin/lezioni' passHref>
+										Admin Lezioni
+									</Dropdown.Item>
+									<Dropdown.Item as={Link} href='/admin/media' passHref>
+										Admin Media
+									</Dropdown.Item>
+								</>
 							)}
 							<Dropdown.Item>Impostazioni</Dropdown.Item>
 							<Dropdown.Item
@@ -129,6 +138,10 @@ function Navbar({ defaultTheme }: { defaultTheme: string }) {
 									dispatch(userLogout())
 									await removeCookie('token')
 									dispatch(userLogout())
+
+									if (pathname.split('/')[1] === 'admin') {
+										router.push('/login')
+									}
 								}}
 							>
 								Logout

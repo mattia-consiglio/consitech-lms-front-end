@@ -1,28 +1,23 @@
 'use client'
 import { titillium_web } from '@/app/fonts'
-import { Course, PublishStatus, UserRole } from '@/utils/types'
+import { AbstractContent, Course, Lesson } from '@/utils/types'
 import Link from 'next/link'
-import { redirect } from 'next/navigation'
-import { title } from 'process'
 import React from 'react'
-import { HiOutlinePencil } from 'react-icons/hi'
 import Image from 'next/image'
 
-interface AdminCourseBlockProps extends Course {}
+interface AdminContentBlockProps {
+	type: 'course' | 'lesson'
+	content: Course | Lesson
+}
 
-export default function AdminCourseBlock({
-	title,
-	description,
-	slug,
-	displayOrder,
-	thumbnail,
-	publishStatus,
-	id,
-}: AdminCourseBlockProps) {
+export default function AdminContentBlock({ content, type }: AdminContentBlockProps) {
 	const handleDelete = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
 		e.preventDefault()
 	}
 
+	const { title, description, displayOrder, thumbnail, publishStatus, id } = content
+
+	const link = type === 'course' ? `/admin/corsi/${id}` : `/admin/lezioni/${id}`
 	return (
 		<div
 			className={`border-3 border-transparent hover:border-neutral-300 hover:bg-neutral-100 dark:hover:border-neutral-700 dark:hover:bg-neutral-800 p-4 transition-colors duration-250 ease-in-out relative group`}
@@ -48,7 +43,7 @@ export default function AdminCourseBlock({
 					</div>
 					<p className='mt-2 opacity-0 group-hover:opacity-100'>
 						<Link
-							href={`/admin/corsi/${id}`}
+							href={link}
 							className='hover:bg-primary focus-within:bg-primary hover:text-white  py-1 px-2'
 						>
 							Modifica
