@@ -1,18 +1,24 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+@import 'mixins.module.scss';
 
 :root {
-	--foreground: theme('colors.invert_light.DEFAULT');
-	--background: theme('colors.body_light');
-	@media (prefers-color-scheme: dark) {
-		--foreground: theme('colors.invert_dark.DEFAULT');
-		--background: theme('colors.body_dark');
-	}
 }
 
 * {
 	box-sizing: border-box;
+}
+
+html {
+	--foreground: theme('colors.invert_light.DEFAULT');
+	--background: theme('colors.body_light');
+	--primaryColor: theme('colors.primary');
+
+	&.dark {
+		--foreground: theme('colors.invert_dark.DEFAULT');
+		--background: theme('colors.body_dark');
+	}
 }
 
 body {
@@ -31,10 +37,18 @@ body {
 	}
 }
 
-@layer utilities {
-	.text-balance {
-		text-wrap: balance;
+@layer base {
+	ol,
+	ul {
+		li {
+			p {
+				&:first-of-type {
+					display: inline-block;
+				}
+			}
+		}
 	}
+
 	h1 {
 		@apply text-3xl font-bold;
 	}
@@ -42,14 +56,13 @@ body {
 		@apply text-xl font-bold;
 	}
 
-	body {
-		@apply flex flex-col min-h-screen;
-	}
 	main {
-		@apply grow;
-	}
-	@mixin input {
-		@apply border-0 border-b-2 focus:ring-0 focus-visible:ring-primary bg-transparent focus:border-primary placeholder:text-neutral-400 dark:placeholder:text-neutral-400;
+		.lesson-page,
+		.tiptap {
+			a {
+				color: var(--primaryColor);
+			}
+		}
 	}
 
 	input {
@@ -57,14 +70,30 @@ body {
 		&[type='password'],
 		&[type='email'],
 		&[type='search'] {
-			@include input();
+			@include inputMixin();
 		}
 	}
 	textarea,
 	select {
-		@include input();
+		@include inputMixin();
+	}
+
+	select {
 		option {
 			@apply text-neutral-500 dark:text-neutral-400 focus:bg-primary;
 		}
+	}
+}
+
+@layer utilities {
+	.text-balance {
+		text-wrap: balance;
+	}
+
+	body {
+		@apply flex flex-col min-h-screen;
+	}
+	main {
+		@apply grow;
 	}
 }

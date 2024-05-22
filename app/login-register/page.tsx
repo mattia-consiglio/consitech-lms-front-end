@@ -5,13 +5,13 @@ import LoginRegister from './LoginRegister'
 import StoreProvider from '@/redux/StoreProvider'
 
 export default function LoginRegisterPage({
-	searchParams,
+	searchParams = {},
 }: {
 	searchParams?: { [key: string]: string | string[] | undefined }
 }) {
 	return (
 		<MainWrapper className={styles.main}>
-			<LoginRegister />
+			<LoginRegister searchParams={searchParams} />
 		</MainWrapper>
 	)
 }

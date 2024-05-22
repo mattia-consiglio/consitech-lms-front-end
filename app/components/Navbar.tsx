@@ -1,14 +1,13 @@
 'use client'
 import Image from 'next/image'
 import Link from 'next/link'
-import React, { use, useEffect, useState } from 'react'
-import { usePathname } from 'next/navigation'
+import React, { useEffect, useState } from 'react'
+import { usePathname, useRouter } from 'next/navigation'
 import { IoPerson } from 'react-icons/io5'
 import { Button, DarkThemeToggle, Dropdown, useThemeMode } from 'flowbite-react'
 import { useAppDispatch, useAppSelector } from '@/redux/store'
 import { customButtonTheme } from '../flowbite.themes'
-import { setUserLoginStatus, userLogin, userLogout } from '@/redux/reducers/userReducer'
-import { log } from 'console'
+import { setUserLoginStatus, userLogout } from '@/redux/reducers/userReducer'
 import { getUserAction } from '@/redux/actions/user'
 import { getCookie, removeCookie, setCookie } from '../actions'
 import { UserRole } from '@/utils/types'
@@ -22,13 +21,12 @@ function Navbar({ defaultTheme }: { defaultTheme: string }) {
 	const pathname = usePathname()
 	const [menuOpen, setMenuOpen] = useState(false)
 	const themeMode = useThemeMode()
-
 	const [theme, setTheme] = useState(defaultTheme)
-	const [logo, setLogo] = useState('/consitech-logo-full.svg')
 	const [isMounted, setIsMounted] = useState(false)
 
 	const user = useAppSelector(state => state.user)
 	const dispatch = useAppDispatch()
+	const router = useRouter()
 
 	const menuItems = [
 		{
@@ -74,7 +72,7 @@ function Navbar({ defaultTheme }: { defaultTheme: string }) {
 	}, [dispatch, user])
 
 	return (
-		<nav className='bg-body_light dark:bg-body_dark w-full z-20 top-0 start-0 border-b-0 md:border-invert_light-400 dark:border-invert_light-600 md:border-b'>
+		<nav className='bg-body_light/95 dark:bg-body_dark/95 w-full z-20 top-0 start-0 border-b-0 md:border-invert_light-400 dark:border-invert_light-600 md:border-b backdrop-blur-md'>
 			<div className='max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4'>
 				<div>
 					<Link href='/' className='items-center space-x-3 rtl:space-x-reverse flex'>
@@ -119,9 +117,20 @@ function Navbar({ defaultTheme }: { defaultTheme: string }) {
 								<span className='block truncate text-sm font-medium'>{user.data.email}</span>
 							</Dropdown.Header>
 							{user.data.role === UserRole.ADMIN && (
-								<Dropdown.Item as={Link} href='/admin/dashboard' passHref>
-									Dashboard
-								</Dropdown.Item>
+								<>
+									<Dropdown.Item as={Link} href='/admin/dashboard' passHref>
+										Admin Dashboard
+									</Dropdown.Item>
+									<Dropdown.Item as={Link} href='/admin/corsi' passHref>
+										Admin Corsi
+									</Dropdown.Item>
+									<Dropdown.Item as={Link} href='/admin/lezioni' passHref>
+										Admin Lezioni
+									</Dropdown.Item>
+									<Dropdown.Item as={Link} href='/admin/media' passHref>
+										Admin Media
+									</Dropdown.Item>
+								</>
 							)}
 							<Dropdown.Item>Impostazioni</Dropdown.Item>
 							<Dropdown.Item
@@ -129,6 +138,10 @@ function Navbar({ defaultTheme }: { defaultTheme: string }) {
 									dispatch(userLogout())
 									await removeCookie('token')
 									dispatch(userLogout())
+
+									if (pathname.split('/')[1] === 'admin') {
+										router.push('/login')
+									}
 								}}
 							>
 								Logout
@@ -139,7 +152,7 @@ function Navbar({ defaultTheme }: { defaultTheme: string }) {
 					<button
 						data-collapse-toggle='navbar-sticky'
 						type='button'
-						className='inline-flex items-center p-2 w-10 h-10 justify-center text-sm  rounded-lg md:hidden hover:bg-invert_light focus:outline-none focus:ring-2 focus:ring-invert_light dark:hover:bg-invert_dark-700 dark:focus:ring-bg-invert_dark-600'
+						className='inline-flex items-center p-2 w-10 h-10 justify-center text-sm md:hidden hover:bg-neutral-300 focus:outline-none focus:ring-2 focus:ring-invert_light dark:hover:bg-invert_dark-700 dark:focus:ring-bg-invert_dark-600'
 						aria-controls='navbar-sticky'
 						aria-expanded={menuOpen}
 						onClick={() => {

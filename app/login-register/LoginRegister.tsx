@@ -40,7 +40,7 @@ const getInitalTab = (tabQuery: string | null) => {
 export default function LoginRegister({
 	searchParams,
 }: {
-	searchParams?: { [key: string]: string | string[] | undefined }
+	searchParams: { [key: string]: string | string[] | undefined }
 }) {
 	const router = useRouter()
 	const dispatch = useAppDispatch()
