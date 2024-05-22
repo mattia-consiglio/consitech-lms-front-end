@@ -1,0 +1,99 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+@import 'mixins.module.scss';
+
+:root {
+}
+
+* {
+	box-sizing: border-box;
+}
+
+html {
+	--foreground: theme('colors.invert_light.DEFAULT');
+	--background: theme('colors.body_light');
+	--primaryColor: theme('colors.primary');
+
+	&.dark {
+		--foreground: theme('colors.invert_dark.DEFAULT');
+		--background: theme('colors.body_dark');
+	}
+}
+
+body {
+	color: var(--foreground);
+	background: var(--background);
+}
+
+.toast {
+	padding: 10px !important;
+	background-color: theme('colors.body_light') !important;
+	color: currentColor !important;
+	border-radius: 0 !important;
+
+	.dark & {
+		background-color: theme('colors.body_dark') !important;
+	}
+}
+
+@layer base {
+	ol,
+	ul {
+		li {
+			p {
+				&:first-of-type {
+					display: inline-block;
+				}
+			}
+		}
+	}
+
+	h1 {
+		@apply text-3xl font-bold;
+	}
+	h2 {
+		@apply text-xl font-bold;
+	}
+
+	main {
+		.lesson-page,
+		.tiptap {
+			a {
+				color: var(--primaryColor);
+			}
+		}
+	}
+
+	input {
+		&[type='text'],
+		&[type='password'],
+		&[type='email'],
+		&[type='search'] {
+			@include inputMixin();
+		}
+	}
+	textarea,
+	select {
+		@include inputMixin();
+	}
+
+	select {
+		option {
+			@apply text-neutral-500 dark:text-neutral-400 focus:bg-primary;
+		}
+	}
+}
+
+@layer utilities {
+	.text-balance {
+		text-wrap: balance;
+	}
+
+	body {
+		@apply flex flex-col min-h-screen;
+	}
+	main {
+		@apply grow;
+	}
+}

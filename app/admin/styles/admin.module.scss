@@ -1,0 +1,33 @@
+@import '../../styles/mixins.module.scss';
+@mixin admin-input-mixin {
+	@include inputMixin();
+	border-width: 2px;
+	// border-color: currentColor;
+	width: 100%;
+}
+
+input {
+	&.input {
+		&[type='text'],
+		&[type='password'],
+		&[type='email'],
+		&[type='search'] {
+			@include admin-input-mixin();
+		}
+	}
+}
+
+textarea,
+select {
+	&.input {
+		@include admin-input-mixin();
+	}
+}
+
+.input {
+	@include admin-input-mixin();
+}
+
+.sidebar {
+	@apply md:sticky md:top-[81px];
+}
