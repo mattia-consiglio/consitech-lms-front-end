@@ -36,10 +36,10 @@ export interface Course extends AbstractContent {
 }
 
 export interface Lesson extends AbstractContent {
-	liveEditor: null
-	videoId: null
-	videoThumbnail: null
-	content: null
+	liveEditor: string
+	videoId: string
+	videoThumbnail: string
+	content: string
 	course: Course
 }
 

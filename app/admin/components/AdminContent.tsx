@@ -14,6 +14,7 @@ import toast from 'react-hot-toast'
 import MediaManager from '@/app/admin/media/components/MediaManager'
 import { useAppSelector } from '@/redux/store'
 import { generateSlug } from '@/utils/utils'
+import Tiptap from './TipTap'
 
 interface AdminCourseProps {
 	contentId: string
@@ -46,6 +47,10 @@ export default function AdminContent({ contentId }: AdminCourseProps) {
 					thumbnail: null,
 					displayOrder: 0,
 					mainLanguage: {} as Language,
+					liveEditor: '',
+					videoId: '',
+					videoThumbnail: '',
+					content: '',
 					seo: {
 						title: '',
 						description: '',
@@ -62,6 +67,7 @@ export default function AdminContent({ contentId }: AdminCourseProps) {
 	const [languages, setLanguages] = useState<Language[]>([])
 	const [saved, setSaved] = useState(true)
 	const [courses, setCourses] = useState<Course[]>([])
+	const [isContentLoaded, setIsContentLoaded] = useState(false)
 	const { title, description, slug, publishStatus, thumbnail, displayOrder, mainLanguage } = content
 	const selectedMedia = useAppSelector(state => state.media.selected)
 
@@ -75,6 +81,7 @@ export default function AdminContent({ contentId }: AdminCourseProps) {
 			.then(response => {
 				setContent(response)
 			})
+
 			.catch(error => {
 				setError(error.message)
 			})
@@ -100,6 +107,7 @@ export default function AdminContent({ contentId }: AdminCourseProps) {
 			})
 			.finally(() => {
 				setLoading(false)
+				setIsContentLoaded(true)
 			})
 	}, [])
 
@@ -118,7 +126,7 @@ export default function AdminContent({ contentId }: AdminCourseProps) {
 			}
 
 			if (saved) {
-				doActions()
+				return doActions()
 			}
 
 			if (e) {
@@ -152,15 +160,23 @@ export default function AdminContent({ contentId }: AdminCourseProps) {
 	}, [content, contentId, languages])
 
 	useEffect(() => {
-		window.addEventListener('beforeunload', beforeLeave)
-		return () => {
-			window.removeEventListener('beforeunload', beforeLeave)
+		if (window) {
+			window.addEventListener('beforeunload', beforeLeave)
+			return () => {
+				window.removeEventListener('beforeunload', beforeLeave)
+			}
 		}
 	}, [beforeLeave])
 
+	const extractVideoId = (url: string) => {
+		const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/
+		const match = url.match(regExp)
+		return match && match[7].length === 11 ? match[7] : ''
+	}
+
 	const handleChange = (e: ChangeEvent) => {
 		setSaved(false)
-		const value = e.target.value
+		let value = e.target.value
 		let key = e.target.name
 		if (key.startsWith('seo.')) {
 			key = e.target.name.split('.')[1]
@@ -171,7 +187,11 @@ export default function AdminContent({ contentId }: AdminCourseProps) {
 			return
 		}
 
-		if (key === 'course' && 'course' in content) {
+		if (key === 'videoId') {
+			value = extractVideoId(value)
+		}
+
+		if (key === 'course') {
 			const course = courses.find(c => c.id === value) as Course
 			console.log('course', course)
 			setContent({
@@ -183,24 +203,42 @@ export default function AdminContent({ contentId }: AdminCourseProps) {
 		setContent({ ...content, [key]: value })
 	}
 
-	const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-		e.preventDefault()
+	const handleSubmit = async (e?: React.FormEvent<HTMLFormElement>) => {
+		if (e) e.preventDefault()
+		if (loading) return
+		if (saved) return
 
 		setLoading(true)
 
 		const saveContentPromise = async () => {
-			const coursePayload = {
-				title,
-				slug,
-				description,
-				publishStatus,
-				thumbnailId: thumbnail ? thumbnail.id : null,
-				mainLanguageId: mainLanguage.id,
-			}
-			console.log('coursePayload', coursePayload)
-			console.log('courseId', contentId)
+			const contentPayload =
+				contentType === 'corsi'
+					? {
+							title,
+							slug,
+							description,
+							publishStatus,
+							thumbnailId: thumbnail ? thumbnail.id : null,
+							mainLanguageId: mainLanguage.id,
+					  }
+					: {
+							title,
+							slug,
+							description,
+							publishStatus,
+							thumbnailId: thumbnail ? thumbnail.id : null,
+							mainLanguageId: mainLanguage.id,
+							courseId: (content as Lesson).course.id,
+							liveEditor: (content as Lesson).liveEditor,
+							videoId: (content as Lesson).videoId,
+							videoThumbnail: (content as Lesson).videoThumbnail,
+							content: (content as Lesson).content,
+					  }
+
+			console.log('contentPayload', contentPayload)
+			console.log('contentId', contentId)
 			if (contentId === 'new') {
-				return API.post<Course>(`courses`, coursePayload)
+				return API.post<Course>(contentType === 'corsi' ? 'courses' : 'lessons', contentPayload)
 					.then(json => {
 						console.log('post', json)
 						setContent(json)
@@ -210,7 +248,10 @@ export default function AdminContent({ contentId }: AdminCourseProps) {
 						throw err
 					})
 			} else {
-				return API.put<Course>(`courses/${content.id}`, coursePayload)
+				return API.put<Course>(
+					`${contentType === 'corsi' ? 'courses' : 'lessons'}/${content.id}`,
+					contentPayload
+				)
 					.then(json => {
 						setContent(json)
 					})
@@ -269,13 +310,33 @@ export default function AdminContent({ contentId }: AdminCourseProps) {
 			})
 	}
 
+	const handleKeyboardSubmit = (e: KeyboardEvent) => {
+		if (e.ctrlKey && e.key === 's') {
+			e.preventDefault()
+
+			handleSubmit()
+		}
+	}
+
+	useEffect(() => {
+		document.addEventListener('keydown', handleKeyboardSubmit)
+		return () => {
+			document.removeEventListener('keydown', handleKeyboardSubmit)
+		}
+	})
+
+	const setLessonContent = (newContent: string) => {
+		setSaved(false)
+		setContent({ ...content, content: newContent })
+	}
+
 	return (
 		<MainWrapper>
 			<Suspense fallback='Caricamento...'>
 				<h1 className='mb-4'>{contentType === 'corsi' ? 'Corso' : 'Lezione'}</h1>
 				<form
 					onSubmit={handleSubmit}
-					className='w-full grid md:grid-cols-[1fr_auto] grid-cols-1  gap-4'
+					className='w-full grid md:grid-cols-[1fr_auto] grid-cols-1 gap-4 items-start'
 				>
 					{/* Col 1 */}
 					<div>
@@ -320,6 +381,44 @@ export default function AdminContent({ contentId }: AdminCourseProps) {
 								onChange={handleChange}
 							></textarea>
 						</div>
+						{contentType === 'lezioni' && 'course' in content && (
+							<>
+								<div className=''>
+									<label htmlFor='videoId'>Video id: </label>{' '}
+									<input
+										type='text'
+										name='videoId'
+										value={(content as Lesson).videoId || ''}
+										onChange={handleChange}
+										onFocus={() => {
+											!slug && setContent({ ...content, slug: generateSlug(title) })
+										}}
+										className={adminStyles.input}
+										id='videoId'
+									/>
+								</div>
+								<div>
+									<label htmlFor='content' className='block'>
+										Lezione
+									</label>
+									<div>
+										<label htmlFor='liveEditor' className='block'>
+											Live Editor
+										</label>
+										<textarea
+											name='liveEditor'
+											id='liveEditor'
+											className={adminStyles.input}
+											value={content.liveEditor || ''}
+											onChange={handleChange}
+										></textarea>
+									</div>
+									{isContentLoaded && (
+										<Tiptap content={(content as Lesson).content} onUpdate={setLessonContent} />
+									)}
+								</div>
+							</>
+						)}
 						<div>
 							{'seo' in content ? (
 								<SEOComponent content={content} handleChange={handleChange} />
@@ -331,7 +430,7 @@ export default function AdminContent({ contentId }: AdminCourseProps) {
 						</div>
 					</div>
 					{/* Col 2 */}
-					<div className='gap-2 flex flex-col'>
+					<div className='gap-2 flex flex-col md:sticky md:top-[81px]'>
 						<div>
 							<label htmlFor='publishStatus' className='block'>
 								Stato pubblicazione
@@ -370,16 +469,12 @@ export default function AdminContent({ contentId }: AdminCourseProps) {
 						</div>
 						{contentType === 'lezioni' && (
 							<div>
-								<label htmlFor='courses'>Corsi</label>
+								<label htmlFor='courses'>Corso</label>
 								<select
 									name='course'
 									id='courses'
 									className={adminStyles.input}
-									value={
-										('course' in content && content.course.id) ||
-										// courses.find(c => 'course' in content && c.id === content.course.id)?.id ||
-										''
-									}
+									value={('course' in content && content.course.id) || ''}
 									onChange={handleChange}
 								>
 									<option key='' value=''>

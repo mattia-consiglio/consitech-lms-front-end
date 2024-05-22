@@ -2,11 +2,11 @@
 import { tree } from 'next/dist/build/templates/app-page'
 import React, { useState } from 'react'
 import { Typewriter } from 'react-simple-typewriter'
-import style from './tyepwriter.module.scss'
+import style from './styles/typewriter.module.scss'
 import Link from 'next/link'
 
 export default function HeroSection() {
-	const [istyping, setIstyping] = useState(false)
+	const [isTyping, setIsTyping] = useState(false)
 	return (
 		<div className='bg-primary h-[50svh] min-h-[550px] w-full box-border flex flex-col justify-center items-center text-center'>
 			<h2 className='text-5xl text-invert_light '>
@@ -15,11 +15,11 @@ export default function HeroSection() {
 					<Typewriter
 						words={['a programmare', 'html', 'css', 'javascript', 'php', 'Bootstrap', 'Wordpress']}
 						cursor
-						cursorBlinking={istyping}
+						cursorBlinking={isTyping}
 						loop={true}
-						onType={() => setIstyping(false)}
-						onDelete={() => setIstyping(false)}
-						onDelay={() => setIstyping(true)}
+						onType={() => setIsTyping(false)}
+						onDelete={() => setIsTyping(false)}
+						onDelay={() => setIsTyping(true)}
 					/>
 				</span>
 				<br />

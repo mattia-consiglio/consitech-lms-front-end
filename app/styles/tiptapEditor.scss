@@ -1,0 +1,59 @@
+.tiptap {
+	> * + * {
+		margin-top: 0.75em;
+	}
+
+	padding: 0.75rem;
+
+	code {
+		background-color: rgba(#0d0d0d, 0.7);
+		color: #fff;
+
+		.dark & {
+			background-color: rgba(#fff, 0.7);
+			color: #0d0d0d;
+		}
+	}
+
+	pre {
+		background: #0d0d0d;
+		color: #fff;
+		// font-family: 'JetBrainsMono', monospace;
+		padding: 0.75rem 1rem;
+		// border-radius: 0.5rem;
+		.dark & {
+			border: 1px solid rgba(255, 255, 255, 0.3);
+		}
+
+		code {
+			color: currentColor;
+			padding: 0;
+			background: none;
+			// font-size: 0.8rem;
+
+			.dark & {
+				background: none;
+				color: currentColor;
+			}
+		}
+	}
+}
+
+.tiptap-menu_bar {
+	padding: 0.75rem;
+
+	position: sticky;
+	top: 81px;
+	background-color: var(--background);
+	z-index: 1000; /* Assicurati che la barra dei menu sia sopra altri contenuti */
+	// padding: 10px; /* Aggiungi un po' di padding per lo spazio */
+	box-shadow: 0 2px 4px rgba(var(--foreground), 0.1); /* Aggiungi un'ombra per separare visivamente la barra dei menu dal contenuto */
+
+	button {
+		@apply p-1 m-1 border hover:bg-neutral-300 dark:hover:bg-neutral-700;
+
+		&.is-active {
+			@apply bg-neutral-900 text-white dark:bg-neutral-200 dark:text-black;
+		}
+	}
+}

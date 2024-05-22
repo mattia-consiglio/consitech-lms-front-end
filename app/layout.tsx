@@ -1,13 +1,12 @@
 import type { Metadata } from 'next'
-import './globals.scss'
 import Navbar from './components/Navbar'
 import { inconsolata } from './fonts'
 import Footer from './components/Footer'
-import { Flowbite, ThemeModeScript, ToastToggle } from 'flowbite-react'
+import { Flowbite } from 'flowbite-react'
 import StoreProvider from '@/redux/StoreProvider'
-import toast, { Toaster, ToastBar } from 'react-hot-toast'
 import ToasterWrapper from './ToasterWrapper'
 import { getCookie } from './actions'
+import './styles/globals.scss'
 
 export const metadata: Metadata = {
 	title: 'Consitech',

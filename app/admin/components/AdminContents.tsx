@@ -10,6 +10,7 @@ import { HiOutlinePlusSm } from 'react-icons/hi'
 import { error } from 'console'
 import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
+import adminStyles from '@/app/admin/styles/admin.module.scss'
 
 export default function AdminContents({
 	title,
@@ -91,7 +92,12 @@ export default function AdminContents({
 			{type === 'lesson' && (
 				<div>
 					<label htmlFor='course'>Corso: </label>
-					<select name='' id='course' onChange={e => getSelectedCourse(e.target.value)}>
+					<select
+						name=''
+						id='course'
+						onChange={e => getSelectedCourse(e.target.value)}
+						className={adminStyles.input}
+					>
 						<option key='' value=''>
 							Seleziona corso
 						</option>

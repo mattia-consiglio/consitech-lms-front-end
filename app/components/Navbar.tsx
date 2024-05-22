@@ -72,7 +72,7 @@ function Navbar({ defaultTheme }: { defaultTheme: string }) {
 	}, [dispatch, user])
 
 	return (
-		<nav className='bg-body_light dark:bg-body_dark w-full z-20 top-0 start-0 border-b-0 md:border-invert_light-400 dark:border-invert_light-600 md:border-b'>
+		<nav className='bg-body_light/95 dark:bg-body_dark/95 w-full z-20 top-0 start-0 border-b-0 md:border-invert_light-400 dark:border-invert_light-600 md:border-b backdrop-blur-md'>
 			<div className='max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4'>
 				<div>
 					<Link href='/' className='items-center space-x-3 rtl:space-x-reverse flex'>
@@ -152,7 +152,7 @@ function Navbar({ defaultTheme }: { defaultTheme: string }) {
 					<button
 						data-collapse-toggle='navbar-sticky'
 						type='button'
-						className='inline-flex items-center p-2 w-10 h-10 justify-center text-sm  rounded-lg md:hidden hover:bg-invert_light focus:outline-none focus:ring-2 focus:ring-invert_light dark:hover:bg-invert_dark-700 dark:focus:ring-bg-invert_dark-600'
+						className='inline-flex items-center p-2 w-10 h-10 justify-center text-sm md:hidden hover:bg-neutral-300 focus:outline-none focus:ring-2 focus:ring-invert_light dark:hover:bg-invert_dark-700 dark:focus:ring-bg-invert_dark-600'
 						aria-controls='navbar-sticky'
 						aria-expanded={menuOpen}
 						onClick={() => {

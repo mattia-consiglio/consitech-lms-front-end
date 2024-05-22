@@ -34,27 +34,29 @@ export default async function LessonsPage({ params }: LessonsPageProps) {
 				{ label: lesson.title },
 			]}
 		>
-			{lesson.videoId ? (
-				lesson.liveEditor ? (
-					<div className='grid grid-cols-1 gap-4 md:grid-cols-2 items-center'>
-						<VideoPlayer videoId={lesson.videoId} />
-						<CodeEditor code={lesson.liveEditor} />
-					</div>
+			<div className='lesson-page'>
+				{lesson.videoId ? (
+					lesson.liveEditor ? (
+						<div className='grid grid-cols-1 gap-4 md:grid-cols-2 items-center'>
+							<VideoPlayer videoId={lesson.videoId} />
+							<CodeEditor code={lesson.liveEditor} />
+						</div>
+					) : (
+						<div className=''>
+							<VideoPlayer videoId={lesson.videoId} />
+						</div>
+					)
 				) : (
-					<div className=''>
-						<VideoPlayer videoId={lesson.videoId} />
-					</div>
-				)
-			) : (
-				''
-			)}
-			<div className='mt-4'>
-				<h3 className='text-primary_darker dark:text-primary text-2xl'>Prova il codice</h3>
-				<CodeEditor />
-			</div>
-			<div className='mt-4'>
-				<h3 className='text-primary_darker dark:text-primary text-2xl'>Lezione</h3>
-				<div dangerouslySetInnerHTML={{ __html: safeHTML }}></div>
+					''
+				)}
+				<div className='mt-4'>
+					<h3 className='text-primary_darker dark:text-primary text-2xl'>Prova il codice</h3>
+					<CodeEditor />
+				</div>
+				<div className='mt-4'>
+					<h3 className='text-primary_darker dark:text-primary text-2xl'>Lezione</h3>
+					<div dangerouslySetInnerHTML={{ __html: safeHTML }}></div>
+				</div>
 			</div>
 			<PathName />
 		</MainWrapper>

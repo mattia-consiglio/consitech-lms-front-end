@@ -2,6 +2,7 @@ import { Metadata } from 'next'
 import HeroSection from './HeroSection'
 import ServerCorsesComponent from './corsi/components/ServerCoursesComponent'
 import ContentWrapper from './components/ContentWrapper'
+import './styles/globals.scss'
 
 export const metadata: Metadata = {
 	title: 'Home',
