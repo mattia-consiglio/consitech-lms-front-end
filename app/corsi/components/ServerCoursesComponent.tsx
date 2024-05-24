@@ -22,13 +22,11 @@ export default async function ServerCorsesComponent() {
 	if (token) {
 		// L'utente è loggato, chiama l'endpoint protetto
 		responseCourses = await API.get<PageableContent<Course>>('courses').catch(error => {
-			toast.error(error.message)
 			return {} as PageableContent<Course>
 		})
 	} else {
 		// L'utente non è loggato, chiama l'endpoint pubblico
 		responseCourses = await API.get<PageableContent<Course>>('public/courses').catch(error => {
-			toast.error(error.message)
 			return {} as PageableContent<Course>
 		})
 	}

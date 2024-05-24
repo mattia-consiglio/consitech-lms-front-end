@@ -1,5 +1,7 @@
 'use client'
 
+// Docs https://tiptap.dev/docs/editor/introduction
+
 import { Color } from '@tiptap/extension-color'
 import ListItem from '@tiptap/extension-list-item'
 import TextStyle from '@tiptap/extension-text-style'
@@ -63,6 +65,11 @@ interface Funcs {
 	setLink: () => void
 }
 
+/**
+ * Represents the menu bar component for the TipTap editor.
+ * @param {Funcs} props - The functional component props.
+ * @returns {JSX.Element} The rendered menu bar component.
+ */
 const MenuBar = ({ editor, addImage, setLink }: Funcs) => {
 	return (
 		<div className='tiptap-menu_bar'>
@@ -368,6 +375,15 @@ interface Props {
 	onUpdate: (content: string) => void
 }
 
+/**
+ * Tiptap Component.
+ *
+ * @component
+ * @param {Object} props - The component props.
+ * @param {string} props.content - The initial content of the editor.
+ * @param {Function} props.onUpdate - The callback function to update the content.
+ * @returns {JSX.Element} The Tiptap component.
+ */
 const Tiptap = ({ content, onUpdate: setContent }: Props) => {
 	const editor = useEditor({
 		extensions: extensions,
