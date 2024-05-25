@@ -45,7 +45,7 @@
 	position: sticky;
 	top: 81px;
 	background-color: var(--background);
-	z-index: 1000; /* Assicurati che la barra dei menu sia sopra altri contenuti */
+	z-index: 40; /* Assicurati che la barra dei menu sia sopra altri contenuti */
 	// padding: 10px; /* Aggiungi un po' di padding per lo spazio */
 	box-shadow: 0 2px 4px rgba(var(--foreground), 0.1); /* Aggiungi un'ombra per separare visivamente la barra dei menu dal contenuto */
 
