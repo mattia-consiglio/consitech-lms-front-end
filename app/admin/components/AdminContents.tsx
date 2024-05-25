@@ -54,22 +54,25 @@ export default function AdminContents({
 			})
 	}, [])
 
-	const getSelectedCourse = useCallback(async (id: string) => {
-		setSelectedCourse(id)
-		if (id === '') return getLessons()
+	const getSelectedCourse = useCallback(
+		async (id: string) => {
+			setSelectedCourse(id)
+			if (id === '') return getLessons()
 
-		setLoading(true)
-		API.get<Course[]>(`lessons/course/${id}`)
-			.then(response => {
-				setContents(response)
-			})
-			.catch(error => {
-				toast.error(error.message)
-			})
-			.finally(() => {
-				setLoading(false)
-			})
-	}, [])
+			setLoading(true)
+			API.get<Course[]>(`lessons/course/${id}`)
+				.then(response => {
+					setContents(response)
+				})
+				.catch(error => {
+					toast.error(error.message)
+				})
+				.finally(() => {
+					setLoading(false)
+				})
+		},
+		[getLessons]
+	)
 
 	useEffect(() => {
 		getCourses()

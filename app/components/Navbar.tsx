@@ -12,12 +12,7 @@ import { getUserAction } from '@/redux/actions/user'
 import { getCookie, removeCookie, setCookie } from '../actions'
 import { UserRole } from '@/utils/types'
 
-const isLoggedIn = async () => {
-	const cookie = await getCookie('token')
-	return cookie ? true : false
-}
-
-function Navbar({ defaultTheme }: { defaultTheme: string }) {
+function Navbar({ defaultTheme, isLoggedIn }: { defaultTheme: string; isLoggedIn: boolean }) {
 	const pathname = usePathname()
 	const [menuOpen, setMenuOpen] = useState(false)
 	const themeMode = useThemeMode()
@@ -61,15 +56,12 @@ function Navbar({ defaultTheme }: { defaultTheme: string }) {
 	}, [theme, themeMode.mode])
 
 	useEffect(() => {
-		isLoggedIn()
-			.then(res => {
-				dispatch(setUserLoginStatus(res))
-				if (res) {
-					dispatch(getUserAction())
-				}
-			})
-			.catch(_ => {})
-	}, [dispatch, user])
+		if (isLoggedIn) {
+			dispatch(getUserAction())
+		} else {
+			dispatch(userLogout())
+		}
+	}, [dispatch, user, isLoggedIn])
 
 	return (
 		<nav className='bg-body_light/95 dark:bg-body_dark/95 w-full z-20 top-0 start-0 border-b-0 md:border-invert_light-400 dark:border-invert_light-600 md:border-b backdrop-blur-md'>
