@@ -50,10 +50,10 @@ body {
 	}
 
 	h1 {
-		@apply text-3xl font-bold;
+		@include h1;
 	}
 	h2 {
-		@apply text-xl font-bold;
+		@include h2;
 	}
 
 	main {

@@ -1,0 +1,11 @@
+@import 'mixins.module.scss';
+
+.basics {
+}
+
+h1.basics {
+	@include h1;
+}
+h2.basics {
+	@include h2;
+}
