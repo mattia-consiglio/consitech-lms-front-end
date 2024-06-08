@@ -353,6 +353,12 @@ export default function AdminContent({ contentId }: AdminCourseProps) {
 		console.log('time', time, hours, minutes, seconds, milliseconds)
 		return hours * 60 * 60 * 1000 + minutes * 60 * 1000 + seconds * 1000 + milliseconds
 	}
+	interface SrtLine {
+		sequence: number
+		timeStart: number
+		timeEnd: number
+		text: string
+	}
 
 	const parseSRTFile = (e: FormEvent<HTMLInputElement>) => {
 		const file = (e.target as HTMLInputElement).files?.[0]
@@ -366,13 +372,20 @@ export default function AdminContent({ contentId }: AdminCourseProps) {
 			const lineBreak = /\r\n\r\n\r\n|\n\n\n|\r\n\r\n|\n\n/
 			const lines = text.split(lineBreak).filter(line => line.trim() !== '')
 			console.log('lines', lines)
-			const srtContent = lines.map(line => {
+			const srtContent: SrtLine[] = []
+			lines.forEach(line => {
 				const lineBreak = /\r\n|\n/
 				const parts = line.split(lineBreak)
-				const sequence = parseInt(parts[0])
+				const sequence = srtContent.length
+					? srtContent[srtContent.length - 1].sequence + 1
+					: parseInt(parts[0])
 				const [timeStart, timeEnd] = parts[1].split(' --> ').map(parseSrtTimeInMs)
 				const text = parts[2] ? parts[2] : ''
-				return { sequence, timeStart, timeEnd, text }
+				if (text === srtContent[srtContent.length - 1]?.text) {
+					srtContent[srtContent.length - 1].timeEnd = timeEnd
+					return
+				}
+				srtContent.push({ sequence, timeStart, timeEnd, text })
 			})
 			console.log('content', srtContent)
 			const liveEditor = JSON.stringify(srtContent)
