@@ -53,8 +53,9 @@ export default async function LessonsPage({ params }: LessonsPageProps) {
 				<div className='mt-4'>
 					<h3 className='text-primary_darker dark:text-primary text-2xl'>Prova il codice</h3>
 					<CodeEditor
-						files={{ 'index.html': { name: 'index.html', language: 'html', value: '' } }}
-						currenFile='index.html'
+						key='code-editor'
+						files={{ 'sandbox/index.html': { name: 'index.html', language: 'html', value: '' } }}
+						currenFile='try.html'
 					/>
 				</div>
 				<div className='mt-4'>

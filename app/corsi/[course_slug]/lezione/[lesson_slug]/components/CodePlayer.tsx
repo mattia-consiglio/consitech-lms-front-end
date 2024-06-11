@@ -19,7 +19,6 @@ function CodePlayer({ sourceCode }: CodePlayerProps) {
 	const { currentTime, playerState } = useAppSelector(state => state.player)
 	const [filteredArray, setFilteredArray] = useState([] as SrtLine[])
 	const files = useRef({} as CodeEditorFilesMap)
-	console.log('files', files)
 
 	const getLanguage = (file: string) => {
 		const extension = file.split('.').pop()
@@ -41,13 +40,14 @@ function CodePlayer({ sourceCode }: CodePlayerProps) {
 		(sourceText: string, init: boolean = false) => {
 			const { file, text } = JSON.parse(sourceText) as SrtText
 			const language = getLanguage(file)
+			const path = 'codePlayer/' + file
 			if (init) {
-				if (files.current[file]) return
-				files.current[file] = { name: file, language, value: '' }
+				if (files.current[path]) return
+				files.current[path] = { name: file, language, value: '' }
 				return
 			}
-			files.current[file] = { name: file, language, value: text }
-			setCurrentCode(file)
+			files.current[path] = { name: file, language, value: text }
+			setCurrentCode(path)
 		},
 		[files]
 	)
@@ -76,11 +76,9 @@ function CodePlayer({ sourceCode }: CodePlayerProps) {
 	}, [currentTime, playerState, sourceCodeArray])
 
 	useEffect(() => {
-		// console.log('playerState', playerState)
 		if (playerState !== 1) {
 			timeoutArray.current.forEach(timeout => clearTimeout(timeout))
 		}
-		// console.log('filteredArray', filteredArray, filteredArray.length)
 		const time = currentTime * 1000
 		if (filteredArray.length === 0) return
 		filteredArray.forEach((element, index) => {
@@ -93,7 +91,6 @@ function CodePlayer({ sourceCode }: CodePlayerProps) {
 				timeoutArray.current.push(
 					setTimeout(() => {
 						updateFiles(element.text)
-						// console.log('file')
 					}, element.timeStart - time)
 				)
 			}
@@ -103,7 +100,7 @@ function CodePlayer({ sourceCode }: CodePlayerProps) {
 
 	return (
 		<>
-			<CodeEditor currenFile={currentCode} files={files.current} />
+			<CodeEditor key='code-player' currenFile={currentCode} files={files.current} />
 		</>
 	)
 }

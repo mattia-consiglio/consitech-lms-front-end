@@ -50,18 +50,18 @@ export default function CodeEditor({ files, currenFile }: CodeEditorProps) {
 		<div className='min-h-[300px] h-[300px] w-full'>
 			{files && (
 				<div>
-					{Object.keys(files).map((tabFile, index) => (
+					{Object.entries(files).map(tabFile => (
 						<button
-							key={index}
-							onClick={() => setFileName(tabFile)}
+							key={tabFile[0]}
+							onClick={() => setFileName(tabFile[0])}
 							className={`inline-flex gap-1 items-center p-2 border-t-3 mr-[0.15rem] hover:bg-[#2e2e2e] text-neutral-200 text-left ${
-								fileName === tabFile
+								fileName === tabFile[0]
 									? 'bg-[#1e1e1e] border-t-[#3399cc]'
 									: 'bg-[#34352f] border-t-[#34352f]'
 							} `}
 						>
-							{fileIcons[files[tabFile].language]}
-							{tabFile}
+							{fileIcons[files[tabFile[0]].language]}
+							{tabFile[1].name}
 						</button>
 					))}
 				</div>
