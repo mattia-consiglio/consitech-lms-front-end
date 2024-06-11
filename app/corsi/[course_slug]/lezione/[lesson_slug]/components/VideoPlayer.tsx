@@ -1,12 +1,10 @@
 'use client'
-import { Button } from 'flowbite-react'
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useState } from 'react'
 import YouTube, { YouTubeEvent, YouTubePlayer, YouTubeProps } from 'react-youtube'
 import VideoControls from './VideoControls'
-import { customButtonTheme } from '@/app/flowbite.themes'
-import { IoPauseSharp, IoPlaySharp } from 'react-icons/io5'
-import { log } from 'console'
-import './videoPlayer.scss'
+import '../videoPlayer.scss'
+import { useAppDispatch, useAppSelector } from '@/redux/store'
+import { setCurrentTime, setPlayerState } from '@/redux/reducers/playerReducer'
 
 interface VideoPlayerProps {
 	videoId: string
@@ -15,32 +13,34 @@ interface VideoPlayerProps {
 export default function VideoPlayer({ videoId }: VideoPlayerProps) {
 	const [player, setPlayer] = useState<YouTubePlayer | null>(null)
 	const [duration, setDuration] = useState(0)
-	const [currentTime, setCurrentTime] = useState(0)
+	const { currentTime, playerState } = useAppSelector(state => state.player)
 	const [intervalID, setIntervalID] = useState<NodeJS.Timeout>()
-	const [playerState, setPlayerState] = useState(-1)
+	// const [playerState, setPlayerState] = useState(-1)
+	const dispatch = useAppDispatch()
+
 	const onPlayerReady: YouTubeProps['onReady'] = event => {
 		// access to player in all event handlers via event.target
 		setPlayer(event.target)
 		setDuration(event.target.getDuration())
-		setCurrentTime(event.target.getCurrentTime())
+		dispatch(setCurrentTime(event.target.getCurrentTime()))
 	}
 
 	const seekTo = (seconds: number) => {
 		if (player) {
 			player.seekTo(seconds)
-			setCurrentTime(seconds)
+			dispatch(setCurrentTime(seconds))
 		}
 	}
 
 	const onStateChange = (state: YouTubeEvent<number>) => {
-		setPlayerState(state.data)
+		dispatch(setPlayerState(state.data))
 		if (state.data === 0) {
 			setCurrentTime(0)
 		} else if (state.data === 1) {
 			setIntervalID(
 				setInterval(() => {
-					setCurrentTime(player.getCurrentTime() || 0)
-					setPlayerState(state.data)
+					dispatch(setCurrentTime(player.getCurrentTime() || 0))
+					dispatch(setPlayerState(state.data))
 				}, 100)
 			)
 		} else {
@@ -73,7 +73,6 @@ export default function VideoPlayer({ videoId }: VideoPlayerProps) {
 					duration={duration}
 					currentTime={currentTime}
 					player={player}
-					setCurrentTime={setCurrentTime}
 					playerState={playerState}
 				/>
 			</div>

@@ -33,7 +33,6 @@ export default function LessonBlock({
 	courseSlug,
 	displayOrder,
 }: LessonBlockProps) {
-	console.log('LessonBlock.tsx: img:', img)
 	return (
 		<Link
 			href={'/corsi/' + courseSlug + '/lezione/' + lessonSlug}

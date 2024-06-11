@@ -2,10 +2,19 @@
 import MainWrapper from '@/app/components/MainWrapper'
 import { customButtonTheme, customSpinnerTheme, customTabsTheme } from '@/app/flowbite.themes'
 import { API } from '@/utils/api'
-import { ChangeEvent, Course, Language, Lesson, PublishStatus, SEO } from '@/utils/types'
+import { ChangeEvent, Course, Language, Lesson, PublishStatus, SEO, SrtLine } from '@/utils/types'
 import { Button, Modal, Spinner } from 'flowbite-react'
 import { usePathname, useRouter } from 'next/navigation'
-import React, { Suspense, use, useCallback, useEffect, useState } from 'react'
+import React, {
+	FormEvent,
+	FormEventHandler,
+	Suspense,
+	use,
+	useCallback,
+	useEffect,
+	useRef,
+	useState,
+} from 'react'
 import { HiOutlinePlusSm, HiOutlineRefresh } from 'react-icons/hi'
 import SEOComponent from './SEOComponent'
 import adminStyles from '@/app/admin/styles/admin.module.scss'
@@ -15,6 +24,7 @@ import MediaManager from '@/app/admin/media/components/MediaManager'
 import { useAppSelector } from '@/redux/store'
 import { generateSlug } from '@/utils/utils'
 import Tiptap from './TipTap'
+import { parse } from 'path'
 
 interface AdminCourseProps {
 	contentId: string
@@ -58,7 +68,7 @@ export default function AdminContent({ contentId }: AdminCourseProps) {
 					course: {
 						id: '',
 					} as Course,
-			  } as Lesson)
+			  } as Lesson & { liveEditor: string })
 	)
 	const router = useRouter()
 	const [loading, setLoading] = useState(false)
@@ -70,6 +80,7 @@ export default function AdminContent({ contentId }: AdminCourseProps) {
 	const [isContentLoaded, setIsContentLoaded] = useState(false)
 	const { title, description, slug, publishStatus, thumbnail, displayOrder, mainLanguage } = content
 	const selectedMedia = useAppSelector(state => state.media.selected)
+	const srtFileRef = useRef<HTMLInputElement>(null)
 
 	const getContent = useCallback(async () => {
 		if (contentId === 'new') {
@@ -246,7 +257,11 @@ export default function AdminContent({ contentId }: AdminCourseProps) {
 					.then(json => {
 						console.log('post', json)
 						setContent(json)
-						router.push(`/admin/corsi/${json.id}`)
+						if (contentType === 'corsi') {
+							router.push(`/admin/corsi/${json.id}`)
+						} else {
+							router.push(`/admin/lezioni/${json.id}`)
+						}
 					})
 					.catch((err: Error) => {
 						throw err
@@ -334,6 +349,50 @@ export default function AdminContent({ contentId }: AdminCourseProps) {
 		setContent({ ...content, content: newContent })
 	}
 
+	const parseSrtTimeInMs = (time: string) => {
+		const [hours, minutes, seconds, milliseconds] = time
+			.replace(',', ':')
+			.split(':')
+			.map(parseFloat)
+		console.log('time', time, hours, minutes, seconds, milliseconds)
+		return hours * 60 * 60 * 1000 + minutes * 60 * 1000 + seconds * 1000 + milliseconds
+	}
+
+	const parseSRTFile = (e: FormEvent<HTMLInputElement>) => {
+		const file = (e.target as HTMLInputElement).files?.[0]
+		if (!file) return
+		console.log('file', file)
+		const reader = new FileReader()
+		reader.onload = async e => {
+			e.preventDefault()
+			const text = e.target?.result as string
+			console.log('text', text)
+			const lineBreak = /\r\n\r\n\r\n|\n\n\n|\r\n\r\n|\n\n/
+			const lines = text.split(lineBreak).filter(line => line.trim() !== '')
+			console.log('lines', lines)
+			const srtContent: SrtLine[] = []
+			lines.forEach(line => {
+				const lineBreak = /\r\n|\n/
+				const parts = line.split(lineBreak)
+				const sequence = srtContent.length
+					? srtContent[srtContent.length - 1].sequence + 1
+					: parseInt(parts[0])
+				const [timeStart, timeEnd] = parts[1].split(' --> ').map(parseSrtTimeInMs)
+				const text = parts[2] ? parts[2] : ''
+				if (text === srtContent[srtContent.length - 1]?.text) {
+					srtContent[srtContent.length - 1].timeEnd = timeEnd
+					return
+				}
+				srtContent.push({ sequence, timeStart, timeEnd, text })
+			})
+			console.log('content', srtContent)
+			const liveEditor = JSON.stringify(srtContent)
+			setContent({ ...content, liveEditor })
+			if (srtFileRef.current) srtFileRef.current.value = ''
+		}
+		reader.readAsText(file)
+	}
+
 	return (
 		<MainWrapper>
 			<Suspense fallback='Caricamento...'>
@@ -409,6 +468,13 @@ export default function AdminContent({ contentId }: AdminCourseProps) {
 										<label htmlFor='liveEditor' className='block'>
 											Live Editor
 										</label>
+										<input
+											type='file'
+											name='liveEditorSrt'
+											id='liveEditorSrt'
+											onInput={e => parseSRTFile(e)}
+											ref={srtFileRef}
+										/>
 										<textarea
 											name='liveEditor'
 											id='liveEditor'
@@ -534,7 +600,7 @@ export default function AdminContent({ contentId }: AdminCourseProps) {
 							<Button theme={customButtonTheme} outline onClick={() => beforeLeave()}>
 								<span className='flex gap-x-2 items-center'>
 									<HiOutlinePlusSm />
-									Aggiungi nuovo {contentType === 'corsi' ? 'corso' : 'lezione'}
+									Aggiungi {contentType === 'corsi' ? 'nuovo corso' : 'nuova lezione'}
 								</span>
 							</Button>
 						</div>
