@@ -2,7 +2,7 @@
 import MainWrapper from '@/app/components/MainWrapper'
 import { customButtonTheme, customSpinnerTheme, customTabsTheme } from '@/app/flowbite.themes'
 import { API } from '@/utils/api'
-import { ChangeEvent, Course, Language, Lesson, PublishStatus, SEO } from '@/utils/types'
+import { ChangeEvent, Course, Language, Lesson, PublishStatus, SEO, SrtLine } from '@/utils/types'
 import { Button, Modal, Spinner } from 'flowbite-react'
 import { usePathname, useRouter } from 'next/navigation'
 import React, {
@@ -257,7 +257,11 @@ export default function AdminContent({ contentId }: AdminCourseProps) {
 					.then(json => {
 						console.log('post', json)
 						setContent(json)
-						router.push(`/admin/corsi/${json.id}`)
+						if (contentType === 'corsi') {
+							router.push(`/admin/corsi/${json.id}`)
+						} else {
+							router.push(`/admin/lezioni/${json.id}`)
+						}
 					})
 					.catch((err: Error) => {
 						throw err
@@ -352,12 +356,6 @@ export default function AdminContent({ contentId }: AdminCourseProps) {
 			.map(parseFloat)
 		console.log('time', time, hours, minutes, seconds, milliseconds)
 		return hours * 60 * 60 * 1000 + minutes * 60 * 1000 + seconds * 1000 + milliseconds
-	}
-	interface SrtLine {
-		sequence: number
-		timeStart: number
-		timeEnd: number
-		text: string
 	}
 
 	const parseSRTFile = (e: FormEvent<HTMLInputElement>) => {
@@ -602,7 +600,7 @@ export default function AdminContent({ contentId }: AdminCourseProps) {
 							<Button theme={customButtonTheme} outline onClick={() => beforeLeave()}>
 								<span className='flex gap-x-2 items-center'>
 									<HiOutlinePlusSm />
-									Aggiungi nuovo {contentType === 'corsi' ? 'corso' : 'lezione'}
+									Aggiungi {contentType === 'corsi' ? 'nuovo corso' : 'nuova lezione'}
 								</span>
 							</Button>
 						</div>

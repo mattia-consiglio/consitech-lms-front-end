@@ -118,3 +118,10 @@ export type ChangeEvent =
 	| React.ChangeEvent<HTMLInputElement>
 	| React.ChangeEvent<HTMLSelectElement>
 	| React.ChangeEvent<HTMLTextAreaElement>
+
+export interface SrtLine {
+	sequence: number
+	timeStart: number
+	timeEnd: number
+	text: string
+}

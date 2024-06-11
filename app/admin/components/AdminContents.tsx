@@ -88,7 +88,7 @@ export default function AdminContents({
 				<Button theme={customButtonTheme} outline onClick={() => router.push(link)}>
 					<span className='flex gap-x-2 items-center'>
 						<HiOutlinePlusSm />
-						Aggiungi nuovo corso
+						Aggiungi {type === 'course' ? 'nuovo corso' : 'nuova lezione'}
 					</span>
 				</Button>
 			</div>
