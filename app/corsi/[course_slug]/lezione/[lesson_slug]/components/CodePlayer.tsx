@@ -3,6 +3,9 @@ import React, { use, useCallback, useEffect, useMemo, useRef, useState } from 'r
 import CodeEditor, { CodeEditorFilesMap, MonacoFile } from './CodeEditor'
 import { SrtLine } from '@/utils/types'
 import { useAppSelector } from '@/redux/store'
+import { text } from 'stream/consumers'
+import adminStyles from '@/app/admin/styles/admin.module.scss'
+import * as Diff from 'diff'
 
 interface CodePlayerProps {
 	sourceCode: string
@@ -19,6 +22,7 @@ function CodePlayer({ sourceCode }: CodePlayerProps) {
 	const { currentTime, playerState } = useAppSelector(state => state.player)
 	const [filteredArray, setFilteredArray] = useState([] as SrtLine[])
 	const files = useRef({} as CodeEditorFilesMap)
+	const prevText = useRef('')
 
 	const getLanguage = (file: string) => {
 		const extension = file.split('.').pop()
@@ -83,7 +87,6 @@ function CodePlayer({ sourceCode }: CodePlayerProps) {
 		if (filteredArray.length === 0) return
 		filteredArray.forEach((element, index) => {
 			if (element === undefined) return
-			const { text, file } = JSON.parse(element.text) as SrtText
 			if (index === 0) {
 				updateFiles(element.text)
 			}
@@ -98,8 +101,120 @@ function CodePlayer({ sourceCode }: CodePlayerProps) {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [filteredArray, playerState])
 
+	interface Changes2DRange {
+		rangeOffset: number
+		rangeLength: number
+		rangeText: string
+		originalText: string
+	}
+
+	const getTextDifference2DRanges = (text: string): Changes2DRange => {
+		let rangeOffset = 0 // Start of the range (changed text)
+		let rangeLength = 0 // Length of the range (removed text)
+		let rangeText = '' // Text to insert
+
+		// const JsDiff = require('diff')
+		const originalText = prevText.current
+		const diff = Diff.diffChars(prevText.current, text)
+		prevText.current = text
+		console.log(diff)
+
+		let changes = 0
+		let deletions = 0
+		let additions = 0
+		diff.forEach((part, i) => {
+			const isLast = i === diff.length - 1
+			if (part.added) {
+				rangeText = rangeText + part.value
+				changes++
+				additions++
+			} else if (part.removed) {
+				rangeLength += part.value.length // Length of the removed text
+				changes++
+				deletions++
+			} else {
+				if (!changes) {
+					rangeOffset += part.value.length ? part.value.length : 0
+				}
+
+				if (changes && !isLast) {
+					rangeLength += part.value.length
+				}
+
+				if (additions && !isLast) {
+					rangeText = rangeText + part.value
+				}
+
+				if (deletions && !additions && !isLast) {
+					rangeLength -= part.value.length
+				}
+			}
+			rangeOffset = changes ? rangeOffset : (rangeOffset += rangeLength)
+		})
+
+		const result = { rangeOffset, rangeLength, rangeText, originalText }
+		console.log(result)
+		return result
+	}
+
+	const convert2DChangesToMonacoOperations = ({
+		rangeOffset,
+		rangeLength,
+		rangeText,
+		originalText,
+	}: Changes2DRange) => {
+		let start = rangeOffset
+		let end = rangeOffset + rangeLength
+		let startLineNumber = 0
+		let startColumn = 0
+		let endLineNumber = 0
+		let endColumn = 0
+		const eol = /\r\n|\n/
+		const lines = originalText.split(eol)
+		const eolLength = originalText.replace(originalText, '')[0] === '\r' ? 2 : 1
+
+		lines.forEach((line, i) => {
+			const lineLength = line.length + eolLength
+			if (end === 0) return
+			if (start >= lineLength) {
+				start -= lineLength
+				startLineNumber++
+			} else if (start) {
+				startColumn = start + 1
+				startLineNumber++
+				start = 0
+			}
+			if (end >= lineLength) {
+				end -= lineLength
+				endLineNumber++
+			} else if (end) {
+				endColumn = end + 1
+				endLineNumber++
+				end = 0
+			}
+		})
+		const monacoRange = {
+			startLineNumber,
+			startColumn,
+			endLineNumber,
+			endColumn,
+		}
+		console.log('monacoRange', monacoRange)
+		return { range: monacoRange, text: rangeText }
+	}
+
 	return (
 		<>
+			<textarea
+				name=''
+				id=''
+				className={adminStyles.input}
+				onChange={e => {
+					const diff = getTextDifference2DRanges(e.target.value)
+					console.log(diff)
+					convert2DChangesToMonacoOperations(diff)
+				}}
+			></textarea>
 			<CodeEditor key='code-player' currenFile={currentCode} files={files.current} />
 		</>
 	)

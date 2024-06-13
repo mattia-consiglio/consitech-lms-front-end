@@ -1,5 +1,5 @@
 'use client'
-import React, { ReactElement, use, useEffect, useState } from 'react'
+import React, { ReactElement, use, useEffect, useRef, useState } from 'react'
 import dynamic from 'next/dynamic'
 import { loader, Editor, Monaco } from '@monaco-editor/react'
 import { emmetCSS, emmetHTML, emmetJSX } from 'emmet-monaco-es'
@@ -31,6 +31,9 @@ const fileIcons: { [key: string]: ReactElement } = {
 export default function CodeEditor({ files, currenFile }: CodeEditorProps) {
 	const [fileName, setFileName] = useState(currenFile)
 
+	const editorRef = useRef(null as unknown as editor.IStandaloneCodeEditor)
+	const monacoRef = useRef(null as unknown as Monaco)
+
 	const file = files ? files[fileName] : null
 
 	// const file = fileName ? localFiles[fileName] : null
@@ -39,11 +42,37 @@ export default function CodeEditor({ files, currenFile }: CodeEditorProps) {
 		setFileName(currenFile)
 	}, [currenFile])
 
+	// useEffect(() => {
+	// 	if (currenFile !== fileName) return
+	// 	handleEditorChange(currenFile)
+	// }, [currenFile, fileName])
+
 	//add emmet support
-	const handleEditorDidMount = (_editor: editor.IStandaloneCodeEditor, monaco: Monaco) => {
+	const handleEditorDidMount = (editor: editor.IStandaloneCodeEditor, monaco: Monaco) => {
 		emmetHTML(monaco)
 		emmetCSS(monaco)
 		emmetJSX(monaco)
+		editorRef.current = editor
+		monacoRef.current = monaco
+	}
+
+	//simulate file onChange event with monaco editor with only changes not entire file
+	const handleEditorChange = (value: string) => {
+		if (!editorRef.current) return
+		const model = editorRef.current.getModel()
+		if (!model) return
+		// console.log(value)
+
+		//create edit operation
+		const editOp: editor.IIdentifiedSingleEditOperation = {
+			range: new monacoRef.current.Range(1, 1, 4, 2),
+			text: value,
+			forceMoveMarkers: false,
+		}
+
+		//push changes to editor
+		editorRef.current.pushUndoStop()
+		model.pushEditOperations([], [editOp], () => null)
 	}
 
 	return (
@@ -64,17 +93,18 @@ export default function CodeEditor({ files, currenFile }: CodeEditorProps) {
 							{tabFile[1].name}
 						</button>
 					))}
+					<button onClick={() => handleEditorChange('hello')}>Add Change</button>
 				</div>
 			)}
 			<Editor
 				height='100%'
 				width='100%'
 				language={file?.language ? file.language : 'auto'}
-				path={fileName}
+				path={currenFile}
 				theme='vs-dark'
 				value={file?.value}
 				onChange={(value, event) => {
-					console.log(value)
+					console.log(event.changes[0].range)
 				}}
 				onMount={handleEditorDidMount}
 			/>
