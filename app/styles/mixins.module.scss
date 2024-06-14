@@ -1,3 +1,10 @@
 @mixin inputMixin {
 	@apply border-0 border-b-2 focus:ring-0 focus-visible:ring-primary bg-transparent focus:border-primary placeholder:text-neutral-400 dark:placeholder:text-neutral-400 border-neutral-400 dark:border-neutral-600;
 }
+
+@mixin h1 {
+	@apply text-3xl font-bold;
+}
+@mixin h2 {
+	@apply text-xl font-bold;
+}

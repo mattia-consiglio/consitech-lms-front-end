@@ -1,3 +1,5 @@
+import { setCurrentTime } from '@/redux/reducers/playerReducer'
+import { useAppDispatch } from '@/redux/store'
 import React, { useEffect, useRef, useState } from 'react'
 import {
 	IoChevronBackSharp,
@@ -11,7 +13,6 @@ interface VideoProgressBarProps {
 	duration: number
 	currentTime: number
 	player: YouTubePlayer
-	setCurrentTime: (time: number) => void
 	playerState: number
 }
 
@@ -19,7 +20,6 @@ export default function VideoControls({
 	duration,
 	currentTime,
 	player,
-	setCurrentTime,
 	playerState,
 }: VideoProgressBarProps) {
 	const formatTime = (time: number) => {
@@ -38,6 +38,7 @@ export default function VideoControls({
 	const progressBar = useRef<HTMLDivElement>(null)
 	const HoverPercentage = useRef(0)
 	const isDragging = useRef(false)
+	const dispatch = useAppDispatch()
 
 	const getCursorPosition = (e: MouseEvent) => {
 		if (!progressBar.current) return 0
@@ -56,7 +57,6 @@ export default function VideoControls({
 		// isHoveringRef.current = true
 		setIsHovering(true)
 		if (isDragging.current) {
-			console.log('drag', isDragging.current)
 			seek()
 		}
 	}
@@ -87,7 +87,7 @@ export default function VideoControls({
 		seconds = seconds !== undefined ? seconds : (HoverPercentage.current / 100) * duration
 		if (player) {
 			player.seekTo(seconds)
-			setCurrentTime(seconds)
+			dispatch(setCurrentTime(seconds))
 		}
 	}
 
@@ -95,10 +95,10 @@ export default function VideoControls({
 		if (player) {
 			if (player.getPlayerState() === 1) {
 				player.pauseVideo()
-				setCurrentTime(player.getCurrentTime())
+				dispatch(setCurrentTime(player.getCurrentTime()))
 				seek(player.getCurrentTime())
 			} else {
-				setCurrentTime(player.getCurrentTime())
+				dispatch(setCurrentTime(player.getCurrentTime()))
 				seek(player.getCurrentTime())
 				player.playVideo()
 			}
@@ -140,7 +140,7 @@ export default function VideoControls({
 					{currentTimeText}
 				</div>
 			</div>
-			<div className='controls'>
+			<div className='controls text-white'>
 				<div className='left'>
 					<button
 						onClick={e => {

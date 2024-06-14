@@ -1,5 +1,5 @@
 import MainWrapper from '@/app/components/MainWrapper'
-import VideoPlayer from './VideoPlayer'
+import VideoPlayer from './components/VideoPlayer'
 import dynamic from 'next/dynamic'
 import { API } from '@/utils/api'
 import { Lesson } from '@/utils/types'
@@ -7,8 +7,10 @@ import DOMPurify from 'isomorphic-dompurify'
 import { HiHome } from 'react-icons/hi'
 import PathName from '@/app/components/PathName'
 import { redirect } from 'next/navigation'
+import CodePlayer from './components/CodePlayer'
+import CodeSandbox from './components/CodeSandbox'
 
-const CodeEditor = dynamic(() => import('./CodeEditor'), {
+const CodeEditor = dynamic(() => import('./components/CodeEditor'), {
 	ssr: false,
 })
 
@@ -39,7 +41,7 @@ export default async function LessonsPage({ params }: LessonsPageProps) {
 					lesson.liveEditor ? (
 						<div className='grid grid-cols-1 gap-4 md:grid-cols-2 items-center'>
 							<VideoPlayer videoId={lesson.videoId} />
-							<CodeEditor code={lesson.liveEditor} />
+							<CodePlayer sourceCode={lesson.liveEditor} />
 						</div>
 					) : (
 						<div className=''>
@@ -51,7 +53,7 @@ export default async function LessonsPage({ params }: LessonsPageProps) {
 				)}
 				<div className='mt-4'>
 					<h3 className='text-primary_darker dark:text-primary text-2xl'>Prova il codice</h3>
-					<CodeEditor />
+					<CodeSandbox />
 				</div>
 				<div className='mt-4'>
 					<h3 className='text-primary_darker dark:text-primary text-2xl'>Lezione</h3>
