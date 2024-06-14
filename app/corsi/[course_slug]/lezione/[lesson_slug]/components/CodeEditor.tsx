@@ -1,5 +1,5 @@
 'use client'
-import React, { ReactElement, use, useEffect, useRef, useState } from 'react'
+import React, { ReactElement, use, useCallback, useEffect, useRef, useState } from 'react'
 import dynamic from 'next/dynamic'
 import { loader, Editor, Monaco } from '@monaco-editor/react'
 import { emmetCSS, emmetHTML, emmetJSX } from 'emmet-monaco-es'
@@ -11,6 +11,7 @@ export interface MonacoFile {
 	name: string
 	language: string
 	value: string
+	isChanged?: boolean
 }
 export interface CodeEditorFilesMap {
 	[key: string]: MonacoFile
@@ -19,6 +20,8 @@ export interface CodeEditorFilesMap {
 interface CodeEditorProps {
 	currenFile: string
 	files: CodeEditorFilesMap
+	externalEditorRef?: React.MutableRefObject<editor.IStandaloneCodeEditor>
+	externalSelectedFile?: React.MutableRefObject<string>
 }
 
 const fileIcons: { [key: string]: ReactElement } = {
@@ -28,24 +31,36 @@ const fileIcons: { [key: string]: ReactElement } = {
 	'ts': <SiTypescript />,
 }
 
-export default function CodeEditor({ files, currenFile }: CodeEditorProps) {
+export default function CodeEditor({
+	files,
+	currenFile,
+	externalEditorRef,
+	externalSelectedFile,
+}: CodeEditorProps) {
 	const [fileName, setFileName] = useState(currenFile)
-
-	const editorRef = useRef(null as unknown as editor.IStandaloneCodeEditor)
+	const prevFileName = useRef(currenFile)
+	const localEditorRef = useRef(null as unknown as editor.IStandaloneCodeEditor)
+	const editorRef = externalEditorRef !== undefined ? externalEditorRef : localEditorRef
 	const monacoRef = useRef(null as unknown as Monaco)
 
 	const file = files ? files[fileName] : null
+	// const prevChanges = useRef(changes)
 
 	// const file = fileName ? localFiles[fileName] : null
 
 	useEffect(() => {
 		setFileName(currenFile)
-	}, [currenFile])
+		if (externalSelectedFile !== undefined) externalSelectedFile.current = currenFile
+	}, [currenFile, externalSelectedFile])
 
-	// useEffect(() => {
-	// 	if (currenFile !== fileName) return
-	// 	handleEditorChange(currenFile)
-	// }, [currenFile, fileName])
+	const handleTabChange = (tabFile: string) => {
+		setFileName(tabFile)
+		if (!files) return
+		const file = files[tabFile]
+		editorRef.current?.setValue(file?.value)
+		if (externalSelectedFile !== undefined) externalSelectedFile.current = tabFile
+		console.log('externalSelectedFile', externalSelectedFile?.current)
+	}
 
 	//add emmet support
 	const handleEditorDidMount = (editor: editor.IStandaloneCodeEditor, monaco: Monaco) => {
@@ -56,25 +71,6 @@ export default function CodeEditor({ files, currenFile }: CodeEditorProps) {
 		monacoRef.current = monaco
 	}
 
-	//simulate file onChange event with monaco editor with only changes not entire file
-	const handleEditorChange = (value: string) => {
-		if (!editorRef.current) return
-		const model = editorRef.current.getModel()
-		if (!model) return
-		// console.log(value)
-
-		//create edit operation
-		const editOp: editor.IIdentifiedSingleEditOperation = {
-			range: new monacoRef.current.Range(1, 1, 4, 2),
-			text: value,
-			forceMoveMarkers: false,
-		}
-
-		//push changes to editor
-		editorRef.current.pushUndoStop()
-		model.pushEditOperations([], [editOp], () => null)
-	}
-
 	return (
 		<div className='min-h-[300px] h-[300px] w-full'>
 			{files && (
@@ -82,7 +78,7 @@ export default function CodeEditor({ files, currenFile }: CodeEditorProps) {
 					{Object.entries(files).map(tabFile => (
 						<button
 							key={tabFile[0]}
-							onClick={() => setFileName(tabFile[0])}
+							onClick={() => handleTabChange(tabFile[0])}
 							className={`inline-flex gap-1 items-center p-2 border-t-3 mr-[0.15rem] hover:bg-[#2e2e2e] text-neutral-200 text-left ${
 								fileName === tabFile[0]
 									? 'bg-[#1e1e1e] border-t-[#3399cc]'
@@ -93,7 +89,7 @@ export default function CodeEditor({ files, currenFile }: CodeEditorProps) {
 							{tabFile[1].name}
 						</button>
 					))}
-					<button onClick={() => handleEditorChange('hello')}>Add Change</button>
+					{/* <button onClick={() => handleEditorChange('hello')}>Add Change</button> */}
 				</div>
 			)}
 			<Editor
@@ -102,10 +98,10 @@ export default function CodeEditor({ files, currenFile }: CodeEditorProps) {
 				language={file?.language ? file.language : 'auto'}
 				path={currenFile}
 				theme='vs-dark'
-				value={file?.value}
-				onChange={(value, event) => {
-					console.log(event.changes[0].range)
-				}}
+				// value={file?.value}
+				// onChange={(value, event) => {
+				// 	console.log(event.changes[0].range)
+				// }}
 				onMount={handleEditorDidMount}
 			/>
 		</div>
