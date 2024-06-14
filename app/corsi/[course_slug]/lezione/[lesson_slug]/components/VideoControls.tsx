@@ -140,7 +140,7 @@ export default function VideoControls({
 					{currentTimeText}
 				</div>
 			</div>
-			<div className='controls'>
+			<div className='controls text-white'>
 				<div className='left'>
 					<button
 						onClick={e => {
