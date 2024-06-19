@@ -1,7 +1,7 @@
 import { getCookie } from '@/app/actions'
 import { ResponseError } from './types'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL
+const API_URL = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, '')
 export class API {
 	static baseURL: string = API_URL + '/api/v1'
 
