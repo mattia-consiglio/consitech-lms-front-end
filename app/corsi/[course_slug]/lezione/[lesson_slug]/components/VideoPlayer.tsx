@@ -1,5 +1,5 @@
 'use client'
-import React, { useState } from 'react'
+import React, { useRef, useState } from 'react'
 import YouTube, { YouTubeEvent, YouTubePlayer, YouTubeProps } from 'react-youtube'
 import VideoControls from './VideoControls'
 import '../videoPlayer.scss'
@@ -16,13 +16,18 @@ export default function VideoPlayer({ videoId }: VideoPlayerProps) {
 	const { currentTime, playerState } = useAppSelector(state => state.player)
 	const [intervalID, setIntervalID] = useState<NodeJS.Timeout>()
 	// const [playerState, setPlayerState] = useState(-1)
+	const playerWrapper = useRef<HTMLDivElement>(null)
 	const dispatch = useAppDispatch()
+	const isPlayedOnce = useRef(false)
 
 	const onPlayerReady: YouTubeProps['onReady'] = event => {
 		// access to player in all event handlers via event.target
-		setPlayer(event.target)
-		setDuration(event.target.getDuration())
-		dispatch(setCurrentTime(event.target.getCurrentTime()))
+		const localPlayer = event.target
+		setPlayer(localPlayer)
+		setDuration(localPlayer.getDuration())
+		dispatch(setCurrentTime(localPlayer.getCurrentTime()))
+		const options = localPlayer.getOptions()
+		console.log('player options', options)
 	}
 
 	const seekTo = (seconds: number) => {
@@ -33,6 +38,8 @@ export default function VideoPlayer({ videoId }: VideoPlayerProps) {
 	}
 
 	const onStateChange = (state: YouTubeEvent<number>) => {
+		console.log('player options', player)
+		// player?.opts
 		dispatch(setPlayerState(state.data))
 		if (state.data === 0) {
 			setCurrentTime(0)
@@ -43,6 +50,9 @@ export default function VideoPlayer({ videoId }: VideoPlayerProps) {
 					dispatch(setPlayerState(state.data))
 				}, 100)
 			)
+			if (!isPlayedOnce.current) {
+				isPlayedOnce.current = true
+			}
 		} else {
 			clearInterval(intervalID)
 		}
@@ -62,19 +72,28 @@ export default function VideoPlayer({ videoId }: VideoPlayerProps) {
 
 	return (
 		<div className='flex flex-col gap-3'>
-			<div className='flex flex-col gap-3 video-player-wrapper'>
+			<div
+				className='flex flex-col gap-3 video-player-wrapper'
+				ref={playerWrapper}
+				id='videoPlayerWrapper'
+			>
 				<YouTube
 					videoId={videoId}
 					opts={opts}
 					onReady={onPlayerReady}
 					onStateChange={onStateChange}
+					onPlaybackQualityChange={e => console.log('quality change', e)}
 				/>
-				<VideoControls
-					duration={duration}
-					currentTime={currentTime}
-					player={player}
-					playerState={playerState}
-				/>
+				{player && (
+					<VideoControls
+						duration={duration}
+						currentTime={currentTime}
+						player={player}
+						playerState={playerState}
+						playerWrapper={playerWrapper}
+						isPlayedOnce={isPlayedOnce.current}
+					/>
+				)}
 			</div>
 		</div>
 	)

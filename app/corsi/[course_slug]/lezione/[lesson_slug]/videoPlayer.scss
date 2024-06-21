@@ -19,7 +19,7 @@ $primary-color: theme('colors.primary');
 		bottom: 0;
 		height: 0;
 		width: 100%;
-		opacity: 0;
+		// opacity: 0;
 		background-color: rgb(0 0 0 / 50%);
 		background: linear-gradient(0deg, rgba(0, 0, 0, 0.8) 0%, transparent 60%);
 		transition: all 200ms ease-in-out;
@@ -32,7 +32,7 @@ $primary-color: theme('colors.primary');
 			position: absolute;
 			bottom: 40px;
 			cursor: pointer;
-			opacity: 0;
+			// opacity: 0;
 			transition: all 200ms ease-in-out;
 			transition-property: height, opacity;
 			left: 50%;
@@ -90,7 +90,8 @@ $primary-color: theme('colors.primary');
 			left: 50%;
 			transform: translateX(-50%);
 
-			.left {
+			.left,
+			.right {
 				display: flex;
 				align-items: center;
 				gap: 5px;
@@ -98,6 +99,19 @@ $primary-color: theme('colors.primary');
 				button {
 					display: inline-flex;
 					align-items: center;
+				}
+			}
+
+			.options-menu {
+				ul {
+					li {
+						cursor: pointer;
+						padding: 5px 10px;
+
+						&:hover {
+							background-color: theme('colors.neutral.900');
+						}
+					}
 				}
 			}
 		}
