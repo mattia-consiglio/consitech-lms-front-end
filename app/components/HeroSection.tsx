@@ -2,7 +2,7 @@
 import { tree } from 'next/dist/build/templates/app-page'
 import React, { useState } from 'react'
 import { Typewriter } from 'react-simple-typewriter'
-import style from './styles/typewriter.module.scss'
+import style from '../styles/typewriter.module.scss'
 import Link from 'next/link'
 
 export default function HeroSection() {

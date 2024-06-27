@@ -28,7 +28,7 @@ export interface AbstractContent {
 	publishStatus: PublishStatus
 	createdAt: Date
 	displayOrder: number
-	thumbnail: null | Media
+	thumbnailImage: null | Media
 	seo: SEO
 }
 export interface Course extends AbstractContent {

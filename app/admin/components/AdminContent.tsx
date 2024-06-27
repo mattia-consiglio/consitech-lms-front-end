@@ -40,7 +40,7 @@ export default function AdminContent({ contentId }: AdminCourseProps) {
 					description: '',
 					slug: '',
 					publishStatus: PublishStatus.DRAFT,
-					thumbnail: null,
+					thumbnailImage: null,
 					displayOrder: 0,
 					mainLanguage: {} as Language,
 					seo: {
@@ -54,7 +54,7 @@ export default function AdminContent({ contentId }: AdminCourseProps) {
 					description: '',
 					slug: '',
 					publishStatus: PublishStatus.DRAFT,
-					thumbnail: null,
+					thumbnailImage: null,
 					displayOrder: 0,
 					mainLanguage: {} as Language,
 					liveEditor: '',
@@ -78,7 +78,15 @@ export default function AdminContent({ contentId }: AdminCourseProps) {
 	const [saved, setSaved] = useState(true)
 	const [courses, setCourses] = useState<Course[]>([])
 	const [isContentLoaded, setIsContentLoaded] = useState(false)
-	const { title, description, slug, publishStatus, thumbnail, displayOrder, mainLanguage } = content
+	const {
+		title,
+		description,
+		slug,
+		publishStatus,
+		thumbnailImage: thumbnail,
+		displayOrder,
+		mainLanguage,
+	} = content
 	const selectedMedia = useAppSelector(state => state.media.selected)
 	const srtFileRef = useRef<HTMLInputElement>(null)
 
@@ -616,7 +624,7 @@ export default function AdminContent({ contentId }: AdminCourseProps) {
 					<Button
 						onClick={() => {
 							setOpenModal(false)
-							setContent({ ...content, thumbnail: selectedMedia })
+							setContent({ ...content, thumbnailImage: selectedMedia })
 						}}
 						outline
 						theme={customButtonTheme}

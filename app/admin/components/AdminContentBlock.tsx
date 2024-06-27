@@ -15,7 +15,7 @@ export default function AdminContentBlock({ content, type }: AdminContentBlockPr
 		e.preventDefault()
 	}
 
-	const { title, description, displayOrder, thumbnail, publishStatus, id } = content
+	const { title, description, displayOrder, thumbnailImage, publishStatus, id } = content
 
 	const link = type === 'course' ? `/admin/corsi/${id}` : `/admin/lezioni/${id}`
 	return (
@@ -23,16 +23,16 @@ export default function AdminContentBlock({ content, type }: AdminContentBlockPr
 			className={`border-3 border-transparent hover:border-neutral-300 hover:bg-neutral-100 dark:hover:border-neutral-700 dark:hover:bg-neutral-800 p-4 transition-colors duration-250 ease-in-out relative group`}
 		>
 			<div className={`grid grid-cols-1 md:grid-cols-[100px_1fr_auto] items-center`}>
-				{thumbnail === null ? (
+				{!thumbnailImage ? (
 					<div className='w-[100px] h-[100px] bg-primary flex justify-center items-center text-2xl font-bold'>
 						<span>{displayOrder}</span>
 					</div>
 				) : (
 					<Image
-						src={thumbnail.url}
-						alt={thumbnail.alt}
-						width={thumbnail.width}
-						height={thumbnail.height}
+						src={thumbnailImage.url}
+						alt={thumbnailImage.alt}
+						width={thumbnailImage.width}
+						height={thumbnailImage.height}
 						className='max-w-20 h-auto w-full object-contain'
 					/>
 				)}
