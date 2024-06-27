@@ -29,7 +29,7 @@ export default async function CourseSingle({ params }: { params: { course_slug: 
 					key={lesson.id}
 					title={lesson.title}
 					description={lesson.description}
-					img={lesson.thumbnail}
+					img={lesson.thumbnailImage}
 					lessonSlug={lesson.slug}
 					courseSlug={params.course_slug}
 					displayOrder={lesson.displayOrder}

@@ -39,7 +39,7 @@ export default function LessonBlock({
 			className='group flex items-center justify-between border-b-2 border-transparent border-neutral-500 hover:border-neutral-300 hover:bg-neutral-100 dark:hover:border-neutral-600 dark:hover:bg-neutral-800 cursor-pointer p-4 transition-colors duration-250 ease-in-out'
 		>
 			<div className='flex items-center'>
-				{img === null ? (
+				{!img ? (
 					<div className='w-[90px] h-[90px] bg-primary flex justify-center items-center text-xl font-bold'>
 						<span>{displayOrder}</span>
 					</div>

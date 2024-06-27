@@ -3,9 +3,6 @@ import CourseBlock from './CourseBlock'
 import { PageableContent, Course, User, UserRole } from '@/utils/types'
 import { API } from '@/utils/api'
 import { cookies } from 'next/headers'
-import CourseModal from './CourseModal'
-import { redirect } from 'next/navigation'
-import toast from 'react-hot-toast'
 
 export default async function ServerCorsesComponent() {
 	const nextCookies = cookies()
