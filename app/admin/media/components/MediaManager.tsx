@@ -2,7 +2,7 @@
 import { setSelected, setSelectedAlt } from '@/redux/reducers/mediaReducer'
 import { useAppDispatch, useAppSelector } from '@/redux/store'
 import { API } from '@/utils/api'
-import { Media, PageableContent, MediaImage } from '@/utils/types'
+import { Media, PageableContent, MediaImage, MediaVideo } from '@/utils/types'
 import React, { useEffect, useRef, useState } from 'react'
 import adminStyles from '@/app/admin/styles/admin.module.scss'
 import toast from 'react-hot-toast'
@@ -10,6 +10,7 @@ import { Button } from 'flowbite-react'
 import { HiOutlineTrash } from 'react-icons/hi'
 import { customButtonTheme } from '@/app/flowbite.themes'
 import MediaElements from './MediaElements'
+import { formatTime } from '@/app/corsi/[course_slug]/lezione/[lesson_slug]/VideoControls'
 
 export default function MediaManager({ displayTitle = true }: { displayTitle?: boolean }) {
 	const selected = useAppSelector(state => state.media.selected)
@@ -180,6 +181,19 @@ export default function MediaManager({ displayTitle = true }: { displayTitle?: b
 										{(selected as MediaImage)?.height}{' '}
 									</p>
 									<p>Colore principale: {(selected as MediaImage)?.avgColor}</p>
+								</>
+							)}
+							{selected.type === 'VIDEO' && (
+								<>
+									<p>Durata: {formatTime((selected as MediaVideo)?.duration)}</p>
+									<p>
+										Risoluzioni:{' '}
+										{(selected as MediaVideo)?.resolutions.flatMap((resolution, index) => {
+											return index < (selected as MediaVideo).resolutions.length - 1
+												? resolution.name + ', '
+												: resolution.name
+										})}
+									</p>
 								</>
 							)}
 							<Button onClick={() => handleDelete(selected)} color='failure'>

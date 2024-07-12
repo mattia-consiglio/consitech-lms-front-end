@@ -15,6 +15,13 @@ interface VideoProgressBarProps {
 	playerState: number
 }
 
+export const formatTime = (time: number) => {
+	const minutes = Math.floor(time / 60)
+	let seconds = Math.floor(time % 60)
+	const secondsText = seconds < 10 ? `0${seconds}` : seconds
+	return `${minutes}:${secondsText}`
+}
+
 export default function VideoControls({
 	duration,
 	currentTime,
@@ -22,13 +29,6 @@ export default function VideoControls({
 	setCurrentTime,
 	playerState,
 }: VideoProgressBarProps) {
-	const formatTime = (time: number) => {
-		const minutes = Math.floor(time / 60)
-		let seconds = Math.floor(time % 60)
-		const secondsText = seconds < 10 ? `0${seconds}` : seconds
-		return `${minutes}:${secondsText}`
-	}
-
 	const formatPercTime = (perc: number) => {
 		const time = (perc / 100) * duration
 		return formatTime(time)
