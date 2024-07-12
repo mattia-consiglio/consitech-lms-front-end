@@ -2,27 +2,23 @@
 import { setSelected, setSelectedAlt } from '@/redux/reducers/mediaReducer'
 import { useAppDispatch, useAppSelector } from '@/redux/store'
 import { API } from '@/utils/api'
-import { Media, PageableContent } from '@/utils/types'
-import Image from 'next/image'
-import React, { Suspense, useEffect, useRef, useState } from 'react'
+import { Media, PageableContent, MediaImage } from '@/utils/types'
+import React, { useEffect, useRef, useState } from 'react'
 import adminStyles from '@/app/admin/styles/admin.module.scss'
 import toast from 'react-hot-toast'
 import { Button } from 'flowbite-react'
 import { HiOutlineTrash } from 'react-icons/hi'
 import { customButtonTheme } from '@/app/flowbite.themes'
+import MediaElements from './MediaElements'
 
 export default function MediaManager({ displayTitle = true }: { displayTitle?: boolean }) {
 	const selected = useAppSelector(state => state.media.selected)
 	const dispatch = useAppDispatch()
 	const [search, setSearch] = useState('')
-	const [loading, setLoading] = useState(false)
-	const [error, setError] = useState<string>()
+	const [loading, setLoading] = useState(true)
+	const [error, setError] = useState<string>('')
 	const [media, setMedia] = useState<PageableContent<Media>>({} as PageableContent<Media>)
 	const fileRef = useRef<HTMLInputElement>(null)
-
-	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		setSearch(e.target.value)
-	}
 
 	const fetchMedia = async () => {
 		API.get<PageableContent<Media>>('media')
@@ -32,14 +28,9 @@ export default function MediaManager({ displayTitle = true }: { displayTitle?: b
 			.catch(error => {
 				setError(error.message)
 			})
-	}
-
-	const handleSelect = (media: Media) => {
-		if (selected && selected.id === media.id) {
-			dispatch(setSelected(null))
-		} else {
-			dispatch(setSelected(media))
-		}
+			.finally(() => {
+				setLoading(false)
+			})
 	}
 
 	const handleDelete = (media: Media | null) => {
@@ -53,7 +44,7 @@ export default function MediaManager({ displayTitle = true }: { displayTitle?: b
 					fetchMedia()
 					dispatch(setSelected(null))
 					setSearch('')
-					setError(undefined)
+					setError('')
 				})
 				.catch(error => {
 					toast.error(error.message)
@@ -70,7 +61,7 @@ export default function MediaManager({ displayTitle = true }: { displayTitle?: b
 			return
 		}
 		setLoading(true)
-		setError(undefined)
+		setError('')
 		const formData = new FormData()
 		formData.append('thumbnail', e.currentTarget.files[0])
 		API.post<Media>('media/upload', formData, null)
@@ -106,7 +97,7 @@ export default function MediaManager({ displayTitle = true }: { displayTitle?: b
 					return media
 				})
 				setMedia({ ...media, content: newMedia })
-				setError(undefined)
+				setError('')
 			})
 			.catch((error: Error) => {
 				toast.error(error.message)
@@ -145,22 +136,17 @@ export default function MediaManager({ displayTitle = true }: { displayTitle?: b
 			</div>
 			<div className='w-full grid md:grid-cols-[1fr_auto] grid-cols-1 gap-4'>
 				<div className='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4'>
-					<Suspense fallback={<div>Caricamento...</div>}>
-						{media.content &&
-							media.content.map(m => (
-								<div
-									key={m.id}
-									className={`flex border-4 hover:border-neutral-500 bg-neutral-200 dark:bg-neutral-300 w-[200px] aspect-square max-w-full h-auto items-center justify-center group-[radio]-checked:border-primary p-2
-											${selected && m.id === selected.id && ' border-primary hover:border-primary_darker'}`}
-									onClick={() => handleSelect(m)}
-								>
-									<Image width={200} height={200} alt={m.alt || ''} src={m.url} />
-								</div>
-							))}
-						{media && media.content && media.content.length === 0 && (
-							<div>Nessun media trovato</div>
-						)}
-					</Suspense>
+					{loading && (
+						<div className='w-full h-full flex items-center justify-center'>Caricamento...</div>
+					)}
+					{error !== '' && (
+						<div className='w-full h-full flex items-center justify-center'>
+							C&apos;è stato un errore durante il caricamento dei media:
+							<br />
+							{error}
+						</div>
+					)}
+					{!loading && error === '' && <MediaElements media={media} />}
 				</div>
 
 				<div className='md:min-w-52 md:max-w-52 md:border-l-2 border-neutral-200 dark:border-neutral-700 pl-4'>
@@ -187,10 +173,15 @@ export default function MediaManager({ displayTitle = true }: { displayTitle?: b
 								className={adminStyles.input + ' mb-2'}
 								onFocus={e => e.target.select()}
 							/>
-							<p>
-								Dimensioni (LxA): {selected?.width}x{selected?.height}{' '}
-							</p>
-							<p>Colore principale: {selected?.mainColor}</p>
+							{selected.type === 'IMAGE' && (
+								<>
+									<p>
+										Dimensioni (LxA): {(selected as MediaImage)?.width}x
+										{(selected as MediaImage)?.height}{' '}
+									</p>
+									<p>Colore principale: {(selected as MediaImage)?.avgColor}</p>
+								</>
+							)}
 							<Button onClick={() => handleDelete(selected)} color='failure'>
 								<HiOutlineTrash className='mr-2 h-4 w-4' />
 								Delete

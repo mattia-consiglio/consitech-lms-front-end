@@ -1,8 +1,8 @@
-import { Media } from '@/utils/types'
+import { Media, MediaVideo, MediaImage } from '@/utils/types'
 import { PayloadAction, createSlice } from '@reduxjs/toolkit'
 
 export interface MediaState {
-	selected: Media | null
+	selected: Media | MediaImage | MediaVideo | null
 }
 
 const initialState: MediaState = {

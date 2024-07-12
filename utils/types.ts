@@ -43,21 +43,40 @@ export interface Lesson extends AbstractContent {
 	course: Course
 }
 
+export interface VideoResolution {
+	name: string
+	width: number
+	height: number
+}
+
 export interface Media {
 	id: string
 	url: string
 	alt: string
-	type: string | 'IMAGE'
-	createdAt: Date
+	type: string | 'IMAGE' | 'VIDEO' | 'AUDIO'
+	uploadedAt: Date
+	parentId: string
+}
+
+export interface MediaImage extends Media {
+	type: 'IMAGE'
 	width: number
 	height: number
-	mainColor: string
+	avgColor: string
+	filename: string
+}
+
+export interface MediaVideo extends Media {
+	type: 'VIDEO'
+	duration: number
+	resolutions: VideoResolution[]
 }
 
 export interface Language {
 	id: string
 	code: string
 	language: string
+	thumbnail: MediaImage
 }
 
 export interface SEO {
