@@ -1,8 +1,8 @@
 'use client'
-import { setSelected, setSelectedAlt } from '@/redux/reducers/mediaReducer'
+import { setSelectedMedia, setSelectedMediaAlt } from '@/redux/reducers/mediaReducer'
 import { useAppDispatch, useAppSelector } from '@/redux/store'
 import { API } from '@/utils/api'
-import { Media, PageableContent, MediaImage, MediaVideo } from '@/utils/types'
+import { Media, PageableContent, MediaImage, MediaVideo, MediaType } from '@/utils/types'
 import React, { useEffect, useRef, useState } from 'react'
 import adminStyles from '@/app/admin/styles/admin.module.scss'
 import toast from 'react-hot-toast'
@@ -12,7 +12,12 @@ import { customButtonTheme } from '@/app/flowbite.themes'
 import MediaElements from './MediaElements'
 import { formatTime } from '@/app/corsi/[course_slug]/lezione/[lesson_slug]/VideoControls'
 
-export default function MediaManager({ displayTitle = true }: { displayTitle?: boolean }) {
+interface MediaManagerProps {
+	displayTitle?: boolean
+	mediaType?: MediaType
+}
+
+export default function MediaManager({ displayTitle = true, mediaType }: MediaManagerProps) {
 	const selected = useAppSelector(state => state.media.selected)
 	const dispatch = useAppDispatch()
 	const [search, setSearch] = useState('')
@@ -22,7 +27,8 @@ export default function MediaManager({ displayTitle = true }: { displayTitle?: b
 	const fileRef = useRef<HTMLInputElement>(null)
 
 	const fetchMedia = async () => {
-		API.get<PageableContent<Media>>('media')
+		const endpoint = mediaType ? 'media?type=' + mediaType : 'media'
+		API.get<PageableContent<Media>>(endpoint)
 			.then(response => {
 				setMedia(response)
 			})
@@ -43,7 +49,7 @@ export default function MediaManager({ displayTitle = true }: { displayTitle?: b
 				.then(() => {
 					toast.success('Media eliminato con successo')
 					fetchMedia()
-					dispatch(setSelected(null))
+					dispatch(setSelectedMedia(null))
 					setSearch('')
 					setError('')
 				})
@@ -69,7 +75,7 @@ export default function MediaManager({ displayTitle = true }: { displayTitle?: b
 			.then(response => {
 				toast.success('Media caricato con successo')
 				setMedia({ ...media, content: [response, ...media.content] })
-				dispatch(setSelected(response))
+				dispatch(setSelectedMedia(response))
 				setSearch('')
 			})
 			.catch(error => {
@@ -160,7 +166,7 @@ export default function MediaManager({ displayTitle = true }: { displayTitle?: b
 								id='alt'
 								value={selected?.alt || ''}
 								onChange={e => {
-									dispatch(setSelectedAlt(e.target.value))
+									dispatch(setSelectedMediaAlt(e.target.value))
 								}}
 								className={adminStyles.input + ' mb-2'}
 								onBlur={() => handleUpdate(selected)}

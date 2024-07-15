@@ -13,10 +13,10 @@ const mediaReducer = createSlice({
 	name: 'media',
 	initialState,
 	reducers: {
-		setSelected(state, action: PayloadAction<MediaState['selected']>) {
+		setSelectedMedia(state, action: PayloadAction<MediaState['selected']>) {
 			state.selected = action.payload
 		},
-		setSelectedAlt(state, action: PayloadAction<string>) {
+		setSelectedMediaAlt(state, action: PayloadAction<string>) {
 			if (state.selected) {
 				state.selected.alt = action.payload
 			}
@@ -24,6 +24,6 @@ const mediaReducer = createSlice({
 	},
 })
 
-export const { setSelected, setSelectedAlt } = mediaReducer.actions
+export const { setSelectedMedia, setSelectedMediaAlt } = mediaReducer.actions
 
 export default mediaReducer.reducer

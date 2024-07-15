@@ -2,7 +2,7 @@ import { PageableContent, Media } from '@/utils/types'
 import React from 'react'
 import MediaElement from './MediaElement'
 import { useAppDispatch, useAppSelector } from '@/redux/store'
-import { setSelected } from '@/redux/reducers/mediaReducer'
+import { setSelectedMedia } from '@/redux/reducers/mediaReducer'
 
 function MediaElements({ media }: { media: PageableContent<Media> }) {
 	const selected = useAppSelector(state => state.media.selected)
@@ -10,9 +10,9 @@ function MediaElements({ media }: { media: PageableContent<Media> }) {
 
 	const handleSelect = (media: Media) => {
 		if (selected && selected.id === media.id) {
-			dispatch(setSelected(null))
+			dispatch(setSelectedMedia(null))
 		} else {
-			dispatch(setSelected(media))
+			dispatch(setSelectedMedia(media))
 		}
 	}
 

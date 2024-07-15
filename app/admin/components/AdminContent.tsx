@@ -2,7 +2,17 @@
 import MainWrapper from '@/app/components/MainWrapper'
 import { customButtonTheme, customSpinnerTheme, customTabsTheme } from '@/app/flowbite.themes'
 import { API } from '@/utils/api'
-import { ChangeEvent, Course, Language, Lesson, PublishStatus, SEO, SrtLine } from '@/utils/types'
+import {
+	ChangeEvent,
+	Course,
+	Language,
+	Lesson,
+	MediaType,
+	MediaVideo,
+	PublishStatus,
+	SEO,
+	SrtLine,
+} from '@/utils/types'
 import { Button, Modal, Spinner } from 'flowbite-react'
 import { usePathname, useRouter } from 'next/navigation'
 import React, {
@@ -21,10 +31,13 @@ import adminStyles from '@/app/admin/styles/admin.module.scss'
 import Image from 'next/image'
 import toast from 'react-hot-toast'
 import MediaManager from '@/app/admin/media/components/MediaManager'
-import { useAppSelector } from '@/redux/store'
+import { useAppDispatch, useAppSelector } from '@/redux/store'
 import { generateSlug } from '@/utils/utils'
 import Tiptap from './TipTap'
 import { parse } from 'path'
+import { MediaImage } from '@/utils/types'
+import { IoPencilSharp, IoPlaySharp, IoTrashSharp } from 'react-icons/io5'
+import { setSelectedMedia } from '@/redux/reducers/mediaReducer'
 
 interface AdminCourseProps {
 	contentId: string
@@ -40,7 +53,7 @@ export default function AdminContent({ contentId }: AdminCourseProps) {
 					description: '',
 					slug: '',
 					publishStatus: PublishStatus.DRAFT,
-					thumbnailImage: null,
+					thumbnail: null,
 					displayOrder: 0,
 					mainLanguage: {} as Language,
 					seo: {
@@ -54,11 +67,11 @@ export default function AdminContent({ contentId }: AdminCourseProps) {
 					description: '',
 					slug: '',
 					publishStatus: PublishStatus.DRAFT,
-					thumbnailImage: null,
+					thumbnail: null,
 					displayOrder: 0,
 					mainLanguage: {} as Language,
 					liveEditor: '',
-					videoId: '',
+					video: null,
 					videoThumbnail: '',
 					content: '',
 					seo: {
@@ -78,16 +91,10 @@ export default function AdminContent({ contentId }: AdminCourseProps) {
 	const [saved, setSaved] = useState(true)
 	const [courses, setCourses] = useState<Course[]>([])
 	const [isContentLoaded, setIsContentLoaded] = useState(false)
-	const {
-		title,
-		description,
-		slug,
-		publishStatus,
-		thumbnailImage: thumbnail,
-		displayOrder,
-		mainLanguage,
-	} = content
+	const { title, description, slug, publishStatus, thumbnail, displayOrder, mainLanguage } = content
+	const [mediaType, setMediaType] = useState<MediaType>()
 	const selectedMedia = useAppSelector(state => state.media.selected)
+	const dispatch = useAppDispatch()
 	const srtFileRef = useRef<HTMLInputElement>(null)
 
 	const getContent = useCallback(async () => {
@@ -171,6 +178,7 @@ export default function AdminContent({ contentId }: AdminCourseProps) {
 		getCourses()
 	}, [getCourses])
 
+	// Set the default language to the first one if the content is new
 	useEffect(() => {
 		if (contentId === 'new' && Object.keys(content.mainLanguage).length === 0 && languages.length) {
 			setSaved(false)
@@ -210,9 +218,9 @@ export default function AdminContent({ contentId }: AdminCourseProps) {
 			return
 		}
 
-		if (key === 'videoId') {
-			value = extractVideoId(value)
-		}
+		// if (key === 'videoId') {
+		// 	value = extractVideoId(value)
+		// }
 
 		if (key === 'course') {
 			const course = courses.find(c => c.id === value) as Course
@@ -253,7 +261,7 @@ export default function AdminContent({ contentId }: AdminCourseProps) {
 							mainLanguageId: mainLanguage.id,
 							courseId: (content as Lesson).course.id,
 							liveEditor: (content as Lesson).liveEditor,
-							videoId: (content as Lesson).videoId,
+							video: (content as Lesson).video,
 							videoThumbnail: (content as Lesson).videoThumbnail,
 							content: (content as Lesson).content,
 					  }
@@ -337,6 +345,7 @@ export default function AdminContent({ contentId }: AdminCourseProps) {
 			})
 	}
 
+	// Save on Ctrl+S keyboard shortcut
 	const handleKeyboardSubmit = (e: KeyboardEvent) => {
 		if (e.ctrlKey && e.key === 's') {
 			e.preventDefault()
@@ -401,6 +410,14 @@ export default function AdminContent({ contentId }: AdminCourseProps) {
 		reader.readAsText(file)
 	}
 
+	const handleSelectVideo = (edit = false) => {
+		setMediaType(MediaType.VIDEO)
+		if (edit) {
+			dispatch(setSelectedMedia((content as Lesson).video))
+		}
+		setOpenModal(true)
+	}
+
 	return (
 		<MainWrapper>
 			<Suspense fallback='Caricamento...'>
@@ -454,19 +471,53 @@ export default function AdminContent({ contentId }: AdminCourseProps) {
 						</div>
 						{contentType === 'lezioni' && 'course' in content && (
 							<>
-								<div className=''>
+								<div>
 									<label htmlFor='videoId'>Video id: </label>{' '}
-									<input
-										type='text'
-										name='videoId'
-										value={(content as Lesson).videoId || ''}
-										onChange={handleChange}
-										onFocus={() => {
-											!slug && setContent({ ...content, slug: generateSlug(title) })
-										}}
-										className={adminStyles.input}
-										id='videoId'
-									/>
+									<div>
+										<div>
+											<div className={`flex items-center justify-center w-12 h-12  rounded-full`}>
+												<IoPlaySharp className='text-xl' />
+											</div>
+											<div>
+												{content.video ? (
+													content.video.alt
+												) : (
+													<div>
+														{' '}
+														Nessun video selezionato
+														<Button
+															type='button'
+															theme={customButtonTheme}
+															onClick={() => handleSelectVideo()}
+														>
+															Scegli video
+														</Button>
+													</div>
+												)}
+											</div>
+										</div>
+
+										{content.video && (
+											<div>
+												<button
+													type='button'
+													onClick={() => {
+														handleSelectVideo(true)
+													}}
+												>
+													<IoPencilSharp />
+												</button>
+												<button
+													type='button'
+													onClick={() => {
+														setContent({ ...content, video: null })
+													}}
+												>
+													<IoTrashSharp />
+												</button>
+											</div>
+										)}
+									</div>
 								</div>
 								<div>
 									<label htmlFor='content' className='block'>
@@ -569,7 +620,10 @@ export default function AdminContent({ contentId }: AdminCourseProps) {
 						<button
 							type='button'
 							className='flex justify-center'
-							onClick={() => setOpenModal(true)}
+							onClick={() => {
+								setMediaType(MediaType.IMAGE)
+								setOpenModal(true)
+							}}
 						>
 							{thumbnail === null || thumbnail === undefined ? (
 								<div className='w-[100px] h-[100px] bg-primary flex justify-center items-center text-2xl font-bold'>
@@ -618,13 +672,19 @@ export default function AdminContent({ contentId }: AdminCourseProps) {
 			<Modal show={openModal} onClose={() => setOpenModal(false)}>
 				<Modal.Header>Media</Modal.Header>
 				<Modal.Body>
-					<MediaManager displayTitle={false} />
+					<MediaManager displayTitle={false} mediaType={mediaType} />
 				</Modal.Body>
 				<Modal.Footer>
 					<Button
 						onClick={() => {
 							setOpenModal(false)
-							setContent({ ...content, thumbnailImage: selectedMedia })
+							if (selectedMedia) {
+								if (mediaType === MediaType.IMAGE) {
+									setContent({ ...content, thumbnail: selectedMedia as MediaImage })
+								} else {
+									setContent({ ...content, video: selectedMedia as MediaVideo })
+								}
+							}
 						}}
 						outline
 						theme={customButtonTheme}

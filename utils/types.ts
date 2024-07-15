@@ -28,7 +28,7 @@ export interface AbstractContent {
 	publishStatus: PublishStatus
 	createdAt: Date
 	displayOrder: number
-	thumbnailImage: null | Media
+	thumbnail: null | MediaImage
 	seo: SEO
 }
 export interface Course extends AbstractContent {
@@ -37,7 +37,7 @@ export interface Course extends AbstractContent {
 
 export interface Lesson extends AbstractContent {
 	liveEditor: string
-	videoId: string
+	video: MediaVideo | null
 	videoThumbnail: string
 	content: string
 	course: Course
@@ -49,17 +49,22 @@ export interface VideoResolution {
 	height: number
 }
 
+export enum MediaType {
+	IMAGE = 'IMAGE',
+	VIDEO = 'VIDEO',
+	AUDIO = 'AUDIO',
+}
 export interface Media {
 	id: string
 	url: string
 	alt: string
-	type: string | 'IMAGE' | 'VIDEO' | 'AUDIO'
+	type: string | MediaType
 	uploadedAt: Date
 	parentId: string
 }
 
 export interface MediaImage extends Media {
-	type: 'IMAGE'
+	type: MediaType.IMAGE
 	width: number
 	height: number
 	avgColor: string
@@ -67,7 +72,7 @@ export interface MediaImage extends Media {
 }
 
 export interface MediaVideo extends Media {
-	type: 'VIDEO'
+	type: MediaType.VIDEO
 	duration: number
 	resolutions: VideoResolution[]
 }

@@ -15,7 +15,7 @@ export default function AdminContentBlock({ content, type }: AdminContentBlockPr
 		e.preventDefault()
 	}
 
-	const { title, description, displayOrder, thumbnailImage, publishStatus, id } = content
+	const { title, description, displayOrder, thumbnail: thumbnailImage, publishStatus, id } = content
 
 	const link = type === 'course' ? `/admin/corsi/${id}` : `/admin/lezioni/${id}`
 	return (

@@ -29,7 +29,7 @@ export default function CourseBlock({
 	description,
 	slug,
 	displayOrder,
-	thumbnailImage,
+	thumbnail: thumbnailImage,
 	role,
 	publishStatus,
 	id,
