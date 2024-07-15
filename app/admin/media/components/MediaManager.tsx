@@ -3,11 +3,12 @@ import { setSelectedMedia, setSelectedMediaAlt } from '@/redux/reducers/mediaRed
 import { useAppDispatch, useAppSelector } from '@/redux/store'
 import { API } from '@/utils/api'
 import { Media, PageableContent, MediaImage, MediaVideo, MediaType } from '@/utils/types'
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import adminStyles from '@/app/admin/styles/admin.module.scss'
 import toast from 'react-hot-toast'
 import { Button } from 'flowbite-react'
 import { HiOutlineTrash } from 'react-icons/hi'
+import { FaRotate } from 'react-icons/fa6'
 import { customButtonTheme } from '@/app/flowbite.themes'
 import MediaElements from './MediaElements'
 import { formatTime } from '@/app/corsi/[course_slug]/lezione/[lesson_slug]/VideoControls'
@@ -26,19 +27,18 @@ export default function MediaManager({ displayTitle = true, mediaType }: MediaMa
 	const [media, setMedia] = useState<PageableContent<Media>>({} as PageableContent<Media>)
 	const fileRef = useRef<HTMLInputElement>(null)
 
-	const fetchMedia = async () => {
+	const fetchMedia = useCallback(async () => {
 		const endpoint = mediaType ? 'media?type=' + mediaType : 'media'
-		API.get<PageableContent<Media>>(endpoint)
-			.then(response => {
-				setMedia(response)
-			})
-			.catch(error => {
-				setError(error.message)
-			})
-			.finally(() => {
-				setLoading(false)
-			})
-	}
+		setLoading(true)
+		try {
+			const response = await API.get<PageableContent<Media>>(endpoint)
+			setMedia(response)
+		} catch (error: any) {
+			setError(error.message)
+		} finally {
+			setLoading(false)
+		}
+	}, [mediaType])
 
 	const handleDelete = (media: Media | null) => {
 		if (!media) return
@@ -114,11 +114,17 @@ export default function MediaManager({ displayTitle = true, mediaType }: MediaMa
 
 	useEffect(() => {
 		fetchMedia()
-	}, [])
+	}, [fetchMedia])
+
 	return (
 		<>
 			<div>
-				{displayTitle && <h1>Media manager</h1>}
+				<div className='flex gap-4 mb-4'>
+					{displayTitle && <h1>Media manager</h1>}
+					<Button theme={customButtonTheme} outline onClick={() => fetchMedia()}>
+						<FaRotate />
+					</Button>
+				</div>
 				<Button as='label' theme={customButtonTheme} outline htmlFor='file'>
 					Carica media
 				</Button>
@@ -128,7 +134,7 @@ export default function MediaManager({ displayTitle = true, mediaType }: MediaMa
 					id='file'
 					className='hidden'
 					onInput={e => handleUpload(e)}
-					accept='image/*'
+					accept='image/*, video/mp4'
 					multiple={false}
 					ref={fileRef}
 				/>
@@ -194,11 +200,16 @@ export default function MediaManager({ displayTitle = true, mediaType }: MediaMa
 									<p>Durata: {formatTime((selected as MediaVideo)?.duration)}</p>
 									<p>
 										Risoluzioni:{' '}
-										{(selected as MediaVideo)?.resolutions.flatMap((resolution, index) => {
-											return index < (selected as MediaVideo).resolutions.length - 1
-												? resolution.name + ', '
-												: resolution.name
-										})}
+										{selected &&
+										'resolutions' in selected &&
+										selected.resolutions &&
+										selected.resolutions.length
+											? selected.resolutions.flatMap((resolution, index) => {
+													return index < selected.resolutions.length - 1
+														? resolution.name + ', '
+														: resolution.name
+											  })
+											: 'N/A'}
 									</p>
 								</>
 							)}

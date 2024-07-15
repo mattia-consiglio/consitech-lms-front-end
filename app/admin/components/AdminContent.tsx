@@ -1,6 +1,6 @@
 'use client'
 import MainWrapper from '@/app/components/MainWrapper'
-import { customButtonTheme, customSpinnerTheme, customTabsTheme } from '@/app/flowbite.themes'
+import { customButtonTheme, customSpinnerTheme } from '@/app/flowbite.themes'
 import { API } from '@/utils/api'
 import {
 	ChangeEvent,
@@ -15,16 +15,7 @@ import {
 } from '@/utils/types'
 import { Button, Modal, Spinner } from 'flowbite-react'
 import { usePathname, useRouter } from 'next/navigation'
-import React, {
-	FormEvent,
-	FormEventHandler,
-	Suspense,
-	use,
-	useCallback,
-	useEffect,
-	useRef,
-	useState,
-} from 'react'
+import React, { FormEvent, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import { HiOutlinePlusSm, HiOutlineRefresh } from 'react-icons/hi'
 import SEOComponent from './SEOComponent'
 import adminStyles from '@/app/admin/styles/admin.module.scss'
@@ -34,10 +25,10 @@ import MediaManager from '@/app/admin/media/components/MediaManager'
 import { useAppDispatch, useAppSelector } from '@/redux/store'
 import { generateSlug } from '@/utils/utils'
 import Tiptap from './TipTap'
-import { parse } from 'path'
 import { MediaImage } from '@/utils/types'
 import { IoPencilSharp, IoPlaySharp, IoTrashSharp } from 'react-icons/io5'
 import { setSelectedMedia } from '@/redux/reducers/mediaReducer'
+import { formatTime } from '@/app/corsi/[course_slug]/lezione/[lesson_slug]/VideoControls'
 
 interface AdminCourseProps {
 	contentId: string
@@ -195,16 +186,6 @@ export default function AdminContent({ contentId }: AdminCourseProps) {
 		}
 	}, [beforeLeave])
 
-	useEffect(() => {
-		setSaved(false)
-	}, [selectedMedia])
-
-	const extractVideoId = (url: string) => {
-		const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/
-		const match = url.match(regExp)
-		return match && match[7].length === 11 ? match[7] : ''
-	}
-
 	const handleChange = (e: ChangeEvent) => {
 		setSaved(false)
 		let value = e.target.value
@@ -261,7 +242,7 @@ export default function AdminContent({ contentId }: AdminCourseProps) {
 							mainLanguageId: mainLanguage.id,
 							courseId: (content as Lesson).course.id,
 							liveEditor: (content as Lesson).liveEditor,
-							video: (content as Lesson).video,
+							videoId: (content as Lesson).video?.id,
 							videoThumbnail: (content as Lesson).videoThumbnail,
 							content: (content as Lesson).content,
 					  }
@@ -368,7 +349,7 @@ export default function AdminContent({ contentId }: AdminCourseProps) {
 
 	const parseSrtTimeInMs = (time: string) => {
 		const [hours, minutes, seconds, milliseconds] = time
-			.replace(',', ':')
+			.replaceAll(',', ':')
 			.split(':')
 			.map(parseFloat)
 		console.log('time', time, hours, minutes, seconds, milliseconds)
@@ -472,57 +453,59 @@ export default function AdminContent({ contentId }: AdminCourseProps) {
 						{contentType === 'lezioni' && 'course' in content && (
 							<>
 								<div>
-									<label htmlFor='videoId'>Video id: </label>{' '}
-									<div>
-										<div>
-											<div className={`flex items-center justify-center w-12 h-12  rounded-full`}>
-												<IoPlaySharp className='text-xl' />
+									<label htmlFor='videoId'>Video: </label>{' '}
+									<div className='border-2 border-dashed border-neutral-400 dark:border-neutral-600 p-4 flex justify-between items-center'>
+										{content.video ? (
+											<div className='flex gap-2 items-center'>
+												<div className='flex items-center justify-center w-10 h-10  rounded-full bg-neutral-300 dark:bg-neutral-500'>
+													<IoPlaySharp className='text-xl' />
+												</div>
+												<span>
+													{content.video.alt}
+													<br />
+													Durata: {formatTime(content.video.duration)}
+												</span>
 											</div>
+										) : (
 											<div>
-												{content.video ? (
-													content.video.alt
-												) : (
-													<div>
-														{' '}
-														Nessun video selezionato
-														<Button
-															type='button'
-															theme={customButtonTheme}
-															onClick={() => handleSelectVideo()}
-														>
-															Scegli video
-														</Button>
-													</div>
-												)}
+												{' '}
+												Nessun video selezionato
+												<Button
+													type='button'
+													outline
+													theme={customButtonTheme}
+													onClick={() => handleSelectVideo()}
+												>
+													Scegli video
+												</Button>
 											</div>
-										</div>
+										)}
 
 										{content.video && (
-											<div>
+											<div className='flex gap-2'>
 												<button
 													type='button'
 													onClick={() => {
 														handleSelectVideo(true)
 													}}
+													className='flex items-center justify-center w-8 h-8  hover:bg-neutral-200 hover:dark:bg-neutral-700'
 												>
-													<IoPencilSharp />
+													<IoPencilSharp className='text-xl' />
 												</button>
 												<button
 													type='button'
 													onClick={() => {
 														setContent({ ...content, video: null })
 													}}
+													className='flex items-center justify-center w-8 h-8  hover:bg-red-500 hover:text-white hover:dark:bg-red-800'
 												>
-													<IoTrashSharp />
+													<IoTrashSharp className='text-xl' />
 												</button>
 											</div>
 										)}
 									</div>
 								</div>
 								<div>
-									<label htmlFor='content' className='block'>
-										Lezione
-									</label>
 									<div>
 										<label htmlFor='liveEditor' className='block'>
 											Live Editor
@@ -542,6 +525,9 @@ export default function AdminContent({ contentId }: AdminCourseProps) {
 											onChange={handleChange}
 										></textarea>
 									</div>
+									<label htmlFor='content' className='block'>
+										Lezione
+									</label>
 									{isContentLoaded && (
 										<Tiptap content={(content as Lesson).content} onUpdate={setLessonContent} />
 									)}
@@ -679,6 +665,7 @@ export default function AdminContent({ contentId }: AdminCourseProps) {
 						onClick={() => {
 							setOpenModal(false)
 							if (selectedMedia) {
+								setSaved(false)
 								if (mediaType === MediaType.IMAGE) {
 									setContent({ ...content, thumbnail: selectedMedia as MediaImage })
 								} else {
