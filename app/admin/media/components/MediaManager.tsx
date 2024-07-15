@@ -121,8 +121,15 @@ export default function MediaManager({ displayTitle = true, mediaType }: MediaMa
 			<div>
 				<div className='flex gap-4 mb-4'>
 					{displayTitle && <h1>Media manager</h1>}
-					<Button theme={customButtonTheme} outline onClick={() => fetchMedia()}>
-						<FaRotate />
+					<Button
+						theme={customButtonTheme}
+						outline
+						onClick={() => fetchMedia()}
+						className={!displayTitle ? 'flex-1' : ''}
+					>
+						<span className='flex justify-center items-center gap-2'>
+							{!displayTitle && <span>Aggiorna</span>} <FaRotate title='Aggiorna' />
+						</span>
 					</Button>
 				</div>
 				<Button as='label' theme={customButtonTheme} outline htmlFor='file'>

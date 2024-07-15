@@ -27,6 +27,7 @@ import { generateSlug } from '@/utils/utils'
 import Tiptap from './TipTap'
 import { MediaImage } from '@/utils/types'
 import { IoPencilSharp, IoPlaySharp, IoTrashSharp } from 'react-icons/io5'
+import { LiaExternalLinkAltSolid } from 'react-icons/lia'
 import { setSelectedMedia } from '@/redux/reducers/mediaReducer'
 import { formatTime } from '@/app/corsi/[course_slug]/lezione/[lesson_slug]/VideoControls'
 
@@ -402,7 +403,23 @@ export default function AdminContent({ contentId }: AdminCourseProps) {
 	return (
 		<MainWrapper>
 			<Suspense fallback='Caricamento...'>
-				<h1 className='mb-4'>{contentType === 'corsi' ? 'Corso' : 'Lezione'}</h1>
+				<span className='flex items-center mb-4 gap-4'>
+					<h1>{contentType === 'corsi' ? 'Corso' : 'Lezione'}</h1>
+					{contentId !== 'new' && (
+						<a
+							href={
+								contentType === 'corsi'
+									? `/corsi/${content?.slug}`
+									: `/corsi/${(content as Lesson)?.course?.slug}/lezione/${content?.slug}`
+							}
+							target='_blank'
+							rel='noopener noreferrer'
+							className='text-primary font-bold'
+						>
+							<LiaExternalLinkAltSolid className='inline-block text-3xl' />
+						</a>
+					)}
+				</span>
 				<form
 					onSubmit={handleSubmit}
 					className='w-full grid md:grid-cols-[1fr_auto] grid-cols-1 gap-4 items-start'
@@ -435,7 +452,7 @@ export default function AdminContent({ contentId }: AdminCourseProps) {
 								outline
 								onClick={() => setContent({ ...content, slug: generateSlug(title) })}
 							>
-								<HiOutlineRefresh />
+								<HiOutlineRefresh title='Genera slug' />
 							</Button>
 						</div>
 						<div>
@@ -454,11 +471,11 @@ export default function AdminContent({ contentId }: AdminCourseProps) {
 							<>
 								<div>
 									<label htmlFor='videoId'>Video: </label>{' '}
-									<div className='border-2 border-dashed border-neutral-400 dark:border-neutral-600 p-4 flex justify-between items-center'>
+									<div className='border-2 border-dashed border-neutral-400 dark:border-neutral-400 p-4 flex justify-between items-center'>
 										{content.video ? (
 											<div className='flex gap-2 items-center'>
 												<div className='flex items-center justify-center w-10 h-10  rounded-full bg-neutral-300 dark:bg-neutral-500'>
-													<IoPlaySharp className='text-xl' />
+													<IoPlaySharp className='text-xl' role='img' />
 												</div>
 												<span>
 													{content.video.alt}
@@ -490,7 +507,7 @@ export default function AdminContent({ contentId }: AdminCourseProps) {
 													}}
 													className='flex items-center justify-center w-8 h-8  hover:bg-neutral-200 hover:dark:bg-neutral-700'
 												>
-													<IoPencilSharp className='text-xl' />
+													<IoPencilSharp className='text-xl' title='Modifica video' />
 												</button>
 												<button
 													type='button'
@@ -499,7 +516,7 @@ export default function AdminContent({ contentId }: AdminCourseProps) {
 													}}
 													className='flex items-center justify-center w-8 h-8  hover:bg-red-500 hover:text-white hover:dark:bg-red-800'
 												>
-													<IoTrashSharp className='text-xl' />
+													<IoTrashSharp className='text-xl' title='Rimuovi video' />
 												</button>
 											</div>
 										)}
