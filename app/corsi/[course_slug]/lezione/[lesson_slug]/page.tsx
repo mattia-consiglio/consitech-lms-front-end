@@ -40,12 +40,12 @@ export default async function LessonsPage({ params }: LessonsPageProps) {
 				{lesson.video ? (
 					lesson.liveEditor ? (
 						<div className='grid grid-cols-1 gap-4 md:grid-cols-2 items-center'>
-							<VideoPlayer videoId={lesson.video} />
+							<VideoPlayer video={lesson.video} />
 							<CodePlayer sourceCode={lesson.liveEditor} />
 						</div>
 					) : (
 						<div className=''>
-							<VideoPlayer videoId={lesson.video} />
+							<VideoPlayer video={lesson.video} />
 						</div>
 					)
 				) : (

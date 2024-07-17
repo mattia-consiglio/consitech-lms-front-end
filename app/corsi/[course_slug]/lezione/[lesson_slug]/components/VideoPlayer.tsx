@@ -1,53 +1,61 @@
 'use client'
-import React, { useRef, useState } from 'react'
-import YouTube, { YouTubeEvent, YouTubePlayer, YouTubeProps } from 'react-youtube'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import VideoControls from './VideoControls'
 import '../videoPlayer.scss'
 import { useAppDispatch, useAppSelector } from '@/redux/store'
 import { setCurrentTime, setPlayerState } from '@/redux/reducers/playerReducer'
+import { MediaVideo } from '@/utils/types'
 
 interface VideoPlayerProps {
-	videoId: string
+	video: MediaVideo
 }
 
-export default function VideoPlayer({ videoId }: VideoPlayerProps) {
-	const [player, setPlayer] = useState<YouTubePlayer | null>(null)
-	const [duration, setDuration] = useState(0)
-	const { currentTime, playerState } = useAppSelector(state => state.player)
+function generateVideoResolutionSources(video: MediaVideo) {
+	if (!video.resolutions) return
+	const videoUrlBase = video.url.replace(/\.mp4$/, '')
+	return video.resolutions.map(resolution => {
+		return videoUrlBase + '_' + resolution.name + '.mp4'
+	})
+}
+
+export enum PlayerState {
+	UNSTARTED = -1,
+	ENDED = 0,
+	PLAYING = 1,
+	PAUSED = 2,
+	BUFFERING = 3,
+}
+
+export default function VideoPlayer({ video }: VideoPlayerProps) {
+	const sources = useMemo(() => generateVideoResolutionSources(video), [video])
+	const qualities = useMemo(() => video.resolutions?.map(resolution => resolution.name), [video])
+	const [videoSource, setVideoSource] = useState(sources?.[0] || video.url)
+	const [currentQuality, setCurrentQuality] = useState(qualities?.[0] || '')
+	const player = useRef<HTMLVideoElement>(null)
 	const [intervalID, setIntervalID] = useState<NodeJS.Timeout>()
-	// const [playerState, setPlayerState] = useState(-1)
 	const playerWrapper = useRef<HTMLDivElement>(null)
+	const { currentTime, playerState } = useAppSelector(state => state.player)
 	const dispatch = useAppDispatch()
 	const isPlayedOnce = useRef(false)
-
-	const onPlayerReady: YouTubeProps['onReady'] = event => {
-		// access to player in all event handlers via event.target
-		const localPlayer = event.target
-		setPlayer(localPlayer)
-		setDuration(localPlayer.getDuration())
-		dispatch(setCurrentTime(localPlayer.getCurrentTime()))
-		const options = localPlayer.getOptions()
-		console.log('player options', options)
-	}
+	const qualityChanged = useRef(false)
 
 	const seekTo = (seconds: number) => {
-		if (player) {
-			player.seekTo(seconds)
+		if (player.current) {
+			player.current.currentTime = seconds
 			dispatch(setCurrentTime(seconds))
 		}
 	}
 
-	const onStateChange = (state: YouTubeEvent<number>) => {
-		console.log('player options', player)
-		// player?.opts
-		dispatch(setPlayerState(state.data))
-		if (state.data === 0) {
+	const onStateChange = (state: PlayerState) => {
+		console.log('onStateChange')
+		dispatch(setPlayerState(state))
+		if (state === PlayerState.ENDED) {
 			setCurrentTime(0)
-		} else if (state.data === 1) {
+		} else if (state === PlayerState.PLAYING) {
 			setIntervalID(
 				setInterval(() => {
-					dispatch(setCurrentTime(player.getCurrentTime() || 0))
-					dispatch(setPlayerState(state.data))
+					dispatch(setCurrentTime(player.current?.currentTime || 0))
+					dispatch(setPlayerState(state))
 				}, 100)
 			)
 			if (!isPlayedOnce.current) {
@@ -58,16 +66,16 @@ export default function VideoPlayer({ videoId }: VideoPlayerProps) {
 		}
 	}
 
-	const opts: YouTubeProps['opts'] = {
-		width: '100%',
-		playerVars: {
-			// https://developers.google.com/youtube/player_parameters
-			autoplay: 0,
-			controls: 0,
-			enablejsapi: true,
-			rel: 0,
-			disablekb: 0,
-		},
+	const changeQuality = (quality: string) => {
+		const qualityIndex = qualities?.indexOf(quality)
+
+		if (qualityIndex !== undefined && qualityIndex >= 0 && sources) {
+			setCurrentQuality(quality)
+			setVideoSource(sources[qualityIndex])
+			player.current?.load()
+			seekTo(currentTime)
+			qualityChanged.current = true
+		}
 	}
 
 	return (
@@ -77,21 +85,39 @@ export default function VideoPlayer({ videoId }: VideoPlayerProps) {
 				ref={playerWrapper}
 				id='videoPlayerWrapper'
 			>
-				<YouTube
-					videoId={videoId}
-					opts={opts}
-					onReady={onPlayerReady}
-					onStateChange={onStateChange}
-					onPlaybackQualityChange={e => console.log('quality change', e)}
-				/>
-				{player && (
+				<video
+					ref={player}
+					id='player'
+					onCanPlay={() => {
+						if (playerState === PlayerState.PLAYING && qualityChanged.current) {
+							player.current?.play()
+							// onStateChange(PlayerState.PLAYING)
+							qualityChanged.current = false
+							console.log('player can play')
+						}
+					}}
+					onPlay={() => {
+						playerState !== PlayerState.PLAYING && onStateChange(PlayerState.PLAYING)
+						console.log('player play')
+					}}
+					onPause={() => {
+						onStateChange(PlayerState.PAUSED)
+						console.log('player pause')
+					}}
+					src={videoSource}
+				></video>
+
+				{player.current && (
 					<VideoControls
-						duration={duration}
-						currentTime={currentTime}
-						player={player}
-						playerState={playerState}
+						duration={video.duration}
+						player={player.current}
 						playerWrapper={playerWrapper}
 						isPlayedOnce={isPlayedOnce.current}
+						seekTo={seekTo}
+						qualities={qualities}
+						currentQuality={currentQuality}
+						setCurrentQuality={setCurrentQuality}
+						changeQuality={changeQuality}
 					/>
 				)}
 			</div>

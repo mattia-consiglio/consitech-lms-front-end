@@ -1,5 +1,5 @@
 import { setCurrentTime } from '@/redux/reducers/playerReducer'
-import { useAppDispatch } from '@/redux/store'
+import { useAppDispatch, useAppSelector } from '@/redux/store'
 import React, { useEffect, useRef, useState } from 'react'
 import {
 	IoChevronBackSharp,
@@ -11,23 +11,32 @@ import {
 } from 'react-icons/io5'
 import { YouTubePlayer } from 'react-youtube'
 import { MdFullscreen, MdOutlineCheck, MdOutlineFullscreenExit } from 'react-icons/md'
+import { PlayerState } from './VideoPlayer'
 
 interface VideoProgressBarProps {
 	duration: number
-	currentTime: number
-	player: YouTubePlayer
-	playerState: number
+	player: HTMLVideoElement
+	// playerState: number
 	playerWrapper: React.RefObject<HTMLDivElement>
 	isPlayedOnce: boolean
+	seekTo: (time: number) => void
+	qualities: string[] | null
+	setCurrentQuality: (quality: string) => void
+	currentQuality: string
+	changeQuality: (quality: string) => void
 }
 
 export default function VideoControls({
 	duration,
-	currentTime,
 	player,
-	playerState,
+	// playerState,
 	playerWrapper,
 	isPlayedOnce,
+	seekTo,
+	qualities,
+	setCurrentQuality,
+	currentQuality,
+	changeQuality,
 }: VideoProgressBarProps) {
 	const formatTime = (time: number) => {
 		const minutes = Math.floor(time / 60)
@@ -41,6 +50,7 @@ export default function VideoControls({
 		return formatTime(time)
 	}
 
+	const { currentTime, playerState } = useAppSelector(state => state.player)
 	const playerControls = useRef<HTMLDivElement>(null)
 	const [currentTimeText, setCurrentTimeText] = useState(formatPercTime(currentTime))
 	const [isHovering, setIsHovering] = useState(false)
@@ -51,29 +61,9 @@ export default function VideoControls({
 	const isDragged = useRef(false)
 	const [isOptionsOpen, setIsOptionsOpen] = useState(false)
 	const [isFullscreen, setIsFullscreen] = useState(false)
-	const [availableSpeeds, setAvailableSpeeds] = useState<number[]>([0.25, 0.5, 1, 1.25, 1.5, 2])
-	const [availableQualities, setAvailableQualities] = useState<string[]>([
-		'hd1080',
-		'hd720',
-		'large',
-		'medium',
-		'small',
-	])
-	const qualityMap: { [key: string]: string } = {
-		'hd1440': '1440p',
-		'hd1080': '1080p',
-		'hd720': '720p',
-		'large': '480p',
-		'medium': '360p',
-		'small': '240p',
-		'tiny': '144p',
-		'auto': 'Automatica',
-	}
-	const [currentQuality, setCurrentQuality] = useState('auto')
+	const availableSpeeds: number[] = [0.25, 0.5, 1, 1.25, 1.5, 2]
 	const [currentSpeed, setCurrentSpeed] = useState(1)
-	const [currentOptionMenu, setCurrentOptionMenu] = useState<
-		'subtitles' | 'speed' | 'quality' | 'main'
-	>('main')
+	const [currentOptionMenu, setCurrentOptionMenu] = useState<'speed' | 'quality' | 'main'>('main')
 
 	const getCursorPosition = (e: MouseEvent) => {
 		if (!progressBar.current) return 0
@@ -124,21 +114,21 @@ export default function VideoControls({
 	const seek = (seconds?: number) => {
 		seconds = seconds !== undefined ? seconds : (HoverPercentage.current / 100) * duration
 		if (player) {
-			player.seekTo(seconds)
-			dispatch(setCurrentTime(seconds))
+			seekTo(seconds)
 		}
 	}
 
 	const playPause = () => {
+		console.log('playerState', playerState)
 		if (player) {
-			if (player.getPlayerState() === 1) {
-				player.pauseVideo()
-				dispatch(setCurrentTime(player.getCurrentTime()))
-				seek(player.getCurrentTime())
+			if (playerState === PlayerState.PLAYING) {
+				player.pause()
+				dispatch(setCurrentTime(player.currentTime))
+				seek(player.currentTime)
 			} else {
-				dispatch(setCurrentTime(player.getCurrentTime()))
-				seek(player.getCurrentTime())
-				player.playVideo()
+				dispatch(setCurrentTime(player.currentTime))
+				seek(player.currentTime)
+				player.play()
 			}
 		}
 	}
@@ -155,17 +145,11 @@ export default function VideoControls({
 
 	useEffect(() => {
 		if (isPlayedOnce && player) {
-			const speeds = player.getAvailablePlaybackRates()
-			setAvailableSpeeds(speeds)
-			const qualities = player.getAvailableQualityLevels()
-			console.log('qualities', qualities)
-			setAvailableQualities(qualities)
-			const currentSpeed = player.getPlaybackRate()
-			setCurrentSpeed(currentSpeed)
-			const currentQuality = player.getPlaybackQuality()
-			setCurrentQuality(currentQuality)
+			if (qualities?.length) {
+				setCurrentQuality(qualities[0])
+			}
 		}
-	}, [isPlayedOnce, player])
+	}, [isPlayedOnce, player, qualities, setCurrentQuality])
 
 	const goBackOption = (
 		<li
@@ -179,11 +163,11 @@ export default function VideoControls({
 	)
 
 	const setVideoQuality = (quality: string) => {
-		player.setPlaybackQuality(quality)
-		console.log('setting quality', player.getPlaybackQuality())
-		setCurrentQuality(quality)
+		// player.childNodes[0].setAttribute('src', quality)
+		// console.log('setting quality', player.getPlaybackQuality())
+		changeQuality(quality)
 		setIsOptionsOpen(false)
-	} 
+	}
 
 	return (
 		<div
@@ -229,7 +213,7 @@ export default function VideoControls({
 					<button
 						onClick={e => {
 							e.stopPropagation()
-							seek(player.getCurrentTime() - 5)
+							seek(Math.max(player.currentTime - 5, 0))
 						}}
 						className='text-xl'
 					>
@@ -242,12 +226,13 @@ export default function VideoControls({
 						}}
 						className='text-3xl'
 					>
-						{playerState === 1 ? <IoPauseSharp /> : <IoPlaySharp />}
+						{playerState === PlayerState.PLAYING ? <IoPauseSharp /> : <IoPlaySharp />}
+						{/* <IoPlaySharp /> */}
 					</button>
 					<button
 						onClick={e => {
 							e.stopPropagation()
-							seek(player.getCurrentTime() + 5)
+							seek(Math.min(player.currentTime + 5, duration))
 						}}
 						className='text-xl'
 					>
@@ -295,7 +280,7 @@ export default function VideoControls({
 							{currentOptionMenu === 'quality' && (
 								<ul>
 									{goBackOption}
-									{availableQualities.map(quality => (
+									{qualities?.map(quality => (
 										<li
 											key={quality}
 											className='flex justify-end items-center'
@@ -305,7 +290,7 @@ export default function VideoControls({
 											}}
 										>
 											{currentQuality === quality && <MdOutlineCheck />}
-											{qualityMap[quality]}
+											{quality}
 										</li>
 									))}
 								</ul>
