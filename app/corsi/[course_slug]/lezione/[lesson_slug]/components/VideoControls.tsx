@@ -31,7 +31,7 @@ function PlayIcon() {
 		<svg
 			stroke='currentColor'
 			fill='currentColor'
-			stroke-width='0'
+			strokeWidth='0'
 			xmlns='http://www.w3.org/2000/svg'
 			height='1em'
 			width='1em'
@@ -47,7 +47,7 @@ function PauseIcon() {
 		<svg
 			stroke='currentColor'
 			fill='currentColor'
-			stroke-width='0'
+			strokeWidth='0'
 			height='1em'
 			width='1em'
 			viewBox='0 0 79 79'
@@ -59,6 +59,18 @@ function PauseIcon() {
 			</g>
 		</svg>
 	)
+}
+
+function formatTime(time: number) {
+	const minutes = Math.floor(time / 60)
+	let seconds = Math.floor(time % 60)
+	const secondsText = seconds < 10 ? `0${seconds}` : seconds
+	return `${minutes}:${secondsText}`
+}
+
+function formatPercTime(perc: number, duration: number) {
+	const time = (perc / 100) * duration
+	return formatTime(time)
 }
 
 export default function VideoControls({
@@ -73,21 +85,9 @@ export default function VideoControls({
 	currentQuality,
 	changeQuality,
 }: VideoProgressBarProps) {
-	const formatTime = (time: number) => {
-		const minutes = Math.floor(time / 60)
-		let seconds = Math.floor(time % 60)
-		const secondsText = seconds < 10 ? `0${seconds}` : seconds
-		return `${minutes}:${secondsText}`
-	}
-
-	const formatPercTime = (perc: number) => {
-		const time = (perc / 100) * duration
-		return formatTime(time)
-	}
-
 	const { currentTime, playerState } = useAppSelector(state => state.player)
 	const playerControls = useRef<HTMLDivElement>(null)
-	const [currentTimeText, setCurrentTimeText] = useState(formatPercTime(currentTime))
+	const [currentTimeText, setCurrentTimeText] = useState(formatPercTime(currentTime, duration))
 	const [isHovering, setIsHovering] = useState(false)
 	const progressBar = useRef<HTMLDivElement>(null)
 	const HoverPercentage = useRef(0)
@@ -101,7 +101,7 @@ export default function VideoControls({
 	const [currentOptionMenu, setCurrentOptionMenu] = useState<'speed' | 'quality' | 'main'>('main')
 	const iconCircle = useRef<HTMLDivElement>(null)
 
-	const getCursorPosition = (e: MouseEvent) => {
+	function getCursorPosition(e: MouseEvent) {
 		if (!progressBar.current) return 0
 		const rect = progressBar.current.getBoundingClientRect()
 		const offsetX = e.clientX - rect.left
@@ -110,26 +110,24 @@ export default function VideoControls({
 	}
 
 	// update percentage on mouse hover
-
-	const handleMouseMove = (e: MouseEvent) => {
+	function handleMouseMove(e: MouseEvent) {
 		const percentage = getCursorPosition(e)
 		HoverPercentage.current = percentage
-		setCurrentTimeText(formatPercTime(percentage))
-		// isHoveringRef.current = true
+		setCurrentTimeText(formatPercTime(percentage, duration))
 		setIsHovering(true)
 		if (isDragging.current) {
 			seek()
 		}
 	}
 
-	const handleMouseLeave = (e: React.MouseEvent<HTMLDivElement>) => {
+	function handleMouseLeave(e: React.MouseEvent<HTMLDivElement>) {
 		e.stopPropagation()
 		if (!isDragging.current) {
 			setIsHovering(false)
 		}
 	}
 
-	const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+	function handleMouseDown(e: React.MouseEvent<HTMLDivElement>) {
 		e.stopPropagation()
 		isDragging.current = true
 		isDragged.current = true
@@ -139,7 +137,7 @@ export default function VideoControls({
 		window.addEventListener('mouseup', handleMouseUp)
 	}
 
-	const handleMouseUp = () => {
+	function handleMouseUp() {
 		setIsHovering(false)
 		isDragging.current = false
 		window.removeEventListener('mousemove', handleMouseMove)
@@ -147,16 +145,13 @@ export default function VideoControls({
 		seek()
 	}
 
-	const seek = (seconds?: number) => {
+	function seek(seconds?: number) {
 		seconds = seconds !== undefined ? seconds : (HoverPercentage.current / 100) * duration
 		if (player) {
 			seekTo(seconds)
 		}
 	}
-
-	const playPause = () => {
-		console.log('playerState', playerState)
-
+	function playPause() {
 		if (playerState === PlayerState.PLAYING) {
 			player.pause()
 		} else {
@@ -165,13 +160,25 @@ export default function VideoControls({
 		iconCircle.current?.classList.toggle('animate')
 	}
 
-	const toggleFullscreen = () => {
-		if (document.fullscreenElement?.id === 'videoPlayerWrapper') {
-			document.exitFullscreen()
+	function openFullscreen() {
+		playerWrapper.current?.requestFullscreen()
+		setIsFullscreen(true)
+	}
+
+	function closeFullscreen(manually = false) {
+		if (document.fullscreenElement?.id !== 'videoPlayerWrapper' || manually) {
+			if (manually) {
+				document.exitFullscreen()
+			}
 			setIsFullscreen(false)
+		}
+	}
+
+	function toggleFullscreen() {
+		if (document.fullscreenElement?.id === 'videoPlayerWrapper') {
+			closeFullscreen(true)
 		} else {
-			playerWrapper.current?.requestFullscreen()
-			setIsFullscreen(true)
+			openFullscreen()
 		}
 	}
 
@@ -182,6 +189,56 @@ export default function VideoControls({
 			}
 		}
 	}, [isPlayedOnce, player, qualities, setCurrentQuality])
+
+	function seekBackward() {
+		seek(Math.max(player.currentTime - 5, 0))
+	}
+	function seekForward() {
+		seek(Math.min(player.currentTime + 5, duration))
+	}
+
+	function handleKeydown(e: KeyboardEvent) {
+		e.preventDefault()
+		switch (e.key) {
+			case 'ArrowRight':
+			case 'j':
+			case 'J':
+				seekForward()
+				break
+			case 'ArrowLeft':
+			case 'l':
+			case 'L':
+				seekBackward()
+				break
+			case ' ':
+			case 'Space':
+			case 'k':
+			case 'K':
+				playPause()
+				break
+			case 'f':
+			case 'F':
+				toggleFullscreen()
+				break
+			case 'o':
+				setIsOptionsOpen(true)
+				break
+		}
+	}
+
+	function handleExitFullScreen() {
+		closeFullscreen()
+	}
+
+	useEffect(() => {
+		document.addEventListener('keydown', handleKeydown)
+		document.addEventListener('fullscreenchange', handleExitFullScreen)
+
+		return () => {
+			document.removeEventListener('keydown', handleKeydown)
+			document.removeEventListener('fullscreenchange', handleExitFullScreen)
+		}
+	})
 
 	const goBackOption = (
 		<li
@@ -195,8 +252,6 @@ export default function VideoControls({
 	)
 
 	const setVideoQuality = (quality: string) => {
-		// player.childNodes[0].setAttribute('src', quality)
-		// console.log('setting quality', player.getPlaybackQuality())
 		changeQuality(quality)
 		setIsOptionsOpen(false)
 	}
@@ -225,6 +280,10 @@ export default function VideoControls({
 						playPause()
 					}
 					isDragged.current = false
+				}}
+				onDoubleClick={e => {
+					e.stopPropagation()
+					toggleFullscreen()
 				}}
 			>
 				<div
@@ -269,7 +328,6 @@ export default function VideoControls({
 							className='text-3xl'
 						>
 							{playerState === PlayerState.PLAYING ? <IoPauseSharp /> : <IoPlaySharp />}
-							{/* <IoPlaySharp /> */}
 						</button>
 						<button
 							onClick={e => {
@@ -352,7 +410,6 @@ export default function VideoControls({
 							<button
 								onClick={e => {
 									e.stopPropagation()
-									console.log('clicked', isOptionsOpen)
 									setIsOptionsOpen(!isOptionsOpen)
 								}}
 							>

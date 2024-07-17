@@ -23,7 +23,6 @@ export enum PlayerState {
 	ENDED = 0,
 	PLAYING = 1,
 	PAUSED = 2,
-	BUFFERING = 3,
 }
 
 export default function VideoPlayer({ video }: VideoPlayerProps) {
@@ -47,7 +46,6 @@ export default function VideoPlayer({ video }: VideoPlayerProps) {
 	}
 
 	const onStateChange = (state: PlayerState) => {
-		console.log('onStateChange')
 		dispatch(setPlayerState(state))
 		if (state === PlayerState.ENDED) {
 			setCurrentTime(0)
@@ -91,17 +89,15 @@ export default function VideoPlayer({ video }: VideoPlayerProps) {
 					onCanPlay={() => {
 						if (playerState === PlayerState.PLAYING && qualityChanged.current) {
 							player.current?.play()
+
 							qualityChanged.current = false
-							console.log('player can play')
 						}
 					}}
 					onPlay={() => {
 						playerState !== PlayerState.PLAYING && onStateChange(PlayerState.PLAYING)
-						console.log('player play')
 					}}
 					onPause={() => {
 						onStateChange(PlayerState.PAUSED)
-						console.log('player pause')
 					}}
 					src={videoSource}
 				></video>
