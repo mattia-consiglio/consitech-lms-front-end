@@ -91,7 +91,6 @@ export default function VideoPlayer({ video }: VideoPlayerProps) {
 					onCanPlay={() => {
 						if (playerState === PlayerState.PLAYING && qualityChanged.current) {
 							player.current?.play()
-							// onStateChange(PlayerState.PLAYING)
 							qualityChanged.current = false
 							console.log('player can play')
 						}

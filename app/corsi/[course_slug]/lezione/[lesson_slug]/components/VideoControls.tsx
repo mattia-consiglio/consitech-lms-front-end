@@ -26,6 +26,41 @@ interface VideoProgressBarProps {
 	changeQuality: (quality: string) => void
 }
 
+function PlayIcon() {
+	return (
+		<svg
+			stroke='currentColor'
+			fill='currentColor'
+			stroke-width='0'
+			xmlns='http://www.w3.org/2000/svg'
+			height='1em'
+			width='1em'
+			viewBox='0 0 79 79'
+		>
+			<polygon points='73.71 39.5 5.29 0 5.29 79 73.71 39.5' />
+		</svg>
+	)
+}
+
+function PauseIcon() {
+	return (
+		<svg
+			stroke='currentColor'
+			fill='currentColor'
+			stroke-width='0'
+			height='1em'
+			width='1em'
+			viewBox='0 0 79 79'
+			xmlns='http://www.w3.org/2000/svg'
+		>
+			<g>
+				<rect x='5' width='24' height='79' />
+				<rect x='50.5' width='24' height='79' />
+			</g>
+		</svg>
+	)
+}
+
 export default function VideoControls({
 	duration,
 	player,
@@ -64,6 +99,7 @@ export default function VideoControls({
 	const availableSpeeds: number[] = [0.25, 0.5, 1, 1.25, 1.5, 2]
 	const [currentSpeed, setCurrentSpeed] = useState(1)
 	const [currentOptionMenu, setCurrentOptionMenu] = useState<'speed' | 'quality' | 'main'>('main')
+	const iconCircle = useRef<HTMLDivElement>(null)
 
 	const getCursorPosition = (e: MouseEvent) => {
 		if (!progressBar.current) return 0
@@ -120,17 +156,13 @@ export default function VideoControls({
 
 	const playPause = () => {
 		console.log('playerState', playerState)
-		if (player) {
-			if (playerState === PlayerState.PLAYING) {
-				player.pause()
-				dispatch(setCurrentTime(player.currentTime))
-				seek(player.currentTime)
-			} else {
-				dispatch(setCurrentTime(player.currentTime))
-				seek(player.currentTime)
-				player.play()
-			}
+
+		if (playerState === PlayerState.PLAYING) {
+			player.pause()
+		} else {
+			player.play()
 		}
+		iconCircle.current?.classList.toggle('animate')
 	}
 
 	const toggleFullscreen = () => {
@@ -170,164 +202,174 @@ export default function VideoControls({
 	}
 
 	return (
-		<div
-			ref={playerControls}
-			className='player-controls'
-			style={{
-				height: isDragging.current ? '100%' : '',
-				opacity: isDragging.current ? 1 : '',
-				cursor: 'default',
-			}}
-			onClick={e => {
-				if (!isDragged.current) {
-					playPause()
-				}
-				isDragged.current = false
-			}}
-		>
+		<>
+			<div className='center-wrapper'>
+				<div
+					className='icon-circle'
+					ref={iconCircle}
+					onAnimationEnd={() => iconCircle.current?.classList.toggle('animate')}
+				>
+					{playerState === PlayerState.PLAYING ? <PlayIcon /> : <PauseIcon />}
+				</div>
+			</div>
 			<div
-				className='progress-bar-wrapper'
-				onMouseMove={e => handleMouseMove(e.nativeEvent)}
-				onMouseLeave={handleMouseLeave}
-				onMouseDown={handleMouseDown}
-				ref={progressBar}
-				style={{ opacity: isDragging.current ? 1 : '' }}
+				ref={playerControls}
+				className='player-controls'
+				style={{
+					height: isDragging.current ? '100%' : '',
+					opacity: isDragging.current ? 1 : '',
+					cursor: 'default',
+				}}
+				onClick={e => {
+					if (!isDragged.current) {
+						playPause()
+					}
+					isDragged.current = false
+				}}
 			>
 				<div
-					className={`circle${isHovering || isDragging.current ? ' active' : ''}`}
-					style={{ left: `${(currentTime / duration) * 100}%` }}
-				></div>
-				<div className='progress' style={{ width: `${(currentTime / duration) * 100}%` }} />
-				<div
-					className='time-hover-text'
-					style={{
-						left: `${HoverPercentage.current}%`,
-						visibility: isHovering ? 'visible' : 'hidden',
-					}}
+					className='progress-bar-wrapper'
+					onMouseMove={e => handleMouseMove(e.nativeEvent)}
+					onMouseLeave={handleMouseLeave}
+					onMouseDown={handleMouseDown}
+					ref={progressBar}
+					style={{ opacity: isDragging.current ? 1 : '' }}
 				>
-					{currentTimeText}
-				</div>
-			</div>
-			<div className='controls text-white'>
-				<div className='left'>
-					<button
-						onClick={e => {
-							e.stopPropagation()
-							seek(Math.max(player.currentTime - 5, 0))
+					<div
+						className={`circle${isHovering || isDragging.current ? ' active' : ''}`}
+						style={{ left: `${(currentTime / duration) * 100}%` }}
+					></div>
+					<div className='progress' style={{ width: `${(currentTime / duration) * 100}%` }} />
+					<div
+						className='time-hover-text'
+						style={{
+							left: `${HoverPercentage.current}%`,
+							visibility: isHovering ? 'visible' : 'hidden',
 						}}
-						className='text-xl'
 					>
-						<IoChevronBackSharp /> 5s
-					</button>
-					<button
-						onClick={e => {
-							e.stopPropagation()
-							playPause()
-						}}
-						className='text-3xl'
-					>
-						{playerState === PlayerState.PLAYING ? <IoPauseSharp /> : <IoPlaySharp />}
-						{/* <IoPlaySharp /> */}
-					</button>
-					<button
-						onClick={e => {
-							e.stopPropagation()
-							seek(Math.min(player.currentTime + 5, duration))
-						}}
-						className='text-xl'
-					>
-						5s <IoChevronForwardSharp />
-					</button>
-					<div>
-						{formatTime(currentTime)} / {formatTime(duration)}
+						{currentTimeText}
 					</div>
 				</div>
-				<div className='right'>
-					<button
-						onClick={e => {
-							e.stopPropagation()
-						}}
-					>
-						<IoLogoClosedCaptioning />
-					</button>
-					<div className='flex items-center relative'>
-						<div
-							className={`options-menu absolute bottom-4 bg-neutral-800 right-0${
-								isOptionsOpen ? ' block' : ' hidden'
-							}`}
+				<div className='controls text-white'>
+					<div className='left'>
+						<button
+							onClick={e => {
+								e.stopPropagation()
+								seek(Math.max(player.currentTime - 5, 0))
+							}}
+							className='text-xl'
 						>
-							{currentOptionMenu === 'main' && (
-								<ul>
-									<li>Sottotitoli</li>
-									<li
-										onClick={e => {
-											e.stopPropagation()
-											setCurrentOptionMenu('speed')
-										}}
-									>
-										Velocità riproduzione
-									</li>
-									<li
-										onClick={e => {
-											e.stopPropagation()
-											setCurrentOptionMenu('quality')
-										}}
-									>
-										Qualità
-									</li>
-								</ul>
-							)}
-							{currentOptionMenu === 'quality' && (
-								<ul>
-									{goBackOption}
-									{qualities?.map(quality => (
+							<IoChevronBackSharp /> 5s
+						</button>
+						<button
+							onClick={e => {
+								e.stopPropagation()
+								playPause()
+							}}
+							className='text-3xl'
+						>
+							{playerState === PlayerState.PLAYING ? <IoPauseSharp /> : <IoPlaySharp />}
+							{/* <IoPlaySharp /> */}
+						</button>
+						<button
+							onClick={e => {
+								e.stopPropagation()
+								seek(Math.min(player.currentTime + 5, duration))
+							}}
+							className='text-xl'
+						>
+							5s <IoChevronForwardSharp />
+						</button>
+						<div>
+							{formatTime(currentTime)} / {formatTime(duration)}
+						</div>
+					</div>
+					<div className='right'>
+						<button
+							onClick={e => {
+								e.stopPropagation()
+							}}
+						>
+							<IoLogoClosedCaptioning />
+						</button>
+						<div className='flex items-center relative'>
+							<div
+								className={`options-menu absolute bottom-4 bg-neutral-800 right-0${
+									isOptionsOpen ? ' block' : ' hidden'
+								}`}
+							>
+								{currentOptionMenu === 'main' && (
+									<ul>
+										<li>Sottotitoli</li>
 										<li
-											key={quality}
-											className='flex justify-end items-center'
 											onClick={e => {
 												e.stopPropagation()
-												setVideoQuality(quality)
+												setCurrentOptionMenu('speed')
 											}}
 										>
-											{currentQuality === quality && <MdOutlineCheck />}
-											{quality}
+											Velocità riproduzione
 										</li>
-									))}
-								</ul>
-							)}
-							{currentOptionMenu === 'speed' && (
-								<ul>
-									{goBackOption}
-									{availableSpeeds.map(speed => (
-										<li key={speed} className='flex justify-end items-center'>
-											{currentSpeed === speed && <MdOutlineCheck />}
-											{speed}x
+										<li
+											onClick={e => {
+												e.stopPropagation()
+												setCurrentOptionMenu('quality')
+											}}
+										>
+											Qualità
 										</li>
-									))}
-								</ul>
-							)}
+									</ul>
+								)}
+								{currentOptionMenu === 'quality' && (
+									<ul>
+										{goBackOption}
+										{qualities?.map(quality => (
+											<li
+												key={quality}
+												className='flex justify-end items-center'
+												onClick={e => {
+													e.stopPropagation()
+													setVideoQuality(quality)
+												}}
+											>
+												{currentQuality === quality && <MdOutlineCheck />}
+												{quality}
+											</li>
+										))}
+									</ul>
+								)}
+								{currentOptionMenu === 'speed' && (
+									<ul>
+										{goBackOption}
+										{availableSpeeds.map(speed => (
+											<li key={speed} className='flex justify-end items-center'>
+												{currentSpeed === speed && <MdOutlineCheck />}
+												{speed}x
+											</li>
+										))}
+									</ul>
+								)}
+							</div>
+							<button
+								onClick={e => {
+									e.stopPropagation()
+									console.log('clicked', isOptionsOpen)
+									setIsOptionsOpen(!isOptionsOpen)
+								}}
+							>
+								<IoSettingsSharp />
+							</button>
+							<button
+								onClick={e => {
+									e.stopPropagation()
+									toggleFullscreen()
+								}}
+							>
+								{isFullscreen ? <MdOutlineFullscreenExit /> : <MdFullscreen />}
+							</button>
 						</div>
-						<button
-							onClick={e => {
-								e.stopPropagation()
-								console.log('clicked', isOptionsOpen)
-
-								setIsOptionsOpen(!isOptionsOpen)
-							}}
-						>
-							<IoSettingsSharp />
-						</button>
-						<button
-							onClick={e => {
-								e.stopPropagation()
-								toggleFullscreen()
-							}}
-						>
-							{isFullscreen ? <MdOutlineFullscreenExit /> : <MdFullscreen />}
-						</button>
 					</div>
 				</div>
 			</div>
-		</div>
+		</>
 	)
 }

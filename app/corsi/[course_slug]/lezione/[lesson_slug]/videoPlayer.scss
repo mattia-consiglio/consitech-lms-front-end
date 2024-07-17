@@ -8,12 +8,56 @@ $primary-color: theme('colors.primary');
 	position: relative;
 	user-select: none;
 
-	& > div,
-	iframe {
+	& > div {
 		max-width: 100%;
 		height: auto;
 		aspect-ratio: 16/9;
 	}
+
+	.center-wrapper {
+		position: absolute;
+		bottom: 0;
+		left: 0;
+		height: 100%;
+		width: 100%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+
+		@keyframes zoomAndFade {
+			0% {
+				transform: scale(1);
+				opacity: 1;
+			}
+			100% {
+				transform: scale(1.5);
+				opacity: 0;
+			}
+		}
+
+		.icon-circle {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			width: 60px;
+			height: 60px;
+			border-radius: 50%;
+			background-color: rgba(0, 0, 0, 0.5);
+			opacity: 0;
+
+			&.animate {
+				animation: zoomAndFade 400ms ease-out forwards;
+			}
+
+			svg {
+				font-size: 25px;
+				color: rgba(255, 255, 255, 0.9);
+				display: flex;
+				margin: 0 auto;
+			}
+		}
+	}
+
 	.player-controls {
 		position: absolute;
 		bottom: 0;
