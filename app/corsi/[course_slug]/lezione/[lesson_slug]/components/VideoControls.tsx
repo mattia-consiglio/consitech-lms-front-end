@@ -1,5 +1,5 @@
 import { useAppDispatch, useAppSelector } from '@/redux/store'
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
 	IoChevronBackSharp,
 	IoChevronForwardSharp,
@@ -22,6 +22,8 @@ interface VideoProgressBarProps {
 	setCurrentQuality: (quality: string) => void
 	currentQuality: string
 	changeQuality: (quality: string) => void
+	currentSpeed: number
+	changeSpeed: (speed: number) => void
 }
 
 function PlayIcon() {
@@ -82,6 +84,8 @@ export default function VideoControls({
 	setCurrentQuality,
 	currentQuality,
 	changeQuality,
+	currentSpeed,
+	changeSpeed,
 }: VideoProgressBarProps) {
 	const { currentTime, playerState, isInFocus } = useAppSelector(state => state.player)
 	const playerControls = useRef<HTMLDivElement>(null)
@@ -95,7 +99,7 @@ export default function VideoControls({
 	const [isOptionsOpen, setIsOptionsOpen] = useState(false)
 	const [isFullscreen, setIsFullscreen] = useState(false)
 	const availableSpeeds: number[] = [0.25, 0.5, 1, 1.25, 1.5, 2]
-	const [currentSpeed, setCurrentSpeed] = useState(1)
+
 	const [currentOptionMenu, setCurrentOptionMenu] = useState<'speed' | 'quality' | 'main'>('main')
 	const iconCircle = useRef<HTMLDivElement>(null)
 	const isAnimating = useRef(false)
@@ -271,20 +275,33 @@ export default function VideoControls({
 		}
 	})
 
-	const goBackOption = (
-		<li
-			onClick={e => {
-				e.stopPropagation()
-				setCurrentOptionMenu('main')
-			}}
-		>
-			Indietro
-		</li>
+	const goBackOption = useMemo(
+		() => (
+			<li
+				onClick={e => {
+					e.stopPropagation()
+					setCurrentOptionMenu('main')
+				}}
+				className='flex items-center gap-2 cursor-pointer'
+			>
+				<IoChevronBackSharp /> Indietro
+			</li>
+		),
+		[]
 	)
 
-	const setVideoQuality = (quality: string) => {
+	const setVideoQuality = (e: React.MouseEvent<HTMLLIElement, MouseEvent>, quality: string) => {
+		e.stopPropagation()
 		changeQuality(quality)
 		setIsOptionsOpen(false)
+		setCurrentOptionMenu('main')
+	}
+
+	const setVideoSpeed = (e: React.MouseEvent<HTMLLIElement, MouseEvent>, speed: number) => {
+		e.stopPropagation()
+		changeSpeed(speed)
+		setIsOptionsOpen(false)
+		setCurrentOptionMenu('main')
 	}
 
 	return (
@@ -352,6 +369,9 @@ export default function VideoControls({
 								seek(Math.max(player.currentTime - 5, 0))
 							}}
 							className='text-xl'
+							onDoubleClick={e => {
+								e.stopPropagation()
+							}}
 						>
 							<IoChevronBackSharp /> 5s
 						</button>
@@ -361,6 +381,9 @@ export default function VideoControls({
 								playPause()
 							}}
 							className='text-3xl'
+							onDoubleClick={e => {
+								e.stopPropagation()
+							}}
 						>
 							{playerState === PlayerState.PLAYING ? <IoPauseSharp /> : <IoPlaySharp />}
 						</button>
@@ -370,6 +393,9 @@ export default function VideoControls({
 								seek(Math.min(player.currentTime + 5, duration))
 							}}
 							className='text-xl'
+							onDoubleClick={e => {
+								e.stopPropagation()
+							}}
 						>
 							5s <IoChevronForwardSharp />
 						</button>
@@ -383,17 +409,17 @@ export default function VideoControls({
 								e.stopPropagation()
 							}}
 						>
-							<IoLogoClosedCaptioning />
+							{/* <IoLogoClosedCaptioning /> */}
 						</button>
 						<div className='flex items-center relative'>
 							<div
-								className={`options-menu absolute bottom-4 bg-neutral-800 right-0${
+								className={`options-menu absolute bottom-7 bg-neutral-800 right-0${
 									isOptionsOpen ? ' block' : ' hidden'
 								}`}
 							>
 								{currentOptionMenu === 'main' && (
 									<ul>
-										<li>Sottotitoli</li>
+										{/* <li>Sottotitoli</li> */}
 										<li
 											onClick={e => {
 												e.stopPropagation()
@@ -418,11 +444,12 @@ export default function VideoControls({
 										{qualities?.map(quality => (
 											<li
 												key={quality}
-												className='flex justify-end items-center'
-												onClick={e => {
-													e.stopPropagation()
-													setVideoQuality(quality)
-												}}
+												className={`flex items-center${
+													currentQuality === quality
+														? ' justify-between text-primary'
+														: ' justify-end'
+												}`}
+												onClick={e => setVideoQuality(e, quality)}
 											>
 												{currentQuality === quality && <MdOutlineCheck />}
 												{quality}
@@ -434,23 +461,35 @@ export default function VideoControls({
 									<ul>
 										{goBackOption}
 										{availableSpeeds.map(speed => (
-											<li key={speed} className='flex justify-end items-center'>
-												{currentSpeed === speed && <MdOutlineCheck />}
-												{speed}x
+											<li
+												key={'videoSpeed_' + speed}
+												className={`flex items-center${
+													currentSpeed === speed ? ' justify-between text-primary' : ' justify-end'
+												}`}
+												onClick={e => setVideoSpeed(e, speed)}
+											>
+												{currentSpeed === speed ? <MdOutlineCheck /> : <div />}
+												{speed + 'x'}
 											</li>
 										))}
 									</ul>
 								)}
 							</div>
 							<button
+								className='text-xl'
 								onClick={e => {
 									e.stopPropagation()
 									setIsOptionsOpen(!isOptionsOpen)
+									setCurrentOptionMenu('main')
+								}}
+								onDoubleClick={e => {
+									e.stopPropagation()
 								}}
 							>
 								<IoSettingsSharp />
 							</button>
 							<button
+								className='text-xl'
 								onClick={e => {
 									e.stopPropagation()
 									toggleFullscreen()
