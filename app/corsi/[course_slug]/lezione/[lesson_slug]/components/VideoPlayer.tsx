@@ -1,9 +1,9 @@
 'use client'
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import VideoControls from './VideoControls'
 import '../videoPlayer.scss'
 import { useAppDispatch, useAppSelector } from '@/redux/store'
-import { setCurrentTime, setPlayerState } from '@/redux/reducers/playerReducer'
+import { setCurrentTime, setPlayerIsInFocus, setPlayerState } from '@/redux/reducers/playerReducer'
 import { MediaVideo } from '@/utils/types'
 
 interface VideoPlayerProps {
@@ -31,7 +31,7 @@ export default function VideoPlayer({ video }: VideoPlayerProps) {
 	const [videoSource, setVideoSource] = useState(sources?.[0] || video.url)
 	const [currentQuality, setCurrentQuality] = useState(qualities?.[0] || '')
 	const player = useRef<HTMLVideoElement>(null)
-	const [intervalID, setIntervalID] = useState<NodeJS.Timeout>()
+	const intervalID = useRef<NodeJS.Timeout>()
 	const playerWrapper = useRef<HTMLDivElement>(null)
 	const { currentTime, playerState } = useAppSelector(state => state.player)
 	const dispatch = useAppDispatch()
@@ -50,17 +50,16 @@ export default function VideoPlayer({ video }: VideoPlayerProps) {
 		if (state === PlayerState.ENDED) {
 			setCurrentTime(0)
 		} else if (state === PlayerState.PLAYING) {
-			setIntervalID(
-				setInterval(() => {
-					dispatch(setCurrentTime(player.current?.currentTime || 0))
-					dispatch(setPlayerState(state))
-				}, 100)
-			)
+			dispatch(setPlayerState(state))
+			intervalID.current = setInterval(() => {
+				dispatch(setCurrentTime(player.current?.currentTime || 0))
+			}, 150)
+
 			if (!isPlayedOnce.current) {
 				isPlayedOnce.current = true
 			}
 		} else {
-			clearInterval(intervalID)
+			clearInterval(intervalID.current)
 		}
 	}
 
@@ -76,12 +75,24 @@ export default function VideoPlayer({ video }: VideoPlayerProps) {
 		}
 	}
 
+	const addVideoFocus = useCallback(() => {
+		dispatch(setPlayerIsInFocus(true))
+	}, [dispatch])
+
+	useEffect(() => {
+		addVideoFocus()
+	}, [addVideoFocus])
+
 	return (
 		<div className='flex flex-col gap-3'>
 			<div
 				className='flex flex-col gap-3 video-player-wrapper'
 				ref={playerWrapper}
 				id='videoPlayerWrapper'
+				tabIndex={0}
+				onFocus={() => {
+					addVideoFocus()
+				}}
 			>
 				<video
 					ref={player}

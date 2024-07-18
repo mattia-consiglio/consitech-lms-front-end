@@ -1,6 +1,5 @@
-import { setCurrentTime } from '@/redux/reducers/playerReducer'
 import { useAppDispatch, useAppSelector } from '@/redux/store'
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import {
 	IoChevronBackSharp,
 	IoChevronForwardSharp,
@@ -9,7 +8,6 @@ import {
 	IoPlaySharp,
 	IoSettingsSharp,
 } from 'react-icons/io5'
-import { YouTubePlayer } from 'react-youtube'
 import { MdFullscreen, MdOutlineCheck, MdOutlineFullscreenExit } from 'react-icons/md'
 import { PlayerState } from './VideoPlayer'
 
@@ -85,7 +83,7 @@ export default function VideoControls({
 	currentQuality,
 	changeQuality,
 }: VideoProgressBarProps) {
-	const { currentTime, playerState } = useAppSelector(state => state.player)
+	const { currentTime, playerState, isInFocus } = useAppSelector(state => state.player)
 	const playerControls = useRef<HTMLDivElement>(null)
 	const [currentTimeText, setCurrentTimeText] = useState(formatPercTime(currentTime, duration))
 	const [isHovering, setIsHovering] = useState(false)
@@ -100,6 +98,7 @@ export default function VideoControls({
 	const [currentSpeed, setCurrentSpeed] = useState(1)
 	const [currentOptionMenu, setCurrentOptionMenu] = useState<'speed' | 'quality' | 'main'>('main')
 	const iconCircle = useRef<HTMLDivElement>(null)
+	const isAnimating = useRef(false)
 
 	function getCursorPosition(e: MouseEvent) {
 		if (!progressBar.current) return 0
@@ -151,37 +150,61 @@ export default function VideoControls({
 			seekTo(seconds)
 		}
 	}
-	function playPause() {
+
+	function toggleAnimation() {
+		if (!iconCircle.current) return
+
+		if (isAnimating.current) {
+			iconCircle.current.classList.remove('animate')
+			iconCircle.current.style.animation = 'none'
+			isAnimating.current = false
+			console.log('Animation stopped', isAnimating.current)
+
+			setTimeout(() => {
+				if (!iconCircle.current) return
+				iconCircle.current.style.animation = ''
+				iconCircle.current.classList.add('animate')
+				isAnimating.current = true
+				console.log('Animation restarted', isAnimating.current)
+			}, 50)
+		} else {
+			iconCircle.current.style.animation = ''
+			iconCircle.current.classList.add('animate')
+			isAnimating.current = true
+			console.log('Animation started', isAnimating.current)
+		}
+	}
+
+	const playPause = useCallback(() => {
 		if (playerState === PlayerState.PLAYING) {
 			player.pause()
 		} else {
 			player.play()
 		}
-		iconCircle.current?.classList.toggle('animate')
-	}
+		toggleAnimation()
+	}, [player, playerState])
 
-	function openFullscreen() {
+	const openFullscreen = useCallback(() => {
 		playerWrapper.current?.requestFullscreen()
 		setIsFullscreen(true)
-	}
+	}, [playerWrapper])
 
-	function closeFullscreen(manually = false) {
+	const closeFullscreen = useCallback((manually = false) => {
 		if (document.fullscreenElement?.id !== 'videoPlayerWrapper' || manually) {
 			if (manually) {
 				document.exitFullscreen()
 			}
 			setIsFullscreen(false)
 		}
-	}
+	}, [])
 
-	function toggleFullscreen() {
+	const toggleFullscreen = useCallback(() => {
 		if (document.fullscreenElement?.id === 'videoPlayerWrapper') {
 			closeFullscreen(true)
 		} else {
 			openFullscreen()
 		}
-	}
-
+	}, [closeFullscreen, openFullscreen])
 	useEffect(() => {
 		if (isPlayedOnce && player) {
 			if (qualities?.length) {
@@ -198,29 +221,37 @@ export default function VideoControls({
 	}
 
 	function handleKeydown(e: KeyboardEvent) {
-		e.preventDefault()
+		if (!playerControls.current) return
+		if (!isInFocus) return
 		switch (e.key) {
 			case 'ArrowRight':
 			case 'j':
 			case 'J':
+				e.preventDefault()
 				seekForward()
 				break
 			case 'ArrowLeft':
 			case 'l':
 			case 'L':
+				e.preventDefault()
 				seekBackward()
 				break
 			case ' ':
 			case 'Space':
 			case 'k':
 			case 'K':
+				e.preventDefault()
+				console.log('Space pressed')
 				playPause()
+				// toggleAnimation()
 				break
 			case 'f':
 			case 'F':
+				e.preventDefault()
 				toggleFullscreen()
 				break
 			case 'o':
+				e.preventDefault()
 				setIsOptionsOpen(true)
 				break
 		}
@@ -262,7 +293,11 @@ export default function VideoControls({
 				<div
 					className='icon-circle'
 					ref={iconCircle}
-					onAnimationEnd={() => iconCircle.current?.classList.toggle('animate')}
+					onAnimationEnd={() => {
+						iconCircle.current?.classList.remove('animate')
+						isAnimating.current = false
+						console.log('Animation ended', isAnimating.current)
+					}}
 				>
 					{playerState === PlayerState.PLAYING ? <PlayIcon /> : <PauseIcon />}
 				</div>
@@ -275,7 +310,7 @@ export default function VideoControls({
 					opacity: isDragging.current ? 1 : '',
 					cursor: 'default',
 				}}
-				onClick={e => {
+				onClick={() => {
 					if (!isDragged.current) {
 						playPause()
 					}
