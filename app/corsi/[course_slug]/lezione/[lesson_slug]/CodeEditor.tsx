@@ -9,7 +9,7 @@ interface CodeEditorProps {
 
 export default function CodeEditor({ code }: CodeEditorProps) {
 	return (
-		<div className='min-h-[300px] h-[300px] w-full'>
+		<div className='min-h-[300px] w-full'>
 			<Editor
 				height='100%'
 				width='100%'

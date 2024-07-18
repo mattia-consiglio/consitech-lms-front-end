@@ -161,20 +161,17 @@ export default function VideoControls({
 			iconCircle.current.classList.remove('animate')
 			iconCircle.current.style.animation = 'none'
 			isAnimating.current = false
-			console.log('Animation stopped', isAnimating.current)
 
 			setTimeout(() => {
 				if (!iconCircle.current) return
 				iconCircle.current.style.animation = ''
 				iconCircle.current.classList.add('animate')
 				isAnimating.current = true
-				console.log('Animation restarted', isAnimating.current)
 			}, 50)
 		} else {
 			iconCircle.current.style.animation = ''
 			iconCircle.current.classList.add('animate')
 			isAnimating.current = true
-			console.log('Animation started', isAnimating.current)
 		}
 	}
 
@@ -244,9 +241,7 @@ export default function VideoControls({
 			case 'k':
 			case 'K':
 				e.preventDefault()
-				console.log('Space pressed')
 				playPause()
-				// toggleAnimation()
 				break
 			case 'f':
 			case 'F':
