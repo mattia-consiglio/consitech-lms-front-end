@@ -4,12 +4,14 @@ interface PlayerState {
 	currentTime: number
 	playerState: number
 	isInFocus: boolean
+	currentSpeed: number
 }
 
 const initialState: PlayerState = {
 	currentTime: 0,
 	playerState: -1,
 	isInFocus: false,
+	currentSpeed: 1,
 }
 
 const playerReducer = createSlice({
@@ -25,9 +27,13 @@ const playerReducer = createSlice({
 		setPlayerIsInFocus(state, action: PayloadAction<boolean>) {
 			state.isInFocus = action.payload
 		},
+		setVideoSpeed(state, action: PayloadAction<number>) {
+			state.currentSpeed = action.payload
+		},
 	},
 })
 
-export const { setCurrentTime, setPlayerState, setPlayerIsInFocus } = playerReducer.actions
+export const { setCurrentTime, setPlayerState, setPlayerIsInFocus, setVideoSpeed } =
+	playerReducer.actions
 
 export default playerReducer.reducer

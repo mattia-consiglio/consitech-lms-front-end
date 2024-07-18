@@ -22,7 +22,6 @@ interface VideoProgressBarProps {
 	setCurrentQuality: (quality: string) => void
 	currentQuality: string
 	changeQuality: (quality: string) => void
-	currentSpeed: number
 	changeSpeed: (speed: number) => void
 }
 
@@ -84,17 +83,17 @@ export default function VideoControls({
 	setCurrentQuality,
 	currentQuality,
 	changeQuality,
-	currentSpeed,
 	changeSpeed,
 }: VideoProgressBarProps) {
-	const { currentTime, playerState, isInFocus } = useAppSelector(state => state.player)
+	const { currentTime, playerState, isInFocus, currentSpeed } = useAppSelector(
+		state => state.player
+	)
 	const playerControls = useRef<HTMLDivElement>(null)
 	const [currentTimeText, setCurrentTimeText] = useState(formatPercTime(currentTime, duration))
 	const [isHovering, setIsHovering] = useState(false)
 	const progressBar = useRef<HTMLDivElement>(null)
 	const HoverPercentage = useRef(0)
 	const isDragging = useRef(false)
-	const dispatch = useAppDispatch()
 	const isDragged = useRef(false)
 	const [isOptionsOpen, setIsOptionsOpen] = useState(false)
 	const [isFullscreen, setIsFullscreen] = useState(false)

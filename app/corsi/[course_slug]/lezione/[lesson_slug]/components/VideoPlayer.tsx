@@ -3,7 +3,12 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import VideoControls from './VideoControls'
 import '../videoPlayer.scss'
 import { useAppDispatch, useAppSelector } from '@/redux/store'
-import { setCurrentTime, setPlayerIsInFocus, setPlayerState } from '@/redux/reducers/playerReducer'
+import {
+	setCurrentTime,
+	setPlayerIsInFocus,
+	setPlayerState,
+	setVideoSpeed,
+} from '@/redux/reducers/playerReducer'
 import { MediaVideo } from '@/utils/types'
 
 interface VideoPlayerProps {
@@ -30,7 +35,6 @@ export default function VideoPlayer({ video }: VideoPlayerProps) {
 	const qualities = useMemo(() => video.resolutions?.map(resolution => resolution.name), [video])
 	const [videoSource, setVideoSource] = useState(sources?.[0] || video.url)
 	const [currentQuality, setCurrentQuality] = useState(qualities?.[0] || '')
-	const [currentSpeed, setCurrentSpeed] = useState(1)
 	const player = useRef<HTMLVideoElement>(null)
 	const intervalID = useRef<NodeJS.Timeout>()
 	const playerWrapper = useRef<HTMLDivElement>(null)
@@ -79,7 +83,7 @@ export default function VideoPlayer({ video }: VideoPlayerProps) {
 	const changeSpeed = (speed: number) => {
 		if (player.current) {
 			player.current.playbackRate = speed
-			setCurrentSpeed(speed)
+			dispatch(setVideoSpeed(speed))
 		}
 	}
 
@@ -132,7 +136,6 @@ export default function VideoPlayer({ video }: VideoPlayerProps) {
 						currentQuality={currentQuality}
 						setCurrentQuality={setCurrentQuality}
 						changeQuality={changeQuality}
-						currentSpeed={currentSpeed}
 						changeSpeed={changeSpeed}
 					/>
 				)}
