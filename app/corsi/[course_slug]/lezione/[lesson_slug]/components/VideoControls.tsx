@@ -1,9 +1,8 @@
-import { useAppDispatch, useAppSelector } from '@/redux/store'
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useAppSelector } from '@/redux/store'
+import React, { MutableRefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
 	IoChevronBackSharp,
 	IoChevronForwardSharp,
-	IoLogoClosedCaptioning,
 	IoPauseSharp,
 	IoPlaySharp,
 	IoSettingsSharp,
@@ -14,15 +13,16 @@ import { BufferStyle, PlayerState } from './VideoPlayer'
 interface VideoProgressBarProps {
 	duration: number
 	player: HTMLVideoElement | null
-	playerWrapper: React.RefObject<HTMLDivElement>
-	isPlayedOnce: boolean
 	seekTo: (time: number) => void
 	qualities: string[] | null
-	setCurrentQuality: (quality: string) => void
 	currentQuality: string
 	changeQuality: (quality: string) => void
 	changeSpeed: (speed: number) => void
 	buffer: BufferStyle[]
+	isFullscreen: boolean
+	toggleFullscreen: () => void
+	closeFullscreen: () => void
+	isProgressHovering: MutableRefObject<boolean>
 }
 
 function PlayIcon() {
@@ -75,15 +75,16 @@ function formatPercTime(perc: number, duration: number) {
 export default function VideoControls({
 	duration,
 	player,
-	playerWrapper,
-	isPlayedOnce,
 	seekTo,
 	qualities,
-	setCurrentQuality,
 	currentQuality,
 	changeQuality,
 	changeSpeed,
 	buffer,
+	isFullscreen,
+	toggleFullscreen,
+	closeFullscreen,
+	isProgressHovering,
 }: Readonly<VideoProgressBarProps>) {
 	const { currentTime, playerState, isInFocus, currentSpeed, isBuffering } = useAppSelector(
 		state => state.player
@@ -97,7 +98,6 @@ export default function VideoControls({
 	const isDragging = useRef(false)
 	const isDragged = useRef(false)
 	const [isOptionsOpen, setIsOptionsOpen] = useState(false)
-	const [isFullscreen, setIsFullscreen] = useState(false)
 	const availableSpeeds: number[] = [0.25, 0.5, 1, 1.25, 1.5, 2]
 
 	const [currentOptionMenu, setCurrentOptionMenu] = useState<'speed' | 'quality' | 'main'>('main')
@@ -111,20 +111,32 @@ export default function VideoControls({
 		const percentage = Math.min(Math.max(0, (offsetX / rect.width) * 100), 100)
 		return percentage
 	}
-
+	const seek = useCallback(
+		(seconds?: number) => {
+			seconds = seconds ?? (HoverPercentage.current / 100) * duration
+			if (player) {
+				seekTo(seconds)
+			}
+		},
+		[duration, player, seekTo]
+	)
 	// update percentage on mouse hover
-	function handleMouseMove(e: MouseEvent) {
-		const percentage = getCursorPosition(e)
-		HoverPercentage.current = percentage
-		setCurrentTimeText(formatPercTime(percentage, duration))
-		setIsHovering(true)
-		if (isDragging.current) {
-			seek()
-		}
-	}
+	const handleMouseMove = useCallback(
+		(e: MouseEvent) => {
+			const percentage = getCursorPosition(e)
+			HoverPercentage.current = percentage
+			setCurrentTimeText(formatPercTime(percentage, duration))
+			setIsHovering(true)
+			if (isDragging.current) {
+				seek()
+			}
+		},
+		[duration, seek]
+	)
 
 	function handleMouseLeave(e: React.MouseEvent<HTMLDivElement>) {
 		e.stopPropagation()
+		isProgressHovering.current = false
 		if (!isDragging.current) {
 			setIsHovering(false)
 		}
@@ -140,20 +152,17 @@ export default function VideoControls({
 		window.addEventListener('mouseup', handleMouseUp)
 	}
 
-	function handleMouseUp() {
+	const handleMouseUp = useCallback(() => {
 		setIsHovering(false)
 		isDragging.current = false
 		window.removeEventListener('mousemove', handleMouseMove)
 		window.removeEventListener('mouseup', handleMouseUp)
 		seek()
-	}
+	}, [handleMouseMove, seek])
 
-	function seek(seconds?: number) {
-		seconds = seconds ?? (HoverPercentage.current / 100) * duration
-		if (player) {
-			seekTo(seconds)
-		}
-	}
+	const handleMoseOver = useCallback(() => {
+		isProgressHovering.current = true
+	}, [isProgressHovering])
 
 	function toggleAnimation() {
 		if (!iconCircle.current) return
@@ -184,35 +193,6 @@ export default function VideoControls({
 		}
 		toggleAnimation()
 	}, [player, playerState])
-
-	const openFullscreen = useCallback(() => {
-		playerWrapper.current?.requestFullscreen()
-		setIsFullscreen(true)
-	}, [playerWrapper])
-
-	const closeFullscreen = useCallback((manually = false) => {
-		if (document.fullscreenElement?.id !== 'videoPlayerWrapper' || manually) {
-			if (manually) {
-				document.exitFullscreen()
-			}
-			setIsFullscreen(false)
-		}
-	}, [])
-
-	const toggleFullscreen = useCallback(() => {
-		if (document.fullscreenElement?.id === 'videoPlayerWrapper') {
-			closeFullscreen(true)
-		} else {
-			openFullscreen()
-		}
-	}, [closeFullscreen, openFullscreen])
-	useEffect(() => {
-		if (isPlayedOnce && player) {
-			if (qualities?.length) {
-				setCurrentQuality(qualities[0])
-			}
-		}
-	}, [isPlayedOnce, player, qualities, setCurrentQuality])
 
 	function seekBackward() {
 		player && seek(Math.max(player.currentTime - 5, 0))
@@ -349,6 +329,7 @@ export default function VideoControls({
 					onMouseMove={e => handleMouseMove(e.nativeEvent)}
 					onMouseLeave={handleMouseLeave}
 					onMouseDown={handleMouseDown}
+					onMouseOver={handleMoseOver}
 					ref={progressBar}
 					style={{ opacity: isDragging.current ? 1 : '' }}
 					aria-roledescription='progressbar'

@@ -1,5 +1,5 @@
 'use client'
-import React, { use, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import VideoControls from './VideoControls'
 import '../videoPlayer.scss'
 import { useAppDispatch, useAppSelector } from '@/redux/store'
@@ -49,7 +49,11 @@ export default function VideoPlayer({ video }: VideoPlayerProps) {
 	const isPlayedOnce = useRef(false)
 	const qualityChanged = useRef(false)
 	const [buffer, setBuffer] = useState<BufferStyle[]>([])
-	const [playerLoaded, setPlayerLoaded] = useState(false)
+	const [isFullscreen, setIsFullscreen] = useState(false)
+	const fullscreenTimeout = useRef<NodeJS.Timeout | null>(null)
+	const [hideControls, setHideControls] = useState(false)
+	const lastMousePosition = useRef({ x: 0, y: 0 })
+	const isProgressHovering = useRef(false)
 
 	const seekTo = (seconds: number) => {
 		if (player.current) {
@@ -103,6 +107,29 @@ export default function VideoPlayer({ video }: VideoPlayerProps) {
 		addVideoFocus()
 	}, [addVideoFocus])
 
+	const openFullscreen = useCallback(() => {
+		playerWrapper.current?.requestFullscreen()
+		setIsFullscreen(true)
+		setHideControls(true)
+	}, [playerWrapper])
+
+	const closeFullscreen = useCallback((manually = false) => {
+		if (document.fullscreenElement?.id !== 'videoPlayerWrapper' || manually) {
+			if (manually) {
+				document.exitFullscreen()
+			}
+			setIsFullscreen(false)
+		}
+	}, [])
+
+	const toggleFullscreen = useCallback(() => {
+		if (document.fullscreenElement?.id === 'videoPlayerWrapper') {
+			closeFullscreen(true)
+		} else {
+			openFullscreen()
+		}
+	}, [closeFullscreen, openFullscreen])
+
 	const getBuffer = useCallback(
 		(setBuffing = false) => {
 			if (player.current) {
@@ -125,10 +152,29 @@ export default function VideoPlayer({ video }: VideoPlayerProps) {
 		[dispatch]
 	)
 
+	const handleHideControls = useCallback((e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+		const { clientX, clientY } = e
+		const { x, y } = lastMousePosition.current
+		const distance = Math.sqrt(Math.pow(clientX - x, 2) + Math.pow(clientY - y, 2))
+
+		fullscreenTimeout.current && clearTimeout(fullscreenTimeout.current)
+		if (distance > 20) {
+			setHideControls(false)
+			lastMousePosition.current = { x: clientX, y: clientY }
+		}
+
+		fullscreenTimeout.current = setTimeout(() => {
+			!isProgressHovering.current && setHideControls(true)
+			lastMousePosition.current = { x: clientX, y: clientY }
+			console.log('hide controls')
+			console.log('isProgressHovering', isProgressHovering)
+		}, 1000)
+	}, [])
+
 	return (
 		<div className='flex flex-col gap-3'>
 			<div
-				className='flex flex-col gap-3 video-player-wrapper'
+				className={'flex flex-col gap-3 video-player-wrapper' + (hideControls ? ' hide' : '')}
 				ref={playerWrapper}
 				id='videoPlayerWrapper'
 				role='region'
@@ -136,6 +182,7 @@ export default function VideoPlayer({ video }: VideoPlayerProps) {
 				onFocus={() => {
 					addVideoFocus()
 				}}
+				onMouseMove={e => handleHideControls(e)}
 			>
 				<video
 					ref={player}
@@ -165,19 +212,13 @@ export default function VideoPlayer({ video }: VideoPlayerProps) {
 						onStateChange(PlayerState.ENDED)
 					}}
 					onLoadedData={() => {
-						console.log('loaded data')
 						getBuffer()
-						setPlayerLoaded(true)
 					}}
 					onLoadedMetadata={() => {
-						console.log('loaded metadata')
 						getBuffer()
-						setPlayerLoaded(true)
 					}}
 					onLoadStart={() => {
-						console.log('load started')
 						getBuffer()
-						setPlayerLoaded(true)
 					}}
 					onProgress={() => {
 						getBuffer()
@@ -191,15 +232,16 @@ export default function VideoPlayer({ video }: VideoPlayerProps) {
 				<VideoControls
 					duration={video.duration}
 					player={player.current}
-					playerWrapper={playerWrapper}
-					isPlayedOnce={isPlayedOnce.current}
 					seekTo={seekTo}
 					qualities={qualities}
 					currentQuality={currentQuality}
-					setCurrentQuality={setCurrentQuality}
 					changeQuality={changeQuality}
 					changeSpeed={changeSpeed}
 					buffer={buffer}
+					isFullscreen={isFullscreen}
+					toggleFullscreen={toggleFullscreen}
+					closeFullscreen={closeFullscreen}
+					isProgressHovering={isProgressHovering}
 				/>
 			</div>
 		</div>

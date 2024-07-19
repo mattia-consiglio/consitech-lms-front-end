@@ -109,12 +109,25 @@ $primary-color: theme('colors.primary');
 		}
 	}
 
+	&.hide {
+		.player-controls {
+			opacity: 0;
+			cursor: none !important;
+		}
+		&:hover {
+			.player-controls {
+				opacity: 0;
+				cursor: none !important;
+			}
+		}
+	}
+
 	.player-controls {
 		position: absolute;
 		bottom: 0;
-		height: 0;
+		height: 100%;
 		width: 100%;
-		// opacity: 0;
+		opacity: 1;
 		background: linear-gradient(0deg, rgba(0, 0, 0, 0.8) 0%, transparent 30%);
 		transition: 200ms ease-in-out;
 		transition-property: height, opacity;
@@ -126,7 +139,7 @@ $primary-color: theme('colors.primary');
 			position: absolute;
 			bottom: 40px;
 			cursor: pointer;
-			// opacity: 0;
+			// opacity: 1;
 			transition: 200ms ease-in-out;
 			transition-property: height, opacity;
 			left: 50%;
@@ -233,7 +246,6 @@ $primary-color: theme('colors.primary');
 		.player-controls {
 			height: 100%;
 			opacity: 1;
-			transition: 200ms ease-in-out;
 			transition-property: opacity;
 		}
 	}
