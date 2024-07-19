@@ -22,7 +22,7 @@ interface VideoProgressBarProps {
 	isFullscreen: boolean
 	toggleFullscreen: () => void
 	closeFullscreen: () => void
-	isProgressHovering: MutableRefObject<boolean>
+	shouldKeepControlsVisible: MutableRefObject<boolean>
 }
 
 function PlayIcon() {
@@ -84,7 +84,7 @@ export default function VideoControls({
 	isFullscreen,
 	toggleFullscreen,
 	closeFullscreen,
-	isProgressHovering,
+	shouldKeepControlsVisible,
 }: Readonly<VideoProgressBarProps>) {
 	const { currentTime, playerState, isInFocus, currentSpeed, isBuffering } = useAppSelector(
 		state => state.player
@@ -98,11 +98,13 @@ export default function VideoControls({
 	const isDragging = useRef(false)
 	const isDragged = useRef(false)
 	const [isOptionsOpen, setIsOptionsOpen] = useState(false)
+	const isOptionsOpenRef = useRef(isOptionsOpen)
 	const availableSpeeds: number[] = [0.25, 0.5, 1, 1.25, 1.5, 2]
 
 	const [currentOptionMenu, setCurrentOptionMenu] = useState<'speed' | 'quality' | 'main'>('main')
 	const iconCircle = useRef<HTMLDivElement>(null)
 	const isAnimating = useRef(false)
+	const isProgressBarHovering = useRef(false)
 
 	function getCursorPosition(e: MouseEvent) {
 		if (!progressBar.current) return 0
@@ -120,6 +122,22 @@ export default function VideoControls({
 		},
 		[duration, player, seekTo]
 	)
+	const keepControlsVisible = useCallback(
+		(force?: boolean) => {
+			if (
+				isProgressBarHovering.current ||
+				isDragging.current ||
+				isOptionsOpenRef.current ||
+				force
+			) {
+				shouldKeepControlsVisible.current = true
+			} else {
+				shouldKeepControlsVisible.current = false
+			}
+		},
+		[shouldKeepControlsVisible]
+	)
+
 	// update percentage on mouse hover
 	const handleMouseMove = useCallback(
 		(e: MouseEvent) => {
@@ -136,10 +154,11 @@ export default function VideoControls({
 
 	function handleMouseLeave(e: React.MouseEvent<HTMLDivElement>) {
 		e.stopPropagation()
-		isProgressHovering.current = false
+		isProgressBarHovering.current = false
 		if (!isDragging.current) {
 			setIsHovering(false)
 		}
+		keepControlsVisible()
 	}
 
 	function handleMouseDown(e: React.MouseEvent<HTMLDivElement>) {
@@ -161,8 +180,9 @@ export default function VideoControls({
 	}, [handleMouseMove, seek])
 
 	const handleMoseOver = useCallback(() => {
-		isProgressHovering.current = true
-	}, [isProgressHovering])
+		isProgressBarHovering.current = true
+		keepControlsVisible()
+	}, [keepControlsVisible])
 
 	function toggleAnimation() {
 		if (!iconCircle.current) return
@@ -232,6 +252,7 @@ export default function VideoControls({
 			case 'o':
 				e.preventDefault()
 				setIsOptionsOpen(true)
+				isOptionsOpenRef.current = true
 				break
 		}
 	}
@@ -278,6 +299,7 @@ export default function VideoControls({
 		e.stopPropagation()
 		changeQuality(quality)
 		setIsOptionsOpen(false)
+		isOptionsOpenRef.current = false
 		setCurrentOptionMenu('main')
 	}
 
@@ -285,6 +307,7 @@ export default function VideoControls({
 		e.stopPropagation()
 		changeSpeed(speed)
 		setIsOptionsOpen(false)
+		isOptionsOpenRef.current = false
 		setCurrentOptionMenu('main')
 	}
 
@@ -381,11 +404,17 @@ export default function VideoControls({
 						<button
 							onClick={e => {
 								e.stopPropagation()
-								player && seek(Math.max(player.currentTime - 5, 0))
+								seekBackward()
 							}}
 							className='text-xl'
 							onDoubleClick={e => {
 								e.stopPropagation()
+							}}
+							onMouseOver={() => {
+								keepControlsVisible(true)
+							}}
+							onMouseLeave={() => {
+								keepControlsVisible(false)
 							}}
 						>
 							<IoChevronBackSharp /> 5s
@@ -399,17 +428,29 @@ export default function VideoControls({
 							onDoubleClick={e => {
 								e.stopPropagation()
 							}}
+							onMouseOver={() => {
+								keepControlsVisible(true)
+							}}
+							onMouseLeave={() => {
+								keepControlsVisible(false)
+							}}
 						>
 							{playerState === PlayerState.PLAYING ? <IoPauseSharp /> : <IoPlaySharp />}
 						</button>
 						<button
 							onClick={e => {
 								e.stopPropagation()
-								player && seek(Math.min(player.currentTime + 5, duration))
+								seekForward()
 							}}
 							className='text-xl'
 							onDoubleClick={e => {
 								e.stopPropagation()
+							}}
+							onMouseOver={() => {
+								keepControlsVisible(true)
+							}}
+							onMouseLeave={() => {
+								keepControlsVisible(false)
 							}}
 						>
 							5s <IoChevronForwardSharp />
@@ -534,10 +575,18 @@ export default function VideoControls({
 								onClick={e => {
 									e.stopPropagation()
 									setIsOptionsOpen(!isOptionsOpen)
+									isOptionsOpenRef.current = !isOptionsOpenRef.current
 									setCurrentOptionMenu('main')
+									keepControlsVisible()
 								}}
 								onDoubleClick={e => {
 									e.stopPropagation()
+								}}
+								onMouseOver={() => {
+									keepControlsVisible(true)
+								}}
+								onMouseLeave={() => {
+									keepControlsVisible(false)
 								}}
 							>
 								<IoSettingsSharp />
@@ -547,6 +596,12 @@ export default function VideoControls({
 								onClick={e => {
 									e.stopPropagation()
 									toggleFullscreen()
+								}}
+								onMouseOver={() => {
+									keepControlsVisible(true)
+								}}
+								onMouseLeave={() => {
+									keepControlsVisible(false)
 								}}
 							>
 								{isFullscreen ? <MdOutlineFullscreenExit /> : <MdFullscreen />}

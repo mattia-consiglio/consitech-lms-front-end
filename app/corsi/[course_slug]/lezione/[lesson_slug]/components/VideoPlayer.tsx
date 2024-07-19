@@ -53,7 +53,7 @@ export default function VideoPlayer({ video }: VideoPlayerProps) {
 	const fullscreenTimeout = useRef<NodeJS.Timeout | null>(null)
 	const [hideControls, setHideControls] = useState(false)
 	const lastMousePosition = useRef({ x: 0, y: 0 })
-	const isProgressHovering = useRef(false)
+	const shouldKeepControlsVisible = useRef(false)
 
 	const seekTo = (seconds: number) => {
 		if (player.current) {
@@ -163,7 +163,7 @@ export default function VideoPlayer({ video }: VideoPlayerProps) {
 		}
 
 		fullscreenTimeout.current = setTimeout(() => {
-			!isProgressHovering.current && setHideControls(true)
+			!shouldKeepControlsVisible.current && setHideControls(true)
 			lastMousePosition.current = { x: clientX, y: clientY }
 		}, 1000)
 	}, [])
@@ -238,7 +238,7 @@ export default function VideoPlayer({ video }: VideoPlayerProps) {
 					isFullscreen={isFullscreen}
 					toggleFullscreen={toggleFullscreen}
 					closeFullscreen={closeFullscreen}
-					isProgressHovering={isProgressHovering}
+					shouldKeepControlsVisible={shouldKeepControlsVisible}
 				/>
 			</div>
 		</div>
