@@ -337,8 +337,12 @@ export default function VideoControls({
 					cursor: 'default',
 				}}
 				onClick={() => {
-					if (!isDragged.current) {
+					if (!isDragged.current && !isOptionsOpenRef.current) {
 						playPause()
+					}
+					if (isOptionsOpenRef.current) {
+						setIsOptionsOpen(false)
+						isOptionsOpenRef.current = false
 					}
 					isDragged.current = false
 				}}
