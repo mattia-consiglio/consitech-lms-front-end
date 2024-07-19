@@ -138,6 +138,14 @@ export default function VideoControls({
 		[shouldKeepControlsVisible]
 	)
 
+	const closeOpenedOptions = () => {
+		if (isOptionsOpenRef.current) {
+			setIsOptionsOpen(false)
+			isOptionsOpenRef.current = false
+			setCurrentOptionMenu('main')
+		}
+	}
+
 	// update percentage on mouse hover
 	const handleMouseMove = useCallback(
 		(e: MouseEvent) => {
@@ -167,6 +175,7 @@ export default function VideoControls({
 		isDragged.current = true
 		const nativeEvent = e.nativeEvent
 		handleMouseMove(nativeEvent)
+		closeOpenedOptions()
 		window.addEventListener('mousemove', handleMouseMove)
 		window.addEventListener('mouseup', handleMouseUp)
 	}
@@ -340,10 +349,7 @@ export default function VideoControls({
 					if (!isDragged.current && !isOptionsOpenRef.current) {
 						playPause()
 					}
-					if (isOptionsOpenRef.current) {
-						setIsOptionsOpen(false)
-						isOptionsOpenRef.current = false
-					}
+					closeOpenedOptions()
 					isDragged.current = false
 				}}
 				onDoubleClick={e => {
@@ -409,6 +415,7 @@ export default function VideoControls({
 							onClick={e => {
 								e.stopPropagation()
 								seekBackward()
+								closeOpenedOptions()
 							}}
 							className='text-xl'
 							onDoubleClick={e => {
@@ -427,6 +434,7 @@ export default function VideoControls({
 							onClick={e => {
 								e.stopPropagation()
 								playPause()
+								closeOpenedOptions()
 							}}
 							className='text-3xl'
 							onDoubleClick={e => {
@@ -445,6 +453,7 @@ export default function VideoControls({
 							onClick={e => {
 								e.stopPropagation()
 								seekForward()
+								closeOpenedOptions()
 							}}
 							className='text-xl'
 							onDoubleClick={e => {
@@ -600,6 +609,7 @@ export default function VideoControls({
 								onClick={e => {
 									e.stopPropagation()
 									toggleFullscreen()
+									closeOpenedOptions()
 								}}
 								onMouseOver={() => {
 									keepControlsVisible(true)
