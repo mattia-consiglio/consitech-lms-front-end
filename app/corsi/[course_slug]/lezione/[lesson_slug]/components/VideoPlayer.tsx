@@ -145,7 +145,6 @@ export default function VideoPlayer({ video }: VideoPlayerProps) {
 						width: `${((end - start) / player.current.duration) * 100}%`,
 					})
 				}
-				console.log(buffer)
 				setBuffer(buffer)
 			}
 		},
@@ -166,8 +165,6 @@ export default function VideoPlayer({ video }: VideoPlayerProps) {
 		fullscreenTimeout.current = setTimeout(() => {
 			!isProgressHovering.current && setHideControls(true)
 			lastMousePosition.current = { x: clientX, y: clientY }
-			console.log('hide controls')
-			console.log('isProgressHovering', isProgressHovering)
 		}, 1000)
 	}, [])
 

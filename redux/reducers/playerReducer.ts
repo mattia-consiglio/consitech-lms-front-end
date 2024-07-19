@@ -33,7 +33,6 @@ const playerReducer = createSlice({
 			state.currentSpeed = action.payload
 		},
 		setIsBuffering(state, action: PayloadAction<boolean>) {
-			console.log('setIsBuffering', action.payload)
 			state.isBuffering = action.payload
 		},
 	},
