@@ -29,9 +29,48 @@ $primary-color: theme('colors.primary');
 		left: 0;
 		height: 100%;
 		width: 100%;
-		display: flex;
-		align-items: center;
-		justify-content: center;
+
+		.loader,
+		.icon-circle-wrapper {
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%, -50%);
+		}
+
+		$animationDuration: 1.5s;
+
+		.loader {
+			width: 48px;
+			height: 48px;
+			display: inline-block;
+			position: relative;
+			&::after,
+			&::before {
+				content: '';
+				width: 48px;
+				height: 48px;
+				border: 3px solid #fff;
+				position: absolute;
+				left: 0;
+				top: 0;
+				box-sizing: border-box;
+				animation: rotation $animationDuration ease-in-out infinite;
+			}
+			&::after {
+				border-color: $primary-color;
+				animation-delay: calc($animationDuration / 2);
+			}
+		}
+
+		@keyframes rotation {
+			0% {
+				transform: rotate(0deg);
+			}
+			100% {
+				transform: rotate(360deg);
+			}
+		}
 
 		@keyframes zoomAndFade {
 			0% {
@@ -76,9 +115,8 @@ $primary-color: theme('colors.primary');
 		height: 0;
 		width: 100%;
 		// opacity: 0;
-		background-color: rgb(0 0 0 / 50%);
-		background: linear-gradient(0deg, rgba(0, 0, 0, 0.8) 0%, transparent 60%);
-		transition: all 200ms ease-in-out;
+		background: linear-gradient(0deg, rgba(0, 0, 0, 0.8) 0%, transparent 30%);
+		transition: 200ms ease-in-out;
 		transition-property: height, opacity;
 
 		.progress-bar-wrapper {
@@ -89,7 +127,7 @@ $primary-color: theme('colors.primary');
 			bottom: 40px;
 			cursor: pointer;
 			// opacity: 0;
-			transition: all 200ms ease-in-out;
+			transition: 200ms ease-in-out;
 			transition-property: height, opacity;
 			left: 50%;
 			transform: translateX(-50%);
@@ -133,6 +171,20 @@ $primary-color: theme('colors.primary');
 				text-shadow: 0 0 3px rgba(0, 0, 0, 0.95);
 				background-color: rgba(0, 0, 0, 0.95);
 				padding: 0 5px;
+			}
+
+			.buffer-wrapper {
+				width: 100%;
+				height: 100%;
+				position: absolute;
+				top: 0;
+				left: 0;
+
+				.buffer-slice {
+					position: absolute;
+					height: 100%;
+					background-color: rgba(255, 255, 255, 0.3);
+				}
 			}
 		}
 
@@ -179,9 +231,10 @@ $primary-color: theme('colors.primary');
 		}
 
 		.player-controls {
-			height: calc(100% - 60.168px);
-			background: linear-gradient(0deg, rgba(0, 0, 0, 0.8) 0%, transparent 30%);
+			height: 100%;
 			opacity: 1;
+			transition: 200ms ease-in-out;
+			transition-property: opacity;
 		}
 	}
 }

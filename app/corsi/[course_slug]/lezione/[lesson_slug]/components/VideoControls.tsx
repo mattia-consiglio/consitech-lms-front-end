@@ -9,12 +9,11 @@ import {
 	IoSettingsSharp,
 } from 'react-icons/io5'
 import { MdFullscreen, MdOutlineCheck, MdOutlineFullscreenExit } from 'react-icons/md'
-import { PlayerState } from './VideoPlayer'
+import { BufferStyle, PlayerState } from './VideoPlayer'
 
 interface VideoProgressBarProps {
 	duration: number
-	player: HTMLVideoElement
-	// playerState: number
+	player: HTMLVideoElement | null
 	playerWrapper: React.RefObject<HTMLDivElement>
 	isPlayedOnce: boolean
 	seekTo: (time: number) => void
@@ -23,6 +22,7 @@ interface VideoProgressBarProps {
 	currentQuality: string
 	changeQuality: (quality: string) => void
 	changeSpeed: (speed: number) => void
+	buffer: BufferStyle[]
 }
 
 function PlayIcon() {
@@ -75,7 +75,6 @@ function formatPercTime(perc: number, duration: number) {
 export default function VideoControls({
 	duration,
 	player,
-	// playerState,
 	playerWrapper,
 	isPlayedOnce,
 	seekTo,
@@ -84,12 +83,14 @@ export default function VideoControls({
 	currentQuality,
 	changeQuality,
 	changeSpeed,
-}: VideoProgressBarProps) {
-	const { currentTime, playerState, isInFocus, currentSpeed } = useAppSelector(
+	buffer,
+}: Readonly<VideoProgressBarProps>) {
+	const { currentTime, playerState, isInFocus, currentSpeed, isBuffering } = useAppSelector(
 		state => state.player
 	)
 	const playerControls = useRef<HTMLDivElement>(null)
 	const [currentTimeText, setCurrentTimeText] = useState(formatPercTime(currentTime, duration))
+	const durationText = useMemo(() => formatTime(duration), [duration])
 	const [isHovering, setIsHovering] = useState(false)
 	const progressBar = useRef<HTMLDivElement>(null)
 	const HoverPercentage = useRef(0)
@@ -133,7 +134,7 @@ export default function VideoControls({
 		e.stopPropagation()
 		isDragging.current = true
 		isDragged.current = true
-		const nativeEvent = e.nativeEvent as MouseEvent
+		const nativeEvent = e.nativeEvent
 		handleMouseMove(nativeEvent)
 		window.addEventListener('mousemove', handleMouseMove)
 		window.addEventListener('mouseup', handleMouseUp)
@@ -148,7 +149,7 @@ export default function VideoControls({
 	}
 
 	function seek(seconds?: number) {
-		seconds = seconds !== undefined ? seconds : (HoverPercentage.current / 100) * duration
+		seconds = seconds ?? (HoverPercentage.current / 100) * duration
 		if (player) {
 			seekTo(seconds)
 		}
@@ -177,9 +178,9 @@ export default function VideoControls({
 
 	const playPause = useCallback(() => {
 		if (playerState === PlayerState.PLAYING) {
-			player.pause()
+			player?.pause()
 		} else {
-			player.play()
+			player?.play()
 		}
 		toggleAnimation()
 	}, [player, playerState])
@@ -214,10 +215,10 @@ export default function VideoControls({
 	}, [isPlayedOnce, player, qualities, setCurrentQuality])
 
 	function seekBackward() {
-		seek(Math.max(player.currentTime - 5, 0))
+		player && seek(Math.max(player.currentTime - 5, 0))
 	}
 	function seekForward() {
-		seek(Math.min(player.currentTime + 5, duration))
+		player && seek(Math.min(player.currentTime + 5, duration))
 	}
 
 	function handleKeydown(e: KeyboardEvent) {
@@ -277,6 +278,15 @@ export default function VideoControls({
 					setCurrentOptionMenu('main')
 				}}
 				className='flex items-center gap-2 cursor-pointer'
+				role='menuitem'
+				aria-roledescription='menuitem'
+				tabIndex={0}
+				onKeyDown={e => {
+					if (e.key === 'Enter' || e.key === ' ') {
+						e.preventDefault()
+						setCurrentOptionMenu('main')
+					}
+				}}
 			>
 				<IoChevronBackSharp /> Indietro
 			</li>
@@ -301,17 +311,19 @@ export default function VideoControls({
 	return (
 		<>
 			<div className='center-wrapper'>
-				<div
-					className='icon-circle'
-					ref={iconCircle}
-					onAnimationEnd={() => {
-						iconCircle.current?.classList.remove('animate')
-						isAnimating.current = false
-						console.log('Animation ended', isAnimating.current)
-					}}
-				>
-					{playerState === PlayerState.PLAYING ? <PlayIcon /> : <PauseIcon />}
+				<div className='icon-circle-wrapper'>
+					<div
+						className='icon-circle'
+						ref={iconCircle}
+						onAnimationEnd={() => {
+							iconCircle.current?.classList.remove('animate')
+							isAnimating.current = false
+						}}
+					>
+						{playerState === PlayerState.PLAYING ? <PlayIcon /> : <PauseIcon />}
+					</div>
 				</div>
+				{isBuffering && <div className='loader' />}
 			</div>
 			<div
 				ref={playerControls}
@@ -339,12 +351,40 @@ export default function VideoControls({
 					onMouseDown={handleMouseDown}
 					ref={progressBar}
 					style={{ opacity: isDragging.current ? 1 : '' }}
+					aria-roledescription='progressbar'
+					role='slider'
+					tabIndex={0}
+					aria-valuemin={0}
+					aria-valuemax={duration}
+					aria-valuenow={currentTime}
+					aria-valuetext={currentTimeText}
+					aria-label={`${currentTimeText}/${durationText}`}
 				>
+					<div className='buffer-wrapper'>
+						{buffer.map(({ left, width }) => (
+							<div
+								key={left}
+								className='buffer-slice'
+								style={{
+									left: `${left}`,
+									width: `${width}`,
+								}}
+							/>
+						))}
+					</div>
 					<div
 						className={`circle${isHovering || isDragging.current ? ' active' : ''}`}
 						style={{ left: `${(currentTime / duration) * 100}%` }}
 					></div>
 					<div className='progress' style={{ width: `${(currentTime / duration) * 100}%` }} />
+					<div
+						className='h-full bg-white/30'
+						style={{
+							width: `${HoverPercentage.current}%`,
+							visibility: isHovering ? 'visible' : 'hidden',
+						}}
+					></div>
+
 					<div
 						className='time-hover-text'
 						style={{
@@ -360,7 +400,7 @@ export default function VideoControls({
 						<button
 							onClick={e => {
 								e.stopPropagation()
-								seek(Math.max(player.currentTime - 5, 0))
+								player && seek(Math.max(player.currentTime - 5, 0))
 							}}
 							className='text-xl'
 							onDoubleClick={e => {
@@ -384,7 +424,7 @@ export default function VideoControls({
 						<button
 							onClick={e => {
 								e.stopPropagation()
-								seek(Math.min(player.currentTime + 5, duration))
+								player && seek(Math.min(player.currentTime + 5, duration))
 							}}
 							className='text-xl'
 							onDoubleClick={e => {
@@ -405,19 +445,34 @@ export default function VideoControls({
 						>
 							{/* <IoLogoClosedCaptioning /> */}
 						</button>
-						<div className='flex items-center relative'>
+						<div className='flex items-center relative gap-2'>
 							<div
 								className={`options-menu absolute bottom-7 bg-neutral-800 right-0${
 									isOptionsOpen ? ' block' : ' hidden'
 								}`}
+								role='menu'
 							>
 								{currentOptionMenu === 'main' && (
-									<ul>
+									<ul
+										tabIndex={0}
+										role='menu'
+										aria-label='Opzioni'
+										aria-orientation='vertical'
+										aria-hidden={isOptionsOpen}
+									>
 										{/* <li>Sottotitoli</li> */}
 										<li
 											onClick={e => {
 												e.stopPropagation()
 												setCurrentOptionMenu('speed')
+											}}
+											role='menuitem'
+											tabIndex={0}
+											onKeyDown={e => {
+												if (e.key === 'Enter' || e.key === ' ') {
+													e.preventDefault()
+													setCurrentOptionMenu('speed')
+												}
 											}}
 										>
 											Velocità riproduzione
@@ -426,6 +481,14 @@ export default function VideoControls({
 											onClick={e => {
 												e.stopPropagation()
 												setCurrentOptionMenu('quality')
+											}}
+											role='menuitem'
+											tabIndex={0}
+											onKeyDown={e => {
+												if (e.key === 'Enter' || e.key === ' ') {
+													e.preventDefault()
+													setCurrentOptionMenu('quality')
+												}
 											}}
 										>
 											Qualità
@@ -444,6 +507,14 @@ export default function VideoControls({
 														: ' justify-end'
 												}`}
 												onClick={e => setVideoQuality(e, quality)}
+												role='menuitem'
+												tabIndex={0}
+												onKeyDown={e => {
+													if (e.key === 'Enter' || e.key === ' ') {
+														e.preventDefault()
+														setVideoQuality(e as any, quality)
+													}
+												}}
 											>
 												{currentQuality === quality && <MdOutlineCheck />}
 												{quality}
@@ -461,6 +532,14 @@ export default function VideoControls({
 													currentSpeed === speed ? ' justify-between text-primary' : ' justify-end'
 												}`}
 												onClick={e => setVideoSpeed(e, speed)}
+												role='menuitem'
+												tabIndex={0}
+												onKeyDown={e => {
+													if (e.key === 'Enter' || e.key === ' ') {
+														e.preventDefault()
+														setVideoSpeed(e as any, speed)
+													}
+												}}
 											>
 												{currentSpeed === speed ? <MdOutlineCheck /> : <div />}
 												{speed + 'x'}

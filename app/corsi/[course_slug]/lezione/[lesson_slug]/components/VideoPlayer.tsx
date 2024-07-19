@@ -1,10 +1,11 @@
 'use client'
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { use, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import VideoControls from './VideoControls'
 import '../videoPlayer.scss'
 import { useAppDispatch, useAppSelector } from '@/redux/store'
 import {
 	setCurrentTime,
+	setIsBuffering,
 	setPlayerIsInFocus,
 	setPlayerState,
 	setVideoSpeed,
@@ -30,6 +31,11 @@ export enum PlayerState {
 	PAUSED = 2,
 }
 
+export interface BufferStyle {
+	left: string
+	width: string
+}
+
 export default function VideoPlayer({ video }: VideoPlayerProps) {
 	const sources = useMemo(() => generateVideoResolutionSources(video), [video])
 	const qualities = useMemo(() => video.resolutions?.map(resolution => resolution.name), [video])
@@ -38,10 +44,12 @@ export default function VideoPlayer({ video }: VideoPlayerProps) {
 	const player = useRef<HTMLVideoElement>(null)
 	const intervalID = useRef<NodeJS.Timeout>()
 	const playerWrapper = useRef<HTMLDivElement>(null)
-	const { currentTime, playerState } = useAppSelector(state => state.player)
+	const { currentTime, playerState, isBuffering } = useAppSelector(state => state.player)
 	const dispatch = useAppDispatch()
 	const isPlayedOnce = useRef(false)
 	const qualityChanged = useRef(false)
+	const [buffer, setBuffer] = useState<BufferStyle[]>([])
+	const [playerLoaded, setPlayerLoaded] = useState(false)
 
 	const seekTo = (seconds: number) => {
 		if (player.current) {
@@ -95,13 +103,36 @@ export default function VideoPlayer({ video }: VideoPlayerProps) {
 		addVideoFocus()
 	}, [addVideoFocus])
 
+	const getBuffer = useCallback(
+		(setBuffing = false) => {
+			if (player.current) {
+				if (player.current.buffered.length && setBuffing) dispatch(setIsBuffering(true))
+				const buffer: BufferStyle[] = []
+				for (let i = 0; i < player.current.buffered.length; i++) {
+					const start = player.current.buffered.start(i)
+					const end = player.current.buffered.end(i)
+					if (start === 0 && end === player.current.duration) return
+					if (start === end) continue
+					buffer.push({
+						left: `${(start / player.current.duration) * 100}%`,
+						width: `${((end - start) / player.current.duration) * 100}%`,
+					})
+				}
+				console.log(buffer)
+				setBuffer(buffer)
+			}
+		},
+		[dispatch]
+	)
+
 	return (
 		<div className='flex flex-col gap-3'>
 			<div
 				className='flex flex-col gap-3 video-player-wrapper'
 				ref={playerWrapper}
 				id='videoPlayerWrapper'
-				tabIndex={0}
+				role='region'
+				aria-label='Video player'
 				onFocus={() => {
 					addVideoFocus()
 				}}
@@ -110,35 +141,66 @@ export default function VideoPlayer({ video }: VideoPlayerProps) {
 					ref={player}
 					id='player'
 					onCanPlay={() => {
+						dispatch(setIsBuffering(false))
 						if (playerState === PlayerState.PLAYING && qualityChanged.current) {
 							player.current?.play()
-
 							qualityChanged.current = false
 						}
 					}}
 					onPlay={() => {
 						playerState !== PlayerState.PLAYING && onStateChange(PlayerState.PLAYING)
+						getBuffer()
 					}}
 					onPause={() => {
 						onStateChange(PlayerState.PAUSED)
+						getBuffer()
+					}}
+					onSeeked={() => {
+						getBuffer()
+					}}
+					onWaiting={() => {
+						getBuffer(true)
+					}}
+					onEnded={() => {
+						onStateChange(PlayerState.ENDED)
+					}}
+					onLoadedData={() => {
+						console.log('loaded data')
+						getBuffer()
+						setPlayerLoaded(true)
+					}}
+					onLoadedMetadata={() => {
+						console.log('loaded metadata')
+						getBuffer()
+						setPlayerLoaded(true)
+					}}
+					onLoadStart={() => {
+						console.log('load started')
+						getBuffer()
+						setPlayerLoaded(true)
+					}}
+					onProgress={() => {
+						getBuffer()
+					}}
+					onPlaying={() => {
+						getBuffer()
 					}}
 					src={videoSource}
 				></video>
 
-				{player.current && (
-					<VideoControls
-						duration={video.duration}
-						player={player.current}
-						playerWrapper={playerWrapper}
-						isPlayedOnce={isPlayedOnce.current}
-						seekTo={seekTo}
-						qualities={qualities}
-						currentQuality={currentQuality}
-						setCurrentQuality={setCurrentQuality}
-						changeQuality={changeQuality}
-						changeSpeed={changeSpeed}
-					/>
-				)}
+				<VideoControls
+					duration={video.duration}
+					player={player.current}
+					playerWrapper={playerWrapper}
+					isPlayedOnce={isPlayedOnce.current}
+					seekTo={seekTo}
+					qualities={qualities}
+					currentQuality={currentQuality}
+					setCurrentQuality={setCurrentQuality}
+					changeQuality={changeQuality}
+					changeSpeed={changeSpeed}
+					buffer={buffer}
+				/>
 			</div>
 		</div>
 	)
