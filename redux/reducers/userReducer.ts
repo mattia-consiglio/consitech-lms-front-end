@@ -5,11 +5,13 @@ export type UserState = {
 	data: User
 	error: boolean
 	loggedIn: boolean
+	loading: boolean
 }
 const initialState: UserState = {
 	data: { id: '', username: '', email: '', role: UserRole.USER },
 	error: false,
 	loggedIn: false,
+	loading: true,
 }
 
 const userReducer = createSlice({
@@ -39,10 +41,13 @@ const userReducer = createSlice({
 		setUserLoginStatus(state, action: PayloadAction<boolean>) {
 			state.loggedIn = action.payload
 		},
+		setUserLoading(state, action: PayloadAction<boolean>) {
+			state.loading = action.payload
+		},
 	},
 })
 
-export const { setUser, setUserError, userLogin, userLogout, setUserLoginStatus } =
+export const { setUser, setUserError, userLogin, userLogout, setUserLoginStatus, setUserLoading } =
 	userReducer.actions
 
 export default userReducer.reducer

@@ -1,6 +1,6 @@
 'use client'
 import { Button, Tabs, TabsRef, Tooltip } from 'flowbite-react'
-import React, { useRef, useState } from 'react'
+import React, { useMemo, useRef, useState } from 'react'
 import { customButtonTheme, customTabsTheme } from '@/app/flowbite.themes'
 import { titillium_web } from '../fonts'
 import { useRouter } from 'next/navigation'
@@ -93,8 +93,9 @@ export default function LoginRegister({
 				setLoginData({ usernameOrEmail: '', password: '', error: false, errorMessage: '' })
 				const token: JWT = parseJwt(response.authorization)
 
-				setCookie('token', response.authorization, token.exp * 1000 - Date.now())
-				dispatch(userLogin())
+				setCookie('token', response.authorization, token.exp * 1000 - Date.now()).then(() => {
+					dispatch(getUserAction())
+				})
 
 				goBackAndReload(router)
 			})
@@ -125,10 +126,12 @@ export default function LoginRegister({
 	}
 
 	const specialChars = '!@#$%^&*()-_=+{};:,<.>/?~`£€[]\\|"\''
-	const safeRegex = (str: string) => {
-		// deepcode ignore GlobalReplacementRegex: <I need to replace only the first occurrence of each special character>
-		return str.replace(']', '\\]').replace('-', '\\-').replace('/', '\\/')
-	}
+	const regexSpecialCharacters = useMemo(
+		() => specialChars.replace(']', '\\]').replace('-', '\\-').replace('/', '\\/'),
+		[]
+	)
+
+	const regexCommonPattern = useMemo(() => `A-Za-z0-9\\s${regexSpecialCharacters}`, [])
 
 	const checkLength = () => {
 		return registrationData.password.length >= 15 && registrationData.password.length <= 30
@@ -141,23 +144,20 @@ export default function LoginRegister({
 
 	const checkUppercaseLetters = () => {
 		const regex = new RegExp(
-			`^(?=(?:.*[A-Z]){2,})(?!.*(.)\\1{2})[A-Za-z0-9${safeRegex(specialChars)}]{2,}$`,
+			`^(?=(?:.*[A-Z]){2,})(?!.*(.)\\1{2})[${regexCommonPattern}]{2,}$`,
 			'gm'
 		)
 		return regex.test(registrationData.password)
 	}
 
 	const checkLowercaseLetters = () => {
-		const regex = new RegExp(
-			`^(?=(?:.*[a-z]){2,})(?!.*(.)\\1{2})[A-Za-z0-9${safeRegex(specialChars)}]{2,}$`,
-			'gm'
-		)
+		const regex = new RegExp(`^(?=(?:.*[a-z]){2,})(?!.*(.)\\1{2})[${regexCommonPattern}]{2,}$`, 'g')
 		return regex.test(registrationData.password)
 	}
 
 	const checkNumbers = () => {
 		const regex = new RegExp(
-			`^(?=(?:.*[0-9]){2,})(?!.*(.)\\1{2})[A-Za-z0-9${safeRegex(specialChars)}]{2,}$`,
+			`^(?=(?:.*[0-9]){2,})(?!.*(.)\\1{2})[${regexCommonPattern}]{2,}$`,
 			'gm'
 		)
 		return regex.test(registrationData.password)
@@ -165,9 +165,7 @@ export default function LoginRegister({
 
 	const checkSpecialChars = () => {
 		const regex = new RegExp(
-			`^(?=(?:.*[${safeRegex(specialChars)}]){2,})(?!.*(.)\\1{2})[A-Za-z0-9${safeRegex(
-				specialChars
-			)}]{2,}$`,
+			`^(?=(?:.*[${regexSpecialCharacters}]){2,})(?!.*(.)\\1{2})[${regexCommonPattern}]{2,}$`,
 			'gm'
 		)
 		return regex.test(registrationData.password)
@@ -405,7 +403,7 @@ export default function LoginRegister({
 											) : (
 												<HiOutlineX className='inline-block text-red-600 dark:text-red-500' />
 											)}{' '}
-											Deve contenere almeno 2 lettere miniscole (non sono accettale le lettere
+											Deve contenere almeno 2 lettere miniscule (non sono accettale le lettere
 											accentate), ma non più di 2 uguali consecutive.
 										</li>
 										<li>

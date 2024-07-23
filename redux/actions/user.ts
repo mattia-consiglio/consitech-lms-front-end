@@ -15,10 +15,11 @@ export const getUserAction = () => {
 						email: response.email,
 					})
 				)
+
 				dispatch(setUserError(false))
 				dispatch(userLogin())
 			})
-			.catch(error => {
+			.catch(() => {
 				dispatch(setUserError(true))
 				dispatch(userLogout())
 			})

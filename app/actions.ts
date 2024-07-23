@@ -8,7 +8,8 @@ export async function setCookie(name: string, value: string, expiresIn = 1000 * 
 }
 
 export async function getCookie(name: string) {
-	return cookies().get(name)
+	const cookie = cookies().get(name)
+	return cookie
 }
 
 export async function removeCookie(name: string) {
@@ -20,4 +21,9 @@ export async function getAuthAndRedirectLogin() {
 	if (!token) {
 		return redirect('/login-register')
 	}
+}
+
+export const isLoggedInAction = async () => {
+	const cookie = await getCookie('token')
+	return !!cookie
 }

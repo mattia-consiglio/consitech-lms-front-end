@@ -2,26 +2,16 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import React, { useEffect, useState } from 'react'
-import { usePathname, useRouter } from 'next/navigation'
-import { IoPerson } from 'react-icons/io5'
-import { Button, DarkThemeToggle, Dropdown, useThemeMode } from 'flowbite-react'
-import { useAppDispatch, useAppSelector } from '@/redux/store'
-import { customButtonTheme } from '../flowbite.themes'
-import { setUserLoginStatus, userLogout } from '@/redux/reducers/userReducer'
-import { getUserAction } from '@/redux/actions/user'
-import { getCookie, removeCookie, setCookie } from '../actions'
-import { UserRole } from '@/utils/types'
+import { usePathname } from 'next/navigation'
+import { DarkThemeToggle, useThemeMode } from 'flowbite-react'
+import { setCookie } from '../actions'
+import UserMenu from './UserMenu'
 
-function Navbar({ defaultTheme, isLoggedIn }: { defaultTheme: string; isLoggedIn: boolean }) {
+function Navbar({ defaultTheme }: Readonly<{ defaultTheme: string }>) {
 	const pathname = usePathname()
 	const [menuOpen, setMenuOpen] = useState(false)
 	const themeMode = useThemeMode()
 	const [theme, setTheme] = useState(defaultTheme)
-	const [isMounted, setIsMounted] = useState(false)
-
-	const user = useAppSelector(state => state.user)
-	const dispatch = useAppDispatch()
-	const router = useRouter()
 
 	const menuItems = [
 		{
@@ -47,21 +37,9 @@ function Navbar({ defaultTheme, isLoggedIn }: { defaultTheme: string; isLoggedIn
 	]
 
 	useEffect(() => {
-		setIsMounted(true)
-	}, [])
-
-	useEffect(() => {
 		setTheme(themeMode.mode)
 		setCookie('theme', themeMode.mode)
 	}, [theme, themeMode.mode])
-
-	useEffect(() => {
-		if (isLoggedIn) {
-			dispatch(getUserAction())
-		} else {
-			dispatch(userLogout())
-		}
-	}, [dispatch, user, isLoggedIn])
 
 	return (
 		<nav className='bg-body_light/95 dark:bg-body_dark/95 w-full z-20 top-0 start-0 border-b-0 md:border-invert_light-400 dark:border-invert_light-600 md:border-b backdrop-blur-md'>
@@ -83,63 +61,7 @@ function Navbar({ defaultTheme, isLoggedIn }: { defaultTheme: string; isLoggedIn
 				<div className='flex md:order-2 space-x-3 md:space-x-0 rtl:space-x-reverse items-center'>
 					<DarkThemeToggle className='rounded-none ' />
 					{/* User menu */}
-					{!user.loggedIn && isMounted && (
-						<Link href='/login-register' passHref>
-							<Button theme={customButtonTheme} outline className='ml-2'>
-								Entra/Registrati
-							</Button>
-						</Link>
-					)}
-					{user.loggedIn && isMounted && (
-						<Dropdown
-							label=''
-							dismissOnClick={true}
-							renderTrigger={() => (
-								<button
-									type='button'
-									className=' border-solid border-spacing-2 border-2 border-current rounded-full flex w-8 h-8 items-center justify-center hover:text-primary !ml-4'
-								>
-									<IoPerson />
-									<span className='sr-only'>Apri menu utente</span>
-								</button>
-							)}
-						>
-							<Dropdown.Header>
-								<span className='block text-sm'>{user.data.username}</span>
-								<span className='block truncate text-sm font-medium'>{user.data.email}</span>
-							</Dropdown.Header>
-							{user.data.role === UserRole.ADMIN && (
-								<>
-									<Dropdown.Item as={Link} href='/admin/dashboard' passHref>
-										Admin Dashboard
-									</Dropdown.Item>
-									<Dropdown.Item as={Link} href='/admin/corsi' passHref>
-										Admin Corsi
-									</Dropdown.Item>
-									<Dropdown.Item as={Link} href='/admin/lezioni' passHref>
-										Admin Lezioni
-									</Dropdown.Item>
-									<Dropdown.Item as={Link} href='/admin/media' passHref>
-										Admin Media
-									</Dropdown.Item>
-								</>
-							)}
-							<Dropdown.Item>Impostazioni</Dropdown.Item>
-							<Dropdown.Item
-								onClick={async () => {
-									dispatch(userLogout())
-									await removeCookie('token')
-									dispatch(userLogout())
-
-									if (pathname.split('/')[1] === 'admin') {
-										router.push('/login')
-									}
-								}}
-							>
-								Logout
-							</Dropdown.Item>
-						</Dropdown>
-					)}
+					<UserMenu />
 					{/* Hamburger menu */}
 					<button
 						data-collapse-toggle='navbar-sticky'
