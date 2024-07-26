@@ -8,6 +8,7 @@ import {
 	HiCheck,
 	HiOutlineX,
 } from 'react-icons/hi'
+import { RiLockPasswordFill } from 'react-icons/ri'
 
 interface Props {
 	verifyStrength?: boolean
@@ -71,6 +72,27 @@ export const checkPassword = (password: string) => {
 	)
 }
 
+const generatePassword = (length: number) => {
+	let result = ''
+	const uppercaseCharacters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+	const lowercaseCharacters = 'abcdefghijklmnopqrstuvwxyz'
+	const numbers = '0123456789'
+	const specialCharacters = specialChars
+	const characters = [uppercaseCharacters, lowercaseCharacters, numbers, specialCharacters]
+	const counterCharacters = [0, 0, 0, 0]
+	for (let i = 0; i < length; i++) {
+		const index = Math.floor(Math.random() * characters.length)
+		const characterSet = characters[index]
+		const char = characterSet[Math.floor(Math.random() * characterSet.length)]
+		counterCharacters[index]++
+		result += char
+	}
+	if (!checkPassword(result)) {
+		return generatePassword(length)
+	}
+	return result
+}
+
 function PasswordInput({
 	verifyStrength = false,
 	className,
@@ -85,47 +107,61 @@ function PasswordInput({
 
 	return (
 		<>
-			<div className='w-full'>
+			<div className='w-full '>
 				{label && <label htmlFor={id}>{label}</label>}
-				<div className='w-full relative'>
-					<input
-						type={showPassword ? 'text' : 'password'}
-						name='password'
-						placeholder={showPlaceholder ? 'Password' : ''}
-						className={'w-full ' + (className ?? '')}
-						value={password}
-						required
-						onChange={e => setPassword(e.target.value)}
-						id={id}
-					/>
-					{verifyStrength && (
-						<div className='absolute right-0 top-1/2 -translate-y-1/2'>
-							<Tooltip content='Requisiti password'>
+				<div
+					className={'w-full relative' + (verifyStrength ? ' grid grid-cols-[1fr_auto] gap-4' : '')}
+				>
+					<div className='relative'>
+						<input
+							type={showPassword ? 'text' : 'password'}
+							name='password'
+							placeholder={showPlaceholder ? 'Password' : ''}
+							className={'w-full ' + (className ?? '')}
+							value={password}
+							required
+							onChange={e => setPassword(e.target.value)}
+							id={id}
+						/>
+						{verifyStrength && (
+							<div className='absolute right-1 top-1/2 -translate-y-1/2'>
+								<Tooltip content='Requisiti password'>
+									<button
+										type='button'
+										className='p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded'
+										onClick={() => setShowInfo(!showInfo)}
+									>
+										<HiInformationCircle />
+									</button>
+								</Tooltip>
+							</div>
+						)}
+						<div
+							className={
+								'absolute top-1/2 -translate-y-1/2 ' + (verifyStrength ? 'right-6' : 'right-1')
+							}
+						>
+							<Tooltip content={showPassword ? 'Nascondi password' : 'Mostra password'}>
 								<button
 									type='button'
-									className='p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded'
-									onClick={() => setShowInfo(!showInfo)}
+									className='p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded text-xl'
+									onClick={() => setShowPassword(p => !p)}
 								>
-									<HiInformationCircle />
+									{showPassword ? <HiOutlineEyeOff /> : <HiOutlineEye />}
 								</button>
 							</Tooltip>
 						</div>
-					)}
-					<div
-						className={
-							'absolute top-1/2 -translate-y-1/2 ' + (verifyStrength ? 'right-5' : 'right-0')
-						}
-					>
-						<Tooltip content={showPassword ? 'Nascondi password' : 'Mostra password'}>
-							<button
-								type='button'
-								className='p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded text-xl'
-								onClick={() => setShowPassword(p => !p)}
-							>
-								{showPassword ? <HiOutlineEyeOff /> : <HiOutlineEye />}
-							</button>
-						</Tooltip>
 					</div>
+					{verifyStrength && (
+						<button
+							type='button'
+							className='border-2 p-2'
+							aria-label='Genera password'
+							onClick={() => setPassword(generatePassword(30))}
+						>
+							<RiLockPasswordFill />
+						</button>
+					)}
 				</div>
 			</div>
 			{showInfo && verifyStrength && (

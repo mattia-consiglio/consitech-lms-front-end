@@ -18,7 +18,7 @@ import { getUserAction } from '@/redux/actions/user'
 import { userLogin } from '@/redux/reducers/userReducer'
 import { setCookie } from '../actions'
 import { goBackAndReload, parseJwt } from '@/utils/utils'
-import PasswordInput from '../admin/components/PasswordInput'
+import PasswordInput, { checkPassword } from '../admin/components/PasswordInput'
 
 const getInitialTab = (tabQuery: string | null) => {
 	let tab = 0
@@ -40,9 +40,9 @@ const getInitialTab = (tabQuery: string | null) => {
 
 export default function LoginRegister({
 	searchParams,
-}: {
+}: Readonly<{
 	searchParams: { [key: string]: string | string[] | undefined }
-}) {
+}>) {
 	const router = useRouter()
 	const dispatch = useAppDispatch()
 
@@ -71,13 +71,6 @@ export default function LoginRegister({
 		error: false,
 		errorMessage: '',
 	})
-
-	const [showPassword, setShowPassword] = useState({
-		login: false,
-		register: false,
-	})
-
-	const [showInfo, setShowInfo] = useState(false)
 
 	const isActiveTab = (tab: number) => {
 		return activeTab === tab
@@ -137,63 +130,6 @@ export default function LoginRegister({
 		)
 	}
 
-	const specialChars = '!@#$%^&*()-_=+{};:,<.>/?~`£€[]\\|"\''
-	const regexSpecialCharacters = useMemo(
-		() => specialChars.replace(']', '\\]').replaceAll('-', '\\-').replaceAll('/', '\\/'),
-		[]
-	)
-
-	const regexCommonPattern = useMemo(() => `A-Za-z0-9\\s${regexSpecialCharacters}`, [])
-
-	const checkLength = () => {
-		return registrationData.password.length >= 15 && registrationData.password.length <= 30
-	}
-
-	const checkSpace = () => {
-		const regex = /^\S*$/gm
-		return regex.test(registrationData.password)
-	}
-
-	const checkUppercaseLetters = () => {
-		const regex = new RegExp(
-			`^(?=(?:.*[A-Z]){2,})(?!.*(.)\\1{2})[${regexCommonPattern}]{2,}$`,
-			'gm'
-		)
-		return regex.test(registrationData.password)
-	}
-
-	const checkLowercaseLetters = () => {
-		const regex = new RegExp(`^(?=(?:.*[a-z]){2,})(?!.*(.)\\1{2})[${regexCommonPattern}]{2,}$`, 'g')
-		return regex.test(registrationData.password)
-	}
-
-	const checkNumbers = () => {
-		const regex = new RegExp(
-			`^(?=(?:.*[0-9]){2,})(?!.*(.)\\1{2})[${regexCommonPattern}]{2,}$`,
-			'gm'
-		)
-		return regex.test(registrationData.password)
-	}
-
-	const checkSpecialChars = () => {
-		const regex = new RegExp(
-			`^(?=(?:.*[${regexSpecialCharacters}]){2,})(?!.*(.)\\1{2})[${regexCommonPattern}]{2,}$`,
-			'gm'
-		)
-		return regex.test(registrationData.password)
-	}
-
-	const checkPassword = () => {
-		return (
-			checkLength() &&
-			checkSpace() &&
-			checkUppercaseLetters() &&
-			checkLowercaseLetters() &&
-			checkNumbers() &&
-			checkSpecialChars()
-		)
-	}
-
 	const registerForm = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault()
 		if (
@@ -206,9 +142,8 @@ export default function LoginRegister({
 				error: true,
 				errorMessage: 'Inserisci username, email e password',
 			})
-			return
 		} else {
-			const passwordStrength = checkPassword()
+			const passwordStrength = checkPassword(registrationData.password)
 			if (passwordStrength) {
 				const { error, errorMessage, ...restOfData } = registrationData
 				await API.post<User>('auth/register', restOfData)

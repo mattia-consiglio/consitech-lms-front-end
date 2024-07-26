@@ -4,6 +4,8 @@ import { useAppSelector } from '@/redux/store'
 import React, { use, useEffect, useState } from 'react'
 import adminStyles from '@/app/admin/styles/admin.module.scss'
 import PasswordInput from '@/app/admin/components/PasswordInput'
+import { Button } from 'flowbite-react'
+import { customButtonTheme } from '@/app/flowbite.themes'
 
 function UserSettings() {
 	const { username, email } = useAppSelector(state => state.user.data)
@@ -54,16 +56,15 @@ function UserSettings() {
 						id='email'
 					/>
 				</div>
-				<div>
-					<PasswordInput
-						className={adminStyles.input}
-						verifyStrength
-						password={tmpPassword}
-						setPassword={setTmpPassword}
-						label='Password'
-						id='password'
-					/>
-				</div>
+
+				<PasswordInput
+					className={adminStyles.input}
+					verifyStrength
+					password={tmpPassword}
+					setPassword={setTmpPassword}
+					label='Password'
+					id='password'
+				/>
 			</form>
 		</MainWrapper>
 	)
