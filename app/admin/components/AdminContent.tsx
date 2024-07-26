@@ -200,10 +200,6 @@ export default function AdminContent({ contentId }: AdminCourseProps) {
 			return
 		}
 
-		// if (key === 'videoId') {
-		// 	value = extractVideoId(value)
-		// }
-
 		if (key === 'course') {
 			const course = courses.find(c => c.id === value) as Course
 			console.log('course', course)

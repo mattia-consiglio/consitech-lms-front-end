@@ -79,7 +79,9 @@ const UserMenu = () => {
 							</Dropdown.Item>
 						</>
 					)}
-					<Dropdown.Item>Impostazioni</Dropdown.Item>
+					<Dropdown.Item as={Link} href='/admin/utenti/io/impostazioni'>
+						Impostazioni
+					</Dropdown.Item>
 					<Dropdown.Item
 						onClick={async () => {
 							dispatch(userLogout())
