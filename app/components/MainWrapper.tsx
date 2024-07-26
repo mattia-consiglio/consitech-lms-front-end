@@ -22,7 +22,7 @@ export default function MainWrapper({
 	subheaderTitle,
 	className,
 	breadcrumbItems,
-}: MainWrapperProps) {
+}: Readonly<MainWrapperProps>) {
 	return (
 		<main className={className}>
 			{subheaderTitle && <Subheader title={subheaderTitle} breadcrumbItems={breadcrumbItems} />}

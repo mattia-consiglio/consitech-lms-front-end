@@ -6,7 +6,9 @@ import { HiHome } from 'react-icons/hi'
 import PathName from '@/app/components/PathName'
 import { redirect } from 'next/navigation'
 
-export default async function CourseSingle({ params }: { params: { course_slug: string } }) {
+export default async function CourseSingle({
+	params,
+}: Readonly<{ params: { course_slug: string } }>) {
 	const course = await API.get<Course>('public/courses/slug/' + params.course_slug).catch(_ => {
 		redirect('/404')
 	})

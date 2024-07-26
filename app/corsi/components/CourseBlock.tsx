@@ -33,7 +33,7 @@ export default function CourseBlock({
 	role,
 	publishStatus,
 	id,
-}: CourseBlockProps) {
+}: Readonly<CourseBlockProps>) {
 	const router = useRouter()
 	return (
 		<Link

@@ -1,15 +1,15 @@
+'use client'
 import { userLogout } from '@/redux/reducers/userReducer'
 import { UserRole } from '@/utils/types'
 import { Button, Dropdown } from 'flowbite-react'
 import Link from 'next/link'
-import router from 'next/router'
 import React, { useCallback, useEffect, useState } from 'react'
 import { IoPerson } from 'react-icons/io5'
 import { isLoggedInAction, removeCookie } from '../actions'
 import { customButtonTheme } from '../flowbite.themes'
 import { useAppDispatch, useAppSelector } from '@/redux/store'
 import { getUserAction } from '@/redux/actions/user'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { CgSpinner } from 'react-icons/cg'
 
 const UserMenu = () => {
@@ -20,6 +20,7 @@ const UserMenu = () => {
 	const dispatch = useAppDispatch()
 	const [isMounted, setIsMounted] = useState(false)
 	const pathname = usePathname()
+	const router = useRouter()
 
 	const handleLogin = useCallback(async () => {
 		const isLoggedIn = await isLoggedInAction()
