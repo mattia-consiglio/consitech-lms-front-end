@@ -8,21 +8,128 @@ $primary-color: theme('colors.primary');
 	position: relative;
 	user-select: none;
 
-	& > div,
-	iframe {
+	& > div {
 		max-width: 100%;
 		height: auto;
 		aspect-ratio: 16/9;
 	}
+
+	&:focus {
+		outline: none;
+	}
+	&:focus-visible {
+		outline: 3px solid currentColor;
+		outline-offset: 2px;
+		border-radius: 0.1rem;
+	}
+
+	.center-wrapper {
+		position: absolute;
+		bottom: 0;
+		left: 0;
+		height: 100%;
+		width: 100%;
+
+		.loader,
+		.icon-circle-wrapper {
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%, -50%);
+		}
+
+		$animationDuration: 1.5s;
+
+		.loader {
+			width: 48px;
+			height: 48px;
+			display: inline-block;
+			position: relative;
+			&::after,
+			&::before {
+				content: '';
+				width: 48px;
+				height: 48px;
+				border: 3px solid #fff;
+				position: absolute;
+				left: 0;
+				top: 0;
+				box-sizing: border-box;
+				animation: rotation $animationDuration ease-in-out infinite;
+			}
+			&::after {
+				border-color: $primary-color;
+				animation-delay: calc($animationDuration / 2);
+			}
+		}
+
+		@keyframes rotation {
+			0% {
+				transform: rotate(0deg);
+			}
+			100% {
+				transform: rotate(360deg);
+			}
+		}
+
+		@keyframes zoomAndFade {
+			0% {
+				transform: scale(1);
+				opacity: 1;
+			}
+			100% {
+				transform: scale(1.7);
+				opacity: 0;
+			}
+		}
+
+		$circleSize: 65px;
+		.icon-circle {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			width: $circleSize;
+			height: $circleSize;
+			border-radius: 50%;
+			background-color: rgba(0, 0, 0, 0.4);
+			opacity: 0;
+
+			&.animate {
+				animation: zoomAndFade 800ms forwards;
+				animation-timing-function: cubic-bezier(0.41, 0.38, 0.1, 1);
+			}
+
+			svg {
+				font-size: 20px;
+				color: rgba(255, 255, 255, 0.95);
+				display: flex;
+				margin: 0 auto;
+				filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.8));
+			}
+		}
+	}
+
+	&.hide {
+		.player-controls {
+			opacity: 0;
+			cursor: none !important;
+		}
+		&:hover {
+			.player-controls {
+				opacity: 0;
+				cursor: none !important;
+			}
+		}
+	}
+
 	.player-controls {
 		position: absolute;
 		bottom: 0;
-		height: 0;
+		height: 100%;
 		width: 100%;
-		opacity: 0;
-		background-color: rgb(0 0 0 / 50%);
-		background: linear-gradient(0deg, rgba(0, 0, 0, 0.8) 0%, transparent 60%);
-		transition: all 200ms ease-in-out;
+		opacity: 1;
+		background: linear-gradient(0deg, rgba(0, 0, 0, 0.8) 0%, transparent 30%);
+		transition: 200ms ease-in-out;
 		transition-property: height, opacity;
 
 		.progress-bar-wrapper {
@@ -32,8 +139,7 @@ $primary-color: theme('colors.primary');
 			position: absolute;
 			bottom: 40px;
 			cursor: pointer;
-			opacity: 0;
-			transition: all 200ms ease-in-out;
+			transition: 200ms ease-in-out;
 			transition-property: height, opacity;
 			left: 50%;
 			transform: translateX(-50%);
@@ -78,6 +184,20 @@ $primary-color: theme('colors.primary');
 				background-color: rgba(0, 0, 0, 0.95);
 				padding: 0 5px;
 			}
+
+			.buffer-wrapper {
+				width: 100%;
+				height: 100%;
+				position: absolute;
+				top: 0;
+				left: 0;
+
+				.buffer-slice {
+					position: absolute;
+					height: 100%;
+					background-color: rgba(255, 255, 255, 0.3);
+				}
+			}
 		}
 
 		.controls {
@@ -90,7 +210,8 @@ $primary-color: theme('colors.primary');
 			left: 50%;
 			transform: translateX(-50%);
 
-			.left {
+			.left,
+			.right {
 				display: flex;
 				align-items: center;
 				gap: 5px;
@@ -98,6 +219,19 @@ $primary-color: theme('colors.primary');
 				button {
 					display: inline-flex;
 					align-items: center;
+				}
+			}
+
+			.options-menu {
+				ul {
+					li {
+						cursor: pointer;
+						padding: 10px 20px;
+
+						&:hover {
+							background-color: theme('colors.neutral.900');
+						}
+					}
 				}
 			}
 		}
@@ -109,9 +243,9 @@ $primary-color: theme('colors.primary');
 		}
 
 		.player-controls {
-			height: calc(100% - 60.168px);
-			background: linear-gradient(0deg, rgba(0, 0, 0, 0.8) 0%, transparent 30%);
+			height: 100%;
 			opacity: 1;
+			transition-property: opacity;
 		}
 	}
 }

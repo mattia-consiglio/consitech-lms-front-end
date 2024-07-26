@@ -1,6 +1,6 @@
 'use client'
 import { Button, Tabs, TabsRef, Tooltip } from 'flowbite-react'
-import React, { useRef, useState } from 'react'
+import React, { useMemo, useRef, useState } from 'react'
 import { customButtonTheme, customTabsTheme } from '@/app/flowbite.themes'
 import { titillium_web } from '../fonts'
 import { useRouter } from 'next/navigation'
@@ -18,8 +18,9 @@ import { getUserAction } from '@/redux/actions/user'
 import { userLogin } from '@/redux/reducers/userReducer'
 import { setCookie } from '../actions'
 import { goBackAndReload, parseJwt } from '@/utils/utils'
+import PasswordInput from '../admin/components/PasswordInput'
 
-const getInitalTab = (tabQuery: string | null) => {
+const getInitialTab = (tabQuery: string | null) => {
 	let tab = 0
 	if (tabQuery) {
 		switch (tabQuery) {
@@ -54,7 +55,7 @@ export default function LoginRegister({
 
 	// let activeTab = getInitalTab(tabQuery)
 	const tabsRef = useRef<TabsRef>(null)
-	const [activeTab, setActiveTab] = useState(getInitalTab(tabQuery))
+	const [activeTab, setActiveTab] = useState(getInitialTab(tabQuery))
 
 	const [loginData, setLoginData] = useState({
 		usernameOrEmail: '',
@@ -87,14 +88,26 @@ export default function LoginRegister({
 		password: string
 	}
 
+	const handleChange = (e: React.ChangeEvent<HTMLInputElement>, nameInput?: string) => {
+		const { name, value } = e.target
+		const [type, realName] = nameInput ? nameInput.split('-') : name.split('-')
+
+		if (type === 'login') {
+			setLoginData({ ...loginData, [realName]: value })
+		} else if (type === 'register') {
+			setRegistrationData({ ...registrationData, [realName]: value })
+		}
+	}
+
 	const login = async (data: LoginData, formForm = false) => {
 		await API.post<Authorization>('auth/login', data)
 			.then(response => {
 				setLoginData({ usernameOrEmail: '', password: '', error: false, errorMessage: '' })
 				const token: JWT = parseJwt(response.authorization)
 
-				setCookie('token', response.authorization, token.exp * 1000 - Date.now())
-				dispatch(userLogin())
+				setCookie('token', response.authorization, token.exp * 1000 - Date.now()).then(() => {
+					dispatch(getUserAction())
+				})
 
 				goBackAndReload(router)
 			})
@@ -125,10 +138,12 @@ export default function LoginRegister({
 	}
 
 	const specialChars = '!@#$%^&*()-_=+{};:,<.>/?~`£€[]\\|"\''
-	const safeRegex = (str: string) => {
-		// deepcode ignore GlobalReplacementRegex: <I need to replace only the first occurrence of each special character>
-		return str.replace(']', '\\]').replace('-', '\\-').replace('/', '\\/')
-	}
+	const regexSpecialCharacters = useMemo(
+		() => specialChars.replace(']', '\\]').replaceAll('-', '\\-').replaceAll('/', '\\/'),
+		[]
+	)
+
+	const regexCommonPattern = useMemo(() => `A-Za-z0-9\\s${regexSpecialCharacters}`, [])
 
 	const checkLength = () => {
 		return registrationData.password.length >= 15 && registrationData.password.length <= 30
@@ -141,23 +156,20 @@ export default function LoginRegister({
 
 	const checkUppercaseLetters = () => {
 		const regex = new RegExp(
-			`^(?=(?:.*[A-Z]){2,})(?!.*(.)\\1{2})[A-Za-z0-9${safeRegex(specialChars)}]{2,}$`,
+			`^(?=(?:.*[A-Z]){2,})(?!.*(.)\\1{2})[${regexCommonPattern}]{2,}$`,
 			'gm'
 		)
 		return regex.test(registrationData.password)
 	}
 
 	const checkLowercaseLetters = () => {
-		const regex = new RegExp(
-			`^(?=(?:.*[a-z]){2,})(?!.*(.)\\1{2})[A-Za-z0-9${safeRegex(specialChars)}]{2,}$`,
-			'gm'
-		)
+		const regex = new RegExp(`^(?=(?:.*[a-z]){2,})(?!.*(.)\\1{2})[${regexCommonPattern}]{2,}$`, 'g')
 		return regex.test(registrationData.password)
 	}
 
 	const checkNumbers = () => {
 		const regex = new RegExp(
-			`^(?=(?:.*[0-9]){2,})(?!.*(.)\\1{2})[A-Za-z0-9${safeRegex(specialChars)}]{2,}$`,
+			`^(?=(?:.*[0-9]){2,})(?!.*(.)\\1{2})[${regexCommonPattern}]{2,}$`,
 			'gm'
 		)
 		return regex.test(registrationData.password)
@@ -165,9 +177,7 @@ export default function LoginRegister({
 
 	const checkSpecialChars = () => {
 		const regex = new RegExp(
-			`^(?=(?:.*[${safeRegex(specialChars)}]){2,})(?!.*(.)\\1{2})[A-Za-z0-9${safeRegex(
-				specialChars
-			)}]{2,}$`,
+			`^(?=(?:.*[${regexSpecialCharacters}]){2,})(?!.*(.)\\1{2})[${regexCommonPattern}]{2,}$`,
 			'gm'
 		)
 		return regex.test(registrationData.password)
@@ -248,41 +258,21 @@ export default function LoginRegister({
 						<form className='mt-4 flex flex-col items-center gap-y-2' onSubmit={e => loginForm(e)}>
 							<input
 								type='text'
-								name='username-email'
+								name='login-usernameOrEmail'
 								placeholder='Username o E-mail'
 								className='w-full'
 								value={loginData.usernameOrEmail}
 								required
-								onChange={e => setLoginData({ ...loginData, usernameOrEmail: e.target.value })}
+								onChange={handleChange}
 							/>
-							<div className='relative w-full'>
-								<input
-									type={showPassword.login ? 'text' : 'password'}
-									name='password'
-									placeholder='Password'
-									className='w-full'
-									value={loginData.password}
-									required
-									onChange={e => {
-										if (e.target.value.length > 0) {
-											setLoginData({ ...loginData, password: e.target.value })
-										}
-									}}
-								/>
-								<div className='absolute right-0 top-1/2 -translate-y-1/2'>
-									<Tooltip content={showPassword.login ? 'Nascondi password' : 'Mostra password'}>
-										<button
-											type='button'
-											className='p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded text-xl'
-											onClick={() =>
-												setShowPassword({ ...showPassword, login: !showPassword.login })
-											}
-										>
-											{showPassword.login ? <HiOutlineEyeOff /> : <HiOutlineEye />}
-										</button>
-									</Tooltip>
-								</div>
-							</div>
+							<PasswordInput
+								password={loginData.password}
+								setPassword={password => {
+									setLoginData({ ...loginData, password: password })
+								}}
+								showPlaceholder
+							/>
+
 							{loginData.error ? (
 								<div className='flex px-4 py-2 border-red-800 dark:border-red-300 border-2 w-full justify-center items-center text-red-800 dark:text-red-300 bg-red-300 dark:bg-red-800 font-bold gap-x-2'>
 									<HiInformationCircle />
@@ -313,123 +303,31 @@ export default function LoginRegister({
 						>
 							<input
 								type='text'
-								name='username'
+								name='register-username'
 								placeholder='Username'
 								className='w-full'
 								minLength={3}
 								value={registrationData.username}
 								required
-								onChange={e =>
-									setRegistrationData({ ...registrationData, username: e.target.value })
-								}
+								onChange={handleChange}
 							/>
+
 							<input
 								type='email'
-								name='email'
+								name='register-email'
 								placeholder='E-mail'
 								className='w-full'
 								value={registrationData.email}
 								onChange={e => setRegistrationData({ ...registrationData, email: e.target.value })}
 							/>
-							<div className='w-full relative'>
-								<input
-									type={showPassword.register ? 'text' : 'password'}
-									name='password'
-									placeholder='Password'
-									className='w-full'
-									value={registrationData.password}
-									required
-									onChange={e =>
-										setRegistrationData({ ...registrationData, password: e.target.value })
-									}
-								/>
-								<div className='absolute right-0 top-1/2 -translate-y-1/2'>
-									<Tooltip content='Requisiti password'>
-										<button
-											type='button'
-											className='p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded'
-											onClick={() => setShowInfo(!showInfo)}
-										>
-											<HiInformationCircle />
-										</button>
-									</Tooltip>
-								</div>
-								<div className='absolute right-5 top-1/2 -translate-y-1/2'>
-									<Tooltip
-										content={showPassword.register ? 'Nascondi password' : 'Mostra password'}
-									>
-										<button
-											type='button'
-											className='p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded text-xl'
-											onClick={() =>
-												setShowPassword({ ...showPassword, register: !showPassword.register })
-											}
-										>
-											{showPassword.register ? <HiOutlineEyeOff /> : <HiOutlineEye />}
-										</button>
-									</Tooltip>
-								</div>
-							</div>
-							{showInfo ? (
-								<div>
-									<p>La password deve rispettare tutti i seguenti criteri</p>
-									<ul>
-										<li>
-											{checkLength() ? (
-												<HiCheck className='inline-block text-green-500' />
-											) : (
-												<HiOutlineX className='inline-block text-red-600 dark:text-red-500' />
-											)}{' '}
-											Deve avere una lunghezza da 15 a 50 caratteri.
-										</li>
-										<li>
-											{checkSpace() ? (
-												<HiCheck className='inline-block text-green-500' />
-											) : (
-												<HiOutlineX className='inline-block text-red-600 dark:text-red-500' />
-											)}{' '}
-											Non deve contenere spazi.
-										</li>
-										<li>
-											{checkUppercaseLetters() ? (
-												<HiCheck className='inline-block text-green-500' />
-											) : (
-												<HiOutlineX className='inline-block text-red-600 dark:text-red-500' />
-											)}{' '}
-											Deve contenere almeno 2 lettere maiuscole (non sono accettale le lettere
-											accentate), ma non più di 2 uguali consecutive.
-										</li>
-										<li>
-											{checkLowercaseLetters() ? (
-												<HiCheck className='inline-block text-green-500' />
-											) : (
-												<HiOutlineX className='inline-block text-red-600 dark:text-red-500' />
-											)}{' '}
-											Deve contenere almeno 2 lettere miniscole (non sono accettale le lettere
-											accentate), ma non più di 2 uguali consecutive.
-										</li>
-										<li>
-											{checkNumbers() ? (
-												<HiCheck className='inline-block text-green-500' />
-											) : (
-												<HiOutlineX className='inline-block text-red-600 dark:text-red-500' />
-											)}{' '}
-											Deve contenere almeno 2 numeri, ma non più di 2 uguali.
-										</li>
-										<li>
-											{checkSpecialChars() ? (
-												<HiCheck className='inline-block text-green-500' />
-											) : (
-												<HiOutlineX className='inline-block text-red-600 dark:text-red-500' />
-											)}{' '}
-											Deve contenere almeno 2 caratteri speciali( {specialChars} ), ma non più di 2
-											uguali consecutivi tra loro.
-										</li>
-									</ul>
-								</div>
-							) : (
-								''
-							)}
+							<PasswordInput
+								password={registrationData.password}
+								setPassword={password => {
+									setRegistrationData({ ...registrationData, password: password })
+								}}
+								showPlaceholder
+								verifyStrength
+							/>
 							<Button
 								type='submit'
 								outline

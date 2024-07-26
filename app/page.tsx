@@ -1,5 +1,5 @@
 import { Metadata } from 'next'
-import HeroSection from './HeroSection'
+import HeroSection from './components/HeroSection'
 import ServerCorsesComponent from './corsi/components/ServerCoursesComponent'
 import ContentWrapper from './components/ContentWrapper'
 // import './styles/globals.scss'

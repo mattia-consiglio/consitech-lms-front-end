@@ -1,46 +1,44 @@
 'use client'
-import { setSelected, setSelectedAlt } from '@/redux/reducers/mediaReducer'
+import { setSelectedMedia, setSelectedMediaAlt } from '@/redux/reducers/mediaReducer'
 import { useAppDispatch, useAppSelector } from '@/redux/store'
 import { API } from '@/utils/api'
-import { Media, PageableContent } from '@/utils/types'
-import Image from 'next/image'
-import React, { Suspense, useEffect, useRef, useState } from 'react'
+import { Media, PageableContent, MediaImage, MediaVideo, MediaType } from '@/utils/types'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import adminStyles from '@/app/admin/styles/admin.module.scss'
 import toast from 'react-hot-toast'
 import { Button } from 'flowbite-react'
 import { HiOutlineTrash } from 'react-icons/hi'
+import { FaRotate } from 'react-icons/fa6'
 import { customButtonTheme } from '@/app/flowbite.themes'
+import MediaElements from './MediaElements'
+import { formatTime } from '@/app/corsi/[course_slug]/lezione/[lesson_slug]/VideoControls'
 
-export default function MediaManager({ displayTitle = true }: { displayTitle?: boolean }) {
+interface MediaManagerProps {
+	displayTitle?: boolean
+	mediaType?: MediaType
+}
+
+export default function MediaManager({ displayTitle = true, mediaType }: MediaManagerProps) {
 	const selected = useAppSelector(state => state.media.selected)
 	const dispatch = useAppDispatch()
 	const [search, setSearch] = useState('')
-	const [loading, setLoading] = useState(false)
-	const [error, setError] = useState<string>()
+	const [loading, setLoading] = useState(true)
+	const [error, setError] = useState<string>('')
 	const [media, setMedia] = useState<PageableContent<Media>>({} as PageableContent<Media>)
 	const fileRef = useRef<HTMLInputElement>(null)
 
-	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		setSearch(e.target.value)
-	}
-
-	const fetchMedia = async () => {
-		API.get<PageableContent<Media>>('media')
-			.then(response => {
-				setMedia(response)
-			})
-			.catch(error => {
-				setError(error.message)
-			})
-	}
-
-	const handleSelect = (media: Media) => {
-		if (selected && selected.id === media.id) {
-			dispatch(setSelected(null))
-		} else {
-			dispatch(setSelected(media))
+	const fetchMedia = useCallback(async () => {
+		const endpoint = mediaType ? 'media?type=' + mediaType : 'media'
+		setLoading(true)
+		try {
+			const response = await API.get<PageableContent<Media>>(endpoint)
+			setMedia(response)
+		} catch (error: any) {
+			setError(error.message)
+		} finally {
+			setLoading(false)
 		}
-	}
+	}, [mediaType])
 
 	const handleDelete = (media: Media | null) => {
 		if (!media) return
@@ -51,9 +49,9 @@ export default function MediaManager({ displayTitle = true }: { displayTitle?: b
 				.then(() => {
 					toast.success('Media eliminato con successo')
 					fetchMedia()
-					dispatch(setSelected(null))
+					dispatch(setSelectedMedia(null))
 					setSearch('')
-					setError(undefined)
+					setError('')
 				})
 				.catch(error => {
 					toast.error(error.message)
@@ -70,14 +68,14 @@ export default function MediaManager({ displayTitle = true }: { displayTitle?: b
 			return
 		}
 		setLoading(true)
-		setError(undefined)
+		setError('')
 		const formData = new FormData()
 		formData.append('thumbnail', e.currentTarget.files[0])
 		API.post<Media>('media/upload', formData, null)
 			.then(response => {
 				toast.success('Media caricato con successo')
 				setMedia({ ...media, content: [response, ...media.content] })
-				dispatch(setSelected(response))
+				dispatch(setSelectedMedia(response))
 				setSearch('')
 			})
 			.catch(error => {
@@ -106,7 +104,7 @@ export default function MediaManager({ displayTitle = true }: { displayTitle?: b
 					return media
 				})
 				setMedia({ ...media, content: newMedia })
-				setError(undefined)
+				setError('')
 			})
 			.catch((error: Error) => {
 				toast.error(error.message)
@@ -116,11 +114,24 @@ export default function MediaManager({ displayTitle = true }: { displayTitle?: b
 
 	useEffect(() => {
 		fetchMedia()
-	}, [])
+	}, [fetchMedia])
+
 	return (
 		<>
 			<div>
-				{displayTitle && <h1>Media manager</h1>}
+				<div className='flex gap-4 mb-4'>
+					{displayTitle && <h1>Media manager</h1>}
+					<Button
+						theme={customButtonTheme}
+						outline
+						onClick={() => fetchMedia()}
+						className={!displayTitle ? 'flex-1' : ''}
+					>
+						<span className='flex justify-center items-center gap-2'>
+							{!displayTitle && <span>Aggiorna</span>} <FaRotate title='Aggiorna' />
+						</span>
+					</Button>
+				</div>
 				<Button as='label' theme={customButtonTheme} outline htmlFor='file'>
 					Carica media
 				</Button>
@@ -130,7 +141,7 @@ export default function MediaManager({ displayTitle = true }: { displayTitle?: b
 					id='file'
 					className='hidden'
 					onInput={e => handleUpload(e)}
-					accept='image/*'
+					accept='image/*, video/mp4'
 					multiple={false}
 					ref={fileRef}
 				/>
@@ -145,22 +156,17 @@ export default function MediaManager({ displayTitle = true }: { displayTitle?: b
 			</div>
 			<div className='w-full grid md:grid-cols-[1fr_auto] grid-cols-1 gap-4'>
 				<div className='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4'>
-					<Suspense fallback={<div>Caricamento...</div>}>
-						{media.content &&
-							media.content.map(m => (
-								<div
-									key={m.id}
-									className={`flex border-4 hover:border-neutral-500 bg-neutral-200 dark:bg-neutral-300 w-[200px] aspect-square max-w-full h-auto items-center justify-center group-[radio]-checked:border-primary p-2
-											${selected && m.id === selected.id && ' border-primary hover:border-primary_darker'}`}
-									onClick={() => handleSelect(m)}
-								>
-									<Image width={200} height={200} alt={m.alt || ''} src={m.url} />
-								</div>
-							))}
-						{media && media.content && media.content.length === 0 && (
-							<div>Nessun media trovato</div>
-						)}
-					</Suspense>
+					{loading && (
+						<div className='w-full h-full flex items-center justify-center'>Caricamento...</div>
+					)}
+					{error !== '' && (
+						<div className='w-full h-full flex items-center justify-center'>
+							C&apos;è stato un errore durante il caricamento dei media:
+							<br />
+							{error}
+						</div>
+					)}
+					{!loading && error === '' && <MediaElements media={media} />}
 				</div>
 
 				<div className='md:min-w-52 md:max-w-52 md:border-l-2 border-neutral-200 dark:border-neutral-700 pl-4'>
@@ -173,7 +179,7 @@ export default function MediaManager({ displayTitle = true }: { displayTitle?: b
 								id='alt'
 								value={selected?.alt || ''}
 								onChange={e => {
-									dispatch(setSelectedAlt(e.target.value))
+									dispatch(setSelectedMediaAlt(e.target.value))
 								}}
 								className={adminStyles.input + ' mb-2'}
 								onBlur={() => handleUpdate(selected)}
@@ -187,10 +193,33 @@ export default function MediaManager({ displayTitle = true }: { displayTitle?: b
 								className={adminStyles.input + ' mb-2'}
 								onFocus={e => e.target.select()}
 							/>
-							<p>
-								Dimensioni (LxA): {selected?.width}x{selected?.height}{' '}
-							</p>
-							<p>Colore principale: {selected?.mainColor}</p>
+							{selected.type === 'IMAGE' && (
+								<>
+									<p>
+										Dimensioni (LxA): {(selected as MediaImage)?.width}x
+										{(selected as MediaImage)?.height}{' '}
+									</p>
+									<p>Colore principale: {(selected as MediaImage)?.avgColor}</p>
+								</>
+							)}
+							{selected.type === 'VIDEO' && (
+								<>
+									<p>Durata: {formatTime((selected as MediaVideo)?.duration)}</p>
+									<p>
+										Risoluzioni:{' '}
+										{selected &&
+										'resolutions' in selected &&
+										selected.resolutions &&
+										selected.resolutions.length
+											? selected.resolutions.flatMap((resolution, index) => {
+													return index < selected.resolutions.length - 1
+														? resolution.name + ', '
+														: resolution.name
+											  })
+											: 'N/A'}
+									</p>
+								</>
+							)}
 							<Button onClick={() => handleDelete(selected)} color='failure'>
 								<HiOutlineTrash className='mr-2 h-4 w-4' />
 								Delete

@@ -29,7 +29,7 @@ export default function CourseBlock({
 	description,
 	slug,
 	displayOrder,
-	thumbnail,
+	thumbnail: thumbnailImage,
 	role,
 	publishStatus,
 	id,
@@ -45,16 +45,16 @@ export default function CourseBlock({
 					publishStatus === PublishStatus.DRAFT ? 'opacity-50' : 'opacity-100'
 				}`}
 			>
-				{thumbnail === null ? (
+				{!thumbnailImage ? (
 					<div className='w-[100px] h-[100px] bg-primary flex justify-center items-center text-2xl font-bold'>
 						<span>{displayOrder}</span>
 					</div>
 				) : (
 					<Image
-						src={thumbnail.url}
-						alt={thumbnail.alt}
-						width={thumbnail.width}
-						height={thumbnail.height}
+						src={thumbnailImage.url}
+						alt={thumbnailImage.alt}
+						width={thumbnailImage.width}
+						height={thumbnailImage.height}
 						className='max-w-[90px] h-auto w-full object-contain'
 					/>
 				)}

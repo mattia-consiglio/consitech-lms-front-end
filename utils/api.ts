@@ -1,7 +1,8 @@
 import { getCookie } from '@/app/actions'
 import { ResponseError } from './types'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL
+const API_URL = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, '')
+const OriginUrl = process.env.NEXT_PUBLIC_API_ORIGIN
 export class API {
 	static baseURL: string = API_URL + '/api/v1'
 
@@ -16,6 +17,12 @@ export class API {
 		const headers: { [key: string]: string } = {}
 		const jwt = await getCookie('token')
 
+		//get origin url
+		const origin =
+			typeof window !== 'undefined' && window.location.origin
+				? window.location.origin
+				: OriginUrl || ''
+
 		if (contentType === undefined) {
 			contentType = 'application/json'
 		}
@@ -26,6 +33,8 @@ export class API {
 		if (jwt) {
 			headers['Authorization'] = `Bearer ${jwt.value}`
 		}
+
+		headers['Origin'] = origin
 
 		const options = {
 			method,

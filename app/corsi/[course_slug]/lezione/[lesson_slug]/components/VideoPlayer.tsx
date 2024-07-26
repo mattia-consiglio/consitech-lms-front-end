@@ -1,79 +1,244 @@
 'use client'
-import React, { useState } from 'react'
-import YouTube, { YouTubeEvent, YouTubePlayer, YouTubeProps } from 'react-youtube'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import VideoControls from './VideoControls'
 import '../videoPlayer.scss'
 import { useAppDispatch, useAppSelector } from '@/redux/store'
-import { setCurrentTime, setPlayerState } from '@/redux/reducers/playerReducer'
+import {
+	setCurrentTime,
+	setIsBuffering,
+	setPlayerIsInFocus,
+	setPlayerState,
+	setVideoSpeed,
+} from '@/redux/reducers/playerReducer'
+import { MediaVideo } from '@/utils/types'
 
 interface VideoPlayerProps {
-	videoId: string
+	video: MediaVideo
 }
 
-export default function VideoPlayer({ videoId }: VideoPlayerProps) {
-	const [player, setPlayer] = useState<YouTubePlayer | null>(null)
-	const [duration, setDuration] = useState(0)
-	const { currentTime, playerState } = useAppSelector(state => state.player)
-	const [intervalID, setIntervalID] = useState<NodeJS.Timeout>()
-	// const [playerState, setPlayerState] = useState(-1)
-	const dispatch = useAppDispatch()
+function generateVideoResolutionSources(video: MediaVideo) {
+	if (!video.resolutions) return
+	const videoUrlBase = video.url.replace(/\.mp4$/, '')
+	return video.resolutions.map(resolution => {
+		return videoUrlBase + '_' + resolution.name + '.mp4'
+	})
+}
 
-	const onPlayerReady: YouTubeProps['onReady'] = event => {
-		// access to player in all event handlers via event.target
-		setPlayer(event.target)
-		setDuration(event.target.getDuration())
-		dispatch(setCurrentTime(event.target.getCurrentTime()))
-	}
+export enum PlayerState {
+	UNSTARTED = -1,
+	ENDED = 0,
+	PLAYING = 1,
+	PAUSED = 2,
+}
+
+export interface BufferStyle {
+	left: string
+	width: string
+}
+
+export default function VideoPlayer({ video }: VideoPlayerProps) {
+	const sources = useMemo(() => generateVideoResolutionSources(video), [video])
+	const qualities = useMemo(() => video.resolutions?.map(resolution => resolution.name), [video])
+	const [videoSource, setVideoSource] = useState(sources?.[0] || video.url)
+	const [currentQuality, setCurrentQuality] = useState(qualities?.[0] || '')
+	const player = useRef<HTMLVideoElement>(null)
+	const intervalID = useRef<NodeJS.Timeout>()
+	const playerWrapper = useRef<HTMLDivElement>(null)
+	const { currentTime, playerState, isBuffering } = useAppSelector(state => state.player)
+	const dispatch = useAppDispatch()
+	const isPlayedOnce = useRef(false)
+	const qualityChanged = useRef(false)
+	const [buffer, setBuffer] = useState<BufferStyle[]>([])
+	const [isFullscreen, setIsFullscreen] = useState(false)
+	const fullscreenTimeout = useRef<NodeJS.Timeout | null>(null)
+	const [hideControls, setHideControls] = useState(false)
+	const lastMousePosition = useRef({ x: 0, y: 0 })
+	const shouldKeepControlsVisible = useRef(false)
 
 	const seekTo = (seconds: number) => {
-		if (player) {
-			player.seekTo(seconds)
+		if (player.current) {
+			player.current.currentTime = seconds
 			dispatch(setCurrentTime(seconds))
 		}
 	}
 
-	const onStateChange = (state: YouTubeEvent<number>) => {
-		dispatch(setPlayerState(state.data))
-		if (state.data === 0) {
+	const onStateChange = (state: PlayerState) => {
+		dispatch(setPlayerState(state))
+		if (state === PlayerState.ENDED) {
 			setCurrentTime(0)
-		} else if (state.data === 1) {
-			setIntervalID(
-				setInterval(() => {
-					dispatch(setCurrentTime(player.getCurrentTime() || 0))
-					dispatch(setPlayerState(state.data))
-				}, 100)
-			)
+		} else if (state === PlayerState.PLAYING) {
+			dispatch(setPlayerState(state))
+			intervalID.current = setInterval(() => {
+				dispatch(setCurrentTime(player.current?.currentTime || 0))
+			}, 150)
+
+			if (!isPlayedOnce.current) {
+				isPlayedOnce.current = true
+			}
 		} else {
-			clearInterval(intervalID)
+			clearInterval(intervalID.current)
 		}
 	}
 
-	const opts: YouTubeProps['opts'] = {
-		width: '100%',
-		playerVars: {
-			// https://developers.google.com/youtube/player_parameters
-			autoplay: 0,
-			controls: 0,
-			enablejsapi: true,
-			rel: 0,
-			disablekb: 0,
-		},
+	const changeQuality = (quality: string) => {
+		const qualityIndex = qualities?.indexOf(quality)
+
+		if (qualityIndex !== undefined && qualityIndex >= 0 && sources) {
+			setCurrentQuality(quality)
+			setVideoSource(sources[qualityIndex])
+			player.current?.load()
+			seekTo(currentTime)
+			qualityChanged.current = true
+		}
 	}
+
+	const changeSpeed = (speed: number) => {
+		if (player.current) {
+			player.current.playbackRate = speed
+			dispatch(setVideoSpeed(speed))
+		}
+	}
+
+	const addVideoFocus = useCallback(() => {
+		dispatch(setPlayerIsInFocus(true))
+	}, [dispatch])
+
+	useEffect(() => {
+		addVideoFocus()
+	}, [addVideoFocus])
+
+	const openFullscreen = useCallback(() => {
+		playerWrapper.current?.requestFullscreen()
+		setIsFullscreen(true)
+		setHideControls(true)
+	}, [playerWrapper])
+
+	const closeFullscreen = useCallback((manually = false) => {
+		if (document.fullscreenElement?.id !== 'videoPlayerWrapper' || manually) {
+			if (manually) {
+				document.exitFullscreen()
+			}
+			setIsFullscreen(false)
+		}
+	}, [])
+
+	const toggleFullscreen = useCallback(() => {
+		if (document.fullscreenElement?.id === 'videoPlayerWrapper') {
+			closeFullscreen(true)
+		} else {
+			openFullscreen()
+		}
+	}, [closeFullscreen, openFullscreen])
+
+	const getBuffer = useCallback(
+		(setBuffing = false) => {
+			if (player.current) {
+				if (player.current.buffered.length && setBuffing) dispatch(setIsBuffering(true))
+				const buffer: BufferStyle[] = []
+				for (let i = 0; i < player.current.buffered.length; i++) {
+					const start = player.current.buffered.start(i)
+					const end = player.current.buffered.end(i)
+					if (start === 0 && end === player.current.duration) return
+					if (start === end) continue
+					buffer.push({
+						left: `${(start / player.current.duration) * 100}%`,
+						width: `${((end - start) / player.current.duration) * 100}%`,
+					})
+				}
+				setBuffer(buffer)
+			}
+		},
+		[dispatch]
+	)
+
+	const handleHideControls = useCallback((e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+		const { clientX, clientY } = e
+		const { x, y } = lastMousePosition.current
+		const distance = Math.sqrt(Math.pow(clientX - x, 2) + Math.pow(clientY - y, 2))
+
+		fullscreenTimeout.current && clearTimeout(fullscreenTimeout.current)
+		if (distance > 20) {
+			setHideControls(false)
+			lastMousePosition.current = { x: clientX, y: clientY }
+		}
+
+		fullscreenTimeout.current = setTimeout(() => {
+			!shouldKeepControlsVisible.current && setHideControls(true)
+			lastMousePosition.current = { x: clientX, y: clientY }
+		}, 1000)
+	}, [])
 
 	return (
 		<div className='flex flex-col gap-3'>
-			<div className='flex flex-col gap-3 video-player-wrapper'>
-				<YouTube
-					videoId={videoId}
-					opts={opts}
-					onReady={onPlayerReady}
-					onStateChange={onStateChange}
-				/>
+			<div
+				className={'flex flex-col gap-3 video-player-wrapper' + (hideControls ? ' hide' : '')}
+				ref={playerWrapper}
+				id='videoPlayerWrapper'
+				role='region'
+				aria-label='Video player'
+				onFocus={() => {
+					addVideoFocus()
+				}}
+				onMouseMove={e => handleHideControls(e)}
+			>
+				<video
+					ref={player}
+					id='player'
+					onCanPlay={() => {
+						dispatch(setIsBuffering(false))
+						if (playerState === PlayerState.PLAYING && qualityChanged.current) {
+							player.current?.play()
+							qualityChanged.current = false
+						}
+					}}
+					onPlay={() => {
+						playerState !== PlayerState.PLAYING && onStateChange(PlayerState.PLAYING)
+						getBuffer()
+					}}
+					onPause={() => {
+						onStateChange(PlayerState.PAUSED)
+						getBuffer()
+					}}
+					onSeeked={() => {
+						getBuffer()
+					}}
+					onWaiting={() => {
+						getBuffer(true)
+					}}
+					onEnded={() => {
+						onStateChange(PlayerState.ENDED)
+					}}
+					onLoadedData={() => {
+						getBuffer()
+					}}
+					onLoadedMetadata={() => {
+						getBuffer()
+					}}
+					onLoadStart={() => {
+						getBuffer()
+					}}
+					onProgress={() => {
+						getBuffer()
+					}}
+					onPlaying={() => {
+						getBuffer()
+					}}
+					src={videoSource}
+				></video>
+
 				<VideoControls
-					duration={duration}
-					currentTime={currentTime}
-					player={player}
-					playerState={playerState}
+					duration={video.duration}
+					player={player.current}
+					seekTo={seekTo}
+					qualities={qualities}
+					currentQuality={currentQuality}
+					changeQuality={changeQuality}
+					changeSpeed={changeSpeed}
+					buffer={buffer}
+					isFullscreen={isFullscreen}
+					toggleFullscreen={toggleFullscreen}
+					closeFullscreen={closeFullscreen}
+					shouldKeepControlsVisible={shouldKeepControlsVisible}
 				/>
 			</div>
 		</div>

@@ -1,179 +1,629 @@
-import { setCurrentTime } from '@/redux/reducers/playerReducer'
-import { useAppDispatch } from '@/redux/store'
-import React, { useEffect, useRef, useState } from 'react'
+import { useAppSelector } from '@/redux/store'
+import React, { MutableRefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
 	IoChevronBackSharp,
 	IoChevronForwardSharp,
 	IoPauseSharp,
 	IoPlaySharp,
+	IoSettingsSharp,
 } from 'react-icons/io5'
-import { YouTubePlayer } from 'react-youtube'
+import { MdFullscreen, MdOutlineCheck, MdOutlineFullscreenExit } from 'react-icons/md'
+import { BufferStyle, PlayerState } from './VideoPlayer'
 
 interface VideoProgressBarProps {
 	duration: number
-	currentTime: number
-	player: YouTubePlayer
-	playerState: number
+	player: HTMLVideoElement | null
+	seekTo: (time: number) => void
+	qualities: string[] | null
+	currentQuality: string
+	changeQuality: (quality: string) => void
+	changeSpeed: (speed: number) => void
+	buffer: BufferStyle[]
+	isFullscreen: boolean
+	toggleFullscreen: () => void
+	closeFullscreen: () => void
+	shouldKeepControlsVisible: MutableRefObject<boolean>
+}
+
+function PlayIcon() {
+	return (
+		<svg
+			stroke='currentColor'
+			fill='currentColor'
+			strokeWidth='0'
+			xmlns='http://www.w3.org/2000/svg'
+			height='1em'
+			width='1em'
+			viewBox='0 0 79 79'
+		>
+			<polygon points='73.71 39.5 5.29 0 5.29 79 73.71 39.5' />
+		</svg>
+	)
+}
+
+function PauseIcon() {
+	return (
+		<svg
+			stroke='currentColor'
+			fill='currentColor'
+			strokeWidth='0'
+			height='1em'
+			width='1em'
+			viewBox='0 0 79 79'
+			xmlns='http://www.w3.org/2000/svg'
+		>
+			<g>
+				<rect x='5' width='24' height='79' />
+				<rect x='50.5' width='24' height='79' />
+			</g>
+		</svg>
+	)
+}
+
+function formatTime(time: number) {
+	const minutes = Math.floor(time / 60)
+	let seconds = Math.floor(time % 60)
+	const secondsText = seconds < 10 ? `0${seconds}` : seconds
+	return `${minutes}:${secondsText}`
+}
+
+function formatPercTime(perc: number, duration: number) {
+	const time = (perc / 100) * duration
+	return formatTime(time)
 }
 
 export default function VideoControls({
 	duration,
-	currentTime,
 	player,
-	playerState,
-}: VideoProgressBarProps) {
-	const formatTime = (time: number) => {
-		const minutes = Math.floor(time / 60)
-		let seconds = Math.floor(time % 60)
-		const secondsText = seconds < 10 ? `0${seconds}` : seconds
-		return `${minutes}:${secondsText}`
-	}
-
-	const formatPercTime = (perc: number) => {
-		const time = (perc / 100) * duration
-		return formatTime(time)
-	}
-	const [currentTimeText, setCurrentTimeText] = useState(formatPercTime(currentTime))
+	seekTo,
+	qualities,
+	currentQuality,
+	changeQuality,
+	changeSpeed,
+	buffer,
+	isFullscreen,
+	toggleFullscreen,
+	closeFullscreen,
+	shouldKeepControlsVisible,
+}: Readonly<VideoProgressBarProps>) {
+	const { currentTime, playerState, isInFocus, currentSpeed, isBuffering } = useAppSelector(
+		state => state.player
+	)
+	const playerControls = useRef<HTMLDivElement>(null)
+	const [currentTimeText, setCurrentTimeText] = useState(formatPercTime(currentTime, duration))
+	const durationText = useMemo(() => formatTime(duration), [duration])
 	const [isHovering, setIsHovering] = useState(false)
 	const progressBar = useRef<HTMLDivElement>(null)
 	const HoverPercentage = useRef(0)
 	const isDragging = useRef(false)
-	const dispatch = useAppDispatch()
+	const isDragged = useRef(false)
+	const [isOptionsOpen, setIsOptionsOpen] = useState(false)
+	const isOptionsOpenRef = useRef(isOptionsOpen)
+	const availableSpeeds: number[] = [0.25, 0.5, 1, 1.25, 1.5, 2]
 
-	const getCursorPosition = (e: MouseEvent) => {
+	const [currentOptionMenu, setCurrentOptionMenu] = useState<'speed' | 'quality' | 'main'>('main')
+	const iconCircle = useRef<HTMLDivElement>(null)
+	const isAnimating = useRef(false)
+	const isProgressBarHovering = useRef(false)
+
+	function getCursorPosition(e: MouseEvent) {
 		if (!progressBar.current) return 0
 		const rect = progressBar.current.getBoundingClientRect()
 		const offsetX = e.clientX - rect.left
 		const percentage = Math.min(Math.max(0, (offsetX / rect.width) * 100), 100)
 		return percentage
 	}
+	const seek = useCallback(
+		(seconds?: number) => {
+			seconds = seconds ?? (HoverPercentage.current / 100) * duration
+			if (player) {
+				seekTo(seconds)
+			}
+		},
+		[duration, player, seekTo]
+	)
+	const keepControlsVisible = useCallback(
+		(force?: boolean) => {
+			if (
+				isProgressBarHovering.current ||
+				isDragging.current ||
+				isOptionsOpenRef.current ||
+				force
+			) {
+				shouldKeepControlsVisible.current = true
+			} else {
+				shouldKeepControlsVisible.current = false
+			}
+		},
+		[shouldKeepControlsVisible]
+	)
 
-	// update percentage on mouse hover
-
-	const handleMouseMove = (e: MouseEvent) => {
-		const percentage = getCursorPosition(e)
-		HoverPercentage.current = percentage
-		setCurrentTimeText(formatPercTime(percentage))
-		// isHoveringRef.current = true
-		setIsHovering(true)
-		if (isDragging.current) {
-			seek()
+	const closeOpenedOptions = () => {
+		if (isOptionsOpenRef.current) {
+			setIsOptionsOpen(false)
+			isOptionsOpenRef.current = false
+			setCurrentOptionMenu('main')
 		}
 	}
 
-	const handleMouseLeave = () => {
+	// update percentage on mouse hover
+	const handleMouseMove = useCallback(
+		(e: MouseEvent) => {
+			const percentage = getCursorPosition(e)
+			HoverPercentage.current = percentage
+			setCurrentTimeText(formatPercTime(percentage, duration))
+			setIsHovering(true)
+			if (isDragging.current) {
+				seek()
+			}
+		},
+		[duration, seek]
+	)
+
+	function handleMouseLeave(e: React.MouseEvent<HTMLDivElement>) {
+		e.stopPropagation()
+		isProgressBarHovering.current = false
 		if (!isDragging.current) {
 			setIsHovering(false)
 		}
+		keepControlsVisible()
 	}
 
-	const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+	function handleMouseDown(e: React.MouseEvent<HTMLDivElement>) {
+		e.stopPropagation()
 		isDragging.current = true
-		const nativeEvent = e.nativeEvent as MouseEvent
+		isDragged.current = true
+		const nativeEvent = e.nativeEvent
 		handleMouseMove(nativeEvent)
+		closeOpenedOptions()
 		window.addEventListener('mousemove', handleMouseMove)
 		window.addEventListener('mouseup', handleMouseUp)
 	}
 
-	const handleMouseUp = () => {
+	const handleMouseUp = useCallback(() => {
 		setIsHovering(false)
 		isDragging.current = false
 		window.removeEventListener('mousemove', handleMouseMove)
 		window.removeEventListener('mouseup', handleMouseUp)
 		seek()
-	}
+	}, [handleMouseMove, seek])
 
-	const seek = (seconds?: number) => {
-		seconds = seconds !== undefined ? seconds : (HoverPercentage.current / 100) * duration
-		if (player) {
-			player.seekTo(seconds)
-			dispatch(setCurrentTime(seconds))
+	const handleMoseOver = useCallback(() => {
+		isProgressBarHovering.current = true
+		keepControlsVisible()
+	}, [keepControlsVisible])
+
+	function toggleAnimation() {
+		if (!iconCircle.current) return
+
+		if (isAnimating.current) {
+			iconCircle.current.classList.remove('animate')
+			iconCircle.current.style.animation = 'none'
+			isAnimating.current = false
+
+			setTimeout(() => {
+				if (!iconCircle.current) return
+				iconCircle.current.style.animation = ''
+				iconCircle.current.classList.add('animate')
+				isAnimating.current = true
+			}, 50)
+		} else {
+			iconCircle.current.style.animation = ''
+			iconCircle.current.classList.add('animate')
+			isAnimating.current = true
 		}
 	}
 
-	const playPause = () => {
-		if (player) {
-			if (player.getPlayerState() === 1) {
-				player.pauseVideo()
-				dispatch(setCurrentTime(player.getCurrentTime()))
-				seek(player.getCurrentTime())
-			} else {
-				dispatch(setCurrentTime(player.getCurrentTime()))
-				seek(player.getCurrentTime())
-				player.playVideo()
-			}
+	const playPause = useCallback(() => {
+		if (playerState === PlayerState.PLAYING) {
+			player?.pause()
+		} else {
+			player?.play()
 		}
+		toggleAnimation()
+	}, [player, playerState])
+
+	function seekBackward() {
+		player && seek(Math.max(player.currentTime - 5, 0))
+	}
+	function seekForward() {
+		player && seek(Math.min(player.currentTime + 5, duration))
+	}
+
+	function handleKeydown(e: KeyboardEvent) {
+		if (!playerControls.current) return
+		if (!isInFocus) return
+		switch (e.key) {
+			case 'ArrowRight':
+			case 'j':
+			case 'J':
+				e.preventDefault()
+				seekForward()
+				break
+			case 'ArrowLeft':
+			case 'l':
+			case 'L':
+				e.preventDefault()
+				seekBackward()
+				break
+			case ' ':
+			case 'Space':
+			case 'k':
+			case 'K':
+				e.preventDefault()
+				playPause()
+				break
+			case 'f':
+			case 'F':
+				e.preventDefault()
+				toggleFullscreen()
+				break
+			case 'o':
+				e.preventDefault()
+				setIsOptionsOpen(true)
+				isOptionsOpenRef.current = true
+				break
+		}
+	}
+
+	function handleExitFullScreen() {
+		closeFullscreen()
+	}
+
+	useEffect(() => {
+		document.addEventListener('keydown', handleKeydown)
+		document.addEventListener('fullscreenchange', handleExitFullScreen)
+
+		return () => {
+			document.removeEventListener('keydown', handleKeydown)
+			document.removeEventListener('fullscreenchange', handleExitFullScreen)
+		}
+	})
+
+	const goBackOption = useMemo(
+		() => (
+			<li
+				onClick={e => {
+					e.stopPropagation()
+					setCurrentOptionMenu('main')
+				}}
+				className='flex items-center gap-2 cursor-pointer'
+				role='menuitem'
+				aria-roledescription='menuitem'
+				tabIndex={0}
+				onKeyDown={e => {
+					if (e.key === 'Enter' || e.key === ' ') {
+						e.preventDefault()
+						setCurrentOptionMenu('main')
+					}
+				}}
+			>
+				<IoChevronBackSharp /> Indietro
+			</li>
+		),
+		[]
+	)
+
+	const setVideoQuality = (e: React.MouseEvent<HTMLLIElement, MouseEvent>, quality: string) => {
+		e.stopPropagation()
+		changeQuality(quality)
+		setIsOptionsOpen(false)
+		isOptionsOpenRef.current = false
+		setCurrentOptionMenu('main')
+	}
+
+	const setVideoSpeed = (e: React.MouseEvent<HTMLLIElement, MouseEvent>, speed: number) => {
+		e.stopPropagation()
+		changeSpeed(speed)
+		setIsOptionsOpen(false)
+		isOptionsOpenRef.current = false
+		setCurrentOptionMenu('main')
 	}
 
 	return (
-		<div
-			className='player-controls'
-			style={{
-				height: isDragging.current ? '100%' : '',
-				opacity: isDragging.current ? 1 : '',
-				cursor: 'default',
-			}}
-			onClick={e => {
-				playPause()
-			}}
-		>
+		<>
+			<div className='center-wrapper'>
+				<div className='icon-circle-wrapper'>
+					<div
+						className='icon-circle'
+						ref={iconCircle}
+						onAnimationEnd={() => {
+							iconCircle.current?.classList.remove('animate')
+							isAnimating.current = false
+						}}
+					>
+						{playerState === PlayerState.PLAYING ? <PlayIcon /> : <PauseIcon />}
+					</div>
+				</div>
+				{isBuffering && <div className='loader' />}
+			</div>
 			<div
-				className='progress-bar-wrapper'
-				onMouseMove={e => handleMouseMove(e.nativeEvent)}
-				onMouseLeave={handleMouseLeave}
-				onMouseDown={handleMouseDown}
-				ref={progressBar}
-				style={{ opacity: isDragging.current ? 1 : '' }}
+				ref={playerControls}
+				className='player-controls'
+				style={{
+					height: isDragging.current ? '100%' : '',
+					opacity: isDragging.current ? 1 : '',
+					cursor: 'default',
+				}}
+				onClick={() => {
+					if (!isDragged.current && !isOptionsOpenRef.current) {
+						playPause()
+					}
+					closeOpenedOptions()
+					isDragged.current = false
+				}}
+				onDoubleClick={e => {
+					e.stopPropagation()
+					toggleFullscreen()
+				}}
 			>
 				<div
-					className={`circle${isHovering || isDragging.current ? ' active' : ''}`}
-					style={{ left: `${(currentTime / duration) * 100}%` }}
-				></div>
-				<div className='progress' style={{ width: `${(currentTime / duration) * 100}%` }} />
-				<div
-					className='time-hover-text'
-					style={{
-						left: `${HoverPercentage.current}%`,
-						visibility: isHovering ? 'visible' : 'hidden',
-					}}
+					className='progress-bar-wrapper'
+					onMouseMove={e => handleMouseMove(e.nativeEvent)}
+					onMouseLeave={handleMouseLeave}
+					onMouseDown={handleMouseDown}
+					onMouseOver={handleMoseOver}
+					ref={progressBar}
+					style={{ opacity: isDragging.current ? 1 : '' }}
+					aria-roledescription='progressbar'
+					role='slider'
+					tabIndex={0}
+					aria-valuemin={0}
+					aria-valuemax={duration}
+					aria-valuenow={currentTime}
+					aria-valuetext={currentTimeText}
+					aria-label={`${currentTimeText}/${durationText}`}
 				>
-					{currentTimeText}
+					<div className='buffer-wrapper'>
+						{buffer.map(({ left, width }) => (
+							<div
+								key={left}
+								className='buffer-slice'
+								style={{
+									left: `${left}`,
+									width: `${width}`,
+								}}
+							/>
+						))}
+					</div>
+					<div
+						className={`circle${isHovering || isDragging.current ? ' active' : ''}`}
+						style={{ left: `${(currentTime / duration) * 100}%` }}
+					></div>
+					<div className='progress' style={{ width: `${(currentTime / duration) * 100}%` }} />
+					<div
+						className='h-full bg-white/30'
+						style={{
+							width: `${HoverPercentage.current}%`,
+							visibility: isHovering ? 'visible' : 'hidden',
+						}}
+					></div>
+
+					<div
+						className='time-hover-text'
+						style={{
+							left: `${HoverPercentage.current}%`,
+							visibility: isHovering ? 'visible' : 'hidden',
+						}}
+					>
+						{currentTimeText}
+					</div>
 				</div>
-			</div>
-			<div className='controls text-white'>
-				<div className='left'>
-					<button
-						onClick={e => {
-							e.stopPropagation()
-							seek(player.getCurrentTime() - 5)
-						}}
-						className='text-xl'
-					>
-						<IoChevronBackSharp /> 5s
-					</button>
-					<button
-						onClick={e => {
-							e.stopPropagation()
-							playPause()
-						}}
-						className='text-3xl'
-					>
-						{playerState === 1 ? <IoPauseSharp /> : <IoPlaySharp />}
-					</button>
-					<button
-						onClick={e => {
-							e.stopPropagation()
-							seek(player.getCurrentTime() + 5)
-						}}
-						className='text-xl'
-					>
-						5s <IoChevronForwardSharp />
-					</button>
-					<div>
-						{formatTime(currentTime)} / {formatTime(duration)}
+				<div className='controls text-white'>
+					<div className='left'>
+						<button
+							onClick={e => {
+								e.stopPropagation()
+								seekBackward()
+								closeOpenedOptions()
+							}}
+							className='text-xl'
+							onDoubleClick={e => {
+								e.stopPropagation()
+							}}
+							onMouseOver={() => {
+								keepControlsVisible(true)
+							}}
+							onMouseLeave={() => {
+								keepControlsVisible(false)
+							}}
+						>
+							<IoChevronBackSharp /> 5s
+						</button>
+						<button
+							onClick={e => {
+								e.stopPropagation()
+								playPause()
+								closeOpenedOptions()
+							}}
+							className='text-3xl'
+							onDoubleClick={e => {
+								e.stopPropagation()
+							}}
+							onMouseOver={() => {
+								keepControlsVisible(true)
+							}}
+							onMouseLeave={() => {
+								keepControlsVisible(false)
+							}}
+						>
+							{playerState === PlayerState.PLAYING ? <IoPauseSharp /> : <IoPlaySharp />}
+						</button>
+						<button
+							onClick={e => {
+								e.stopPropagation()
+								seekForward()
+								closeOpenedOptions()
+							}}
+							className='text-xl'
+							onDoubleClick={e => {
+								e.stopPropagation()
+							}}
+							onMouseOver={() => {
+								keepControlsVisible(true)
+							}}
+							onMouseLeave={() => {
+								keepControlsVisible(false)
+							}}
+						>
+							5s <IoChevronForwardSharp />
+						</button>
+						<div>
+							{formatTime(currentTime)} / {formatTime(duration)}
+						</div>
+					</div>
+					<div className='right'>
+						<button
+							onClick={e => {
+								e.stopPropagation()
+							}}
+						>
+							{/* <IoLogoClosedCaptioning /> */}
+						</button>
+						<div className='flex items-center relative gap-2'>
+							<div
+								className={`options-menu absolute bottom-7 bg-neutral-800 right-0${
+									isOptionsOpen ? ' block' : ' hidden'
+								}`}
+								role='menu'
+							>
+								{currentOptionMenu === 'main' && (
+									<ul
+										tabIndex={0}
+										role='menu'
+										aria-label='Opzioni'
+										aria-orientation='vertical'
+										aria-hidden={isOptionsOpen}
+									>
+										{/* <li>Sottotitoli</li> */}
+										<li
+											onClick={e => {
+												e.stopPropagation()
+												setCurrentOptionMenu('speed')
+											}}
+											role='menuitem'
+											tabIndex={0}
+											onKeyDown={e => {
+												if (e.key === 'Enter' || e.key === ' ') {
+													e.preventDefault()
+													setCurrentOptionMenu('speed')
+												}
+											}}
+										>
+											Velocità riproduzione
+										</li>
+										<li
+											onClick={e => {
+												e.stopPropagation()
+												setCurrentOptionMenu('quality')
+											}}
+											role='menuitem'
+											tabIndex={0}
+											onKeyDown={e => {
+												if (e.key === 'Enter' || e.key === ' ') {
+													e.preventDefault()
+													setCurrentOptionMenu('quality')
+												}
+											}}
+										>
+											Qualità
+										</li>
+									</ul>
+								)}
+								{currentOptionMenu === 'quality' && (
+									<ul>
+										{goBackOption}
+										{qualities?.map(quality => (
+											<li
+												key={quality}
+												className={`flex items-center${
+													currentQuality === quality
+														? ' justify-between text-primary'
+														: ' justify-end'
+												}`}
+												onClick={e => setVideoQuality(e, quality)}
+												role='menuitem'
+												tabIndex={0}
+												onKeyDown={e => {
+													if (e.key === 'Enter' || e.key === ' ') {
+														e.preventDefault()
+														setVideoQuality(e as any, quality)
+													}
+												}}
+											>
+												{currentQuality === quality && <MdOutlineCheck />}
+												{quality}
+											</li>
+										))}
+									</ul>
+								)}
+								{currentOptionMenu === 'speed' && (
+									<ul>
+										{goBackOption}
+										{availableSpeeds.map(speed => (
+											<li
+												key={'videoSpeed_' + speed}
+												className={`flex items-center${
+													currentSpeed === speed ? ' justify-between text-primary' : ' justify-end'
+												}`}
+												onClick={e => setVideoSpeed(e, speed)}
+												role='menuitem'
+												tabIndex={0}
+												onKeyDown={e => {
+													if (e.key === 'Enter' || e.key === ' ') {
+														e.preventDefault()
+														setVideoSpeed(e as any, speed)
+													}
+												}}
+											>
+												{currentSpeed === speed ? <MdOutlineCheck /> : <div />}
+												{speed + 'x'}
+											</li>
+										))}
+									</ul>
+								)}
+							</div>
+							<button
+								className='text-xl'
+								onClick={e => {
+									e.stopPropagation()
+									setIsOptionsOpen(!isOptionsOpen)
+									isOptionsOpenRef.current = !isOptionsOpenRef.current
+									setCurrentOptionMenu('main')
+									keepControlsVisible()
+								}}
+								onDoubleClick={e => {
+									e.stopPropagation()
+								}}
+								onMouseOver={() => {
+									keepControlsVisible(true)
+								}}
+								onMouseLeave={() => {
+									keepControlsVisible(false)
+								}}
+							>
+								<IoSettingsSharp />
+							</button>
+							<button
+								className='text-xl'
+								onClick={e => {
+									e.stopPropagation()
+									toggleFullscreen()
+									closeOpenedOptions()
+								}}
+								onMouseOver={() => {
+									keepControlsVisible(true)
+								}}
+								onMouseLeave={() => {
+									keepControlsVisible(false)
+								}}
+							>
+								{isFullscreen ? <MdOutlineFullscreenExit /> : <MdFullscreen />}
+							</button>
+						</div>
 					</div>
 				</div>
 			</div>
-		</div>
+		</>
 	)
 }

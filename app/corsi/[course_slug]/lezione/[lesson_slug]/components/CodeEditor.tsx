@@ -1,11 +1,11 @@
 'use client'
-import React, { ReactElement, use, useCallback, useEffect, useRef, useState } from 'react'
-import dynamic from 'next/dynamic'
-import { loader, Editor, Monaco } from '@monaco-editor/react'
+import React, { ReactElement, useEffect, useRef, useState } from 'react'
+import { Editor, Monaco } from '@monaco-editor/react'
 import { emmetCSS, emmetHTML, emmetJSX } from 'emmet-monaco-es'
 import { editor } from 'monaco-editor'
 import { SiCss3, SiHtml5, SiJavascript, SiTypescript } from 'react-icons/si'
-import { IconType } from '@react-icons/all-files'
+import { useAppDispatch } from '@/redux/store'
+import { setPlayerIsInFocus } from '@/redux/reducers/playerReducer'
 
 export interface MonacoFile {
 	name: string
@@ -44,6 +44,7 @@ export default function CodeEditor({
 	const monacoRef = useRef(null as unknown as Monaco)
 
 	const file = files ? files[fileName] : null
+	const dispatch = useAppDispatch()
 	// const prevChanges = useRef(changes)
 
 	// const file = fileName ? localFiles[fileName] : null
@@ -71,39 +72,45 @@ export default function CodeEditor({
 		monacoRef.current = monaco
 	}
 
+	function removeVideoFocus() {
+		dispatch(setPlayerIsInFocus(false))
+	}
+
 	return (
-		<div className='min-h-[300px] h-[300px] w-full'>
-			{files && (
-				<div>
-					{Object.entries(files).map(tabFile => (
-						<button
-							key={tabFile[0]}
-							onClick={() => handleTabChange(tabFile[0])}
-							className={`inline-flex gap-1 items-center p-2 border-t-3 mr-[0.15rem] hover:bg-[#2e2e2e] text-neutral-200 text-left ${
-								fileName === tabFile[0]
-									? 'bg-[#1e1e1e] border-t-[#3399cc]'
-									: 'bg-[#34352f] border-t-[#34352f]'
-							} `}
-						>
-							{fileIcons[files[tabFile[0]].language]}
-							{tabFile[1].name}
-						</button>
-					))}
-					{/* <button onClick={() => handleEditorChange('hello')}>Add Change</button> */}
-				</div>
-			)}
-			<Editor
-				height='100%'
-				width='100%'
-				language={file?.language ? file.language : 'auto'}
-				path={currenFile}
-				theme='vs-dark'
-				// value={file?.value}
-				// onChange={(value, event) => {
-				// 	console.log(event.changes[0].range)
-				// }}
-				onMount={handleEditorDidMount}
-			/>
+		<div className='w-full' onClick={removeVideoFocus} onFocus={removeVideoFocus}>
+			<div className='min-h-[300px] h-[300px] w-full'>
+				{files && (
+					<div>
+						{Object.entries(files).map(tabFile => (
+							<button
+								key={tabFile[0]}
+								onClick={() => handleTabChange(tabFile[0])}
+								className={`inline-flex gap-1 items-center p-2 border-t-3 mr-[0.15rem] hover:bg-[#2e2e2e] text-neutral-200 text-left ${
+									fileName === tabFile[0]
+										? 'bg-[#1e1e1e] border-t-[#3399cc]'
+										: 'bg-[#34352f] border-t-[#34352f]'
+								} `}
+							>
+								{fileIcons[files[tabFile[0]].language]}
+								{tabFile[1].name}
+							</button>
+						))}
+						{/* <button onClick={() => handleEditorChange('hello')}>Add Change</button> */}
+					</div>
+				)}
+				<Editor
+					height='100%'
+					width='100%'
+					language={file?.language ? file.language : 'auto'}
+					path={currenFile}
+					theme='vs-dark'
+					// value={file?.value}
+					// onChange={(value, event) => {
+					// 	console.log(event.changes[0].range)
+					// }}
+					onMount={handleEditorDidMount}
+				/>
+			</div>
 		</div>
 	)
 }

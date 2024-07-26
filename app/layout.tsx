@@ -18,12 +18,7 @@ export default async function RootLayout({
 }: Readonly<{
 	children: React.ReactNode
 }>) {
-	const isLoggedIn = async () => {
-		const cookie = await getCookie('token')
-		return cookie ? true : false
-	}
 	const theme = await getCookie('theme')
-	const isLogged = await isLoggedIn()
 	return (
 		<html lang='it' className={theme?.value === 'dark' ? 'dark' : ''}>
 			<head></head>
@@ -33,7 +28,7 @@ export default async function RootLayout({
 				>
 					<StoreProvider>
 						<header className='sticky top-0 z-50'>
-							<Navbar defaultTheme={theme?.value || 'dark'} isLoggedIn={isLogged} />
+							<Navbar defaultTheme={theme?.value ?? 'dark'} />
 						</header>
 						<ToasterWrapper />
 						{children}

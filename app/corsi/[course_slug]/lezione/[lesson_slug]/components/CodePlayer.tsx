@@ -7,6 +7,7 @@ import { text } from 'stream/consumers'
 import adminStyles from '@/app/admin/styles/admin.module.scss'
 import * as Diff from 'diff'
 import { editor } from 'monaco-editor'
+import { PlayerState } from './VideoPlayer'
 
 interface CodePlayerProps {
 	sourceCode: string
@@ -25,13 +26,14 @@ function CodePlayer({ sourceCode }: CodePlayerProps) {
 	const currentPathRef = useRef('')
 	const timeoutArray = useRef([] as NodeJS.Timeout[])
 	const sourceCodeArray = useMemo(() => JSON.parse(sourceCode) as SrtLine[], [sourceCode])
-	const { currentTime, playerState } = useAppSelector(state => state.player)
+	const { currentTime, playerState, currentSpeed } = useAppSelector(state => state.player)
 	const [filteredArray, setFilteredArray] = useState([] as SrtLine[])
 	const files = useRef({} as CodeEditorFilesMap)
 	const changes = useRef({} as MonacoEditorChangeOptions)
 	const editorRef = useRef(null as unknown as editor.IStandaloneCodeEditor)
 	const editorCurrentPath = useRef('')
 	const isEditorChanged = useRef(false)
+	const prevVideoSpeed = useRef(1)
 
 	const getLanguage = (file: string) => {
 		const extension = file.split('.').pop()
@@ -234,7 +236,7 @@ function CodePlayer({ sourceCode }: CodePlayerProps) {
 	}, [currentTime, playerState, sourceCodeArray])
 
 	useEffect(() => {
-		if (playerState !== 1) {
+		if (playerState !== PlayerState.PLAYING || prevVideoSpeed.current !== currentSpeed) {
 			timeoutArray.current.forEach(timeout => clearTimeout(timeout))
 		}
 		const time = currentTime * 1000
@@ -244,17 +246,20 @@ function CodePlayer({ sourceCode }: CodePlayerProps) {
 			if (index === 0) {
 				updateFiles(element.text)
 			}
-			if (playerState === 1) {
+			if (playerState === PlayerState.PLAYING) {
 				timeoutArray.current.push(
 					setTimeout(() => {
 						updateFiles(element.text)
-					}, element.timeStart - time)
+					}, element.timeStart / currentSpeed - time)
 				)
 			}
 		})
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [filteredArray, playerState])
+	}, [filteredArray, playerState, currentSpeed])
 
+	useEffect(() => {
+		prevVideoSpeed.current = currentSpeed
+	}, [currentSpeed])
 	interface Changes2DRange {
 		rangeOffset: number
 		rangeLength: number
