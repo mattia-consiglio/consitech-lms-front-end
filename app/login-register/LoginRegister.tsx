@@ -206,6 +206,7 @@ export default function LoginRegister({
 									setLoginData({ ...loginData, password: password })
 								}}
 								showPlaceholder
+								required
 							/>
 
 							{loginData.error ? (
@@ -262,6 +263,7 @@ export default function LoginRegister({
 								}}
 								showPlaceholder
 								verifyStrength
+								required
 							/>
 							<Button
 								type='submit'

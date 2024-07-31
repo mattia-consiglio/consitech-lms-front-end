@@ -16,6 +16,7 @@ interface Props {
 	password: string
 	setPassword: (password: string) => void
 	showPlaceholder?: boolean
+	required?: boolean
 }
 type PasswordInputProps =
 	| (Props & { id: string; label: string })
@@ -143,6 +144,7 @@ function PasswordInput({
 	showPlaceholder,
 	id,
 	label,
+	required = false,
 }: PasswordInputProps) {
 	const [showPassword, setShowPassword] = useState(false)
 	const [showInfo, setShowInfo] = useState(false)
@@ -162,14 +164,14 @@ function PasswordInput({
 								placeholder={showPlaceholder ? 'Password' : ''}
 								className={'w-full ' + (className ?? '')}
 								value={password}
-								required
+								required={required}
 								onChange={e => setPassword(e.target.value)}
 								id={id}
 								minLength={15}
 								maxLength={50}
 							/>
-							{verifyStrength && (
-								<div className='absolute right-1 top-1/2 -translate-y-1/2'>
+							<div className='absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-1'>
+								{verifyStrength && (
 									<Tooltip content='Requisiti password'>
 										<button
 											type='button'
@@ -179,13 +181,7 @@ function PasswordInput({
 											<HiInformationCircle />
 										</button>
 									</Tooltip>
-								</div>
-							)}
-							<div
-								className={
-									'absolute top-1/2 -translate-y-1/2 ' + (verifyStrength ? 'right-6' : 'right-1')
-								}
-							>
+								)}
 								<Tooltip content={showPassword ? 'Nascondi password' : 'Mostra password'}>
 									<button
 										type='button'
