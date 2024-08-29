@@ -1,62 +1,100 @@
-'use client'
-import React, { use, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import CodeEditor, { CodeEditorFilesMap } from './CodeEditor'
-import { SrtLine } from '@/utils/types'
-import { useAppSelector } from '@/redux/store'
-import { text } from 'stream/consumers'
-import adminStyles from '@/app/admin/styles/admin.module.scss'
-import * as Diff from 'diff'
-import { editor } from 'monaco-editor'
-import { PlayerState } from './VideoPlayer'
+"use client"
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import CodeEditor, { type CodeEditorFilesMap } from "./CodeEditor"
+import type { SrtLine } from "@/utils/types"
+import { useAppSelector } from "@/redux/store"
+import * as Diff from "diff"
+import type { editor } from "monaco-editor"
+import { PlayerState } from "./VideoPlayer"
+import type { Monaco } from "@monaco-editor/react"
 
 interface CodePlayerProps {
 	sourceCode: string
 }
+/**
+ * Represents a line of text from a subtitle file (SRT) along with the file it belongs to.
+ * @property {string} text - The text content of the subtitle line.
+ * @property {string} file - The file that the subtitle line belongs to.
+ */
 interface SrtText {
 	text: string
 	file: string
 }
+
+/**
+ * Represents the options for a change event in a Monaco editor.
+ * @property {editor.IIdentifiedSingleEditOperation["range"]} range - The range of the edit operation.
+ * @property {string} text - The new text to be inserted.
+ * @property {string} targetText - The text that was replaced.
+ */
 interface MonacoEditorChangeOptions {
-	range: editor.IIdentifiedSingleEditOperation['range']
+	range: editor.IIdentifiedSingleEditOperation["range"]
 	text: string
 	targetText: string
 }
 
-function CodePlayer({ sourceCode }: CodePlayerProps) {
-	const currentPathRef = useRef('')
+/**
+ * Represents the changes made to a range of text in a document.
+ * @property {number} rangeOffset - The offset of the changed range from the start of the document.
+ * @property {number} rangeLength - The length of the changed range.
+ * @property {string} rangeText - The new text that was inserted or replaced.
+ * @property {string} originalText - The original text that was replaced.
+ * @property {string} targeText - The text that the range was changed to.
+ */
+interface Changes2DRange {
+	rangeOffset: number
+	rangeLength: number
+	rangeText: string
+	originalText: string
+	targeText: string
+}
+function CodePlayer({ sourceCode }: Readonly<CodePlayerProps>) {
+	const currentFilePathRef = useRef("")
+	const [currentFile, setCurrentFile] = useState("")
 	const timeoutArray = useRef([] as NodeJS.Timeout[])
-	const sourceCodeArray = useMemo(() => JSON.parse(sourceCode) as SrtLine[], [sourceCode])
-	const { currentTime, playerState, currentSpeed } = useAppSelector(state => state.player)
+	const sourceCodeArray = useMemo(
+		() => JSON.parse(sourceCode) as SrtLine[],
+		[sourceCode],
+	)
+	const { currentTime, playerState, currentSpeed } = useAppSelector(
+		(state) => state.player,
+	)
 	const [filteredArray, setFilteredArray] = useState([] as SrtLine[])
 	const files = useRef({} as CodeEditorFilesMap)
 	const changes = useRef({} as MonacoEditorChangeOptions)
 	const editorRef = useRef(null as unknown as editor.IStandaloneCodeEditor)
-	const editorCurrentPath = useRef('')
+	const monacoRef = useRef(null as unknown as Monaco)
 	const isEditorChanged = useRef(false)
 	const prevVideoSpeed = useRef(1)
+	const currentTimeRef = useRef(currentTime)
 
-	const getLanguage = (file: string) => {
-		const extension = file.split('.').pop()
+	/**
+	 * Determines the language mode for a given file based on its file extension.
+	 *
+	 * @param file - The file name, including the file extension.
+	 * @returns The language mode for the file, or 'auto' if the extension is not recognized.
+	 */
+	const getLanguage = useCallback((file: string) => {
+		const extension = file.split(".").pop()
 		switch (extension) {
-			case 'js':
-				return 'javascript'
-			case 'ts':
-				return 'typescript'
-			case 'html':
-				return 'html'
-			case 'css':
-				return 'css'
+			case "js":
+				return "javascript"
+			case "ts":
+				return "typescript"
+			case "html":
+				return "html"
+			case "css":
+				return "css"
 			default:
-				return 'auto'
+				return "auto"
 		}
-	}
+	}, [])
 
 	//simulate file onChange event with monaco editor with only changes not entire file
 	const handleEditorChange = useCallback(
 		({ range, text, targetText }: MonacoEditorChangeOptions) => {
 			// console.log('handleEditorChange', range, text)
-			if (!editorRef.current) return
-			if (!range) return
+			if (!editorRef.current || !monacoRef.current || !range) return
 			const model = editorRef.current.getModel()
 			if (!model) return
 			// console.log(value)
@@ -75,21 +113,43 @@ function CodePlayer({ sourceCode }: CodePlayerProps) {
 			if (editorRef.current.getValue() !== targetText) {
 				editorRef.current.setValue(targetText)
 			}
+			console.log("targetText", targetText)
+			const file = files.current[currentFilePathRef.current]
+			console.log("file", file)
+			if (model && file?.language) {
+				monacoRef.current.editor.setModelLanguage(model, file.language)
+			}
 		},
-		[]
+		[],
 	)
 
+	/**
+	 * Calculates the differences between two strings and returns a 2D range of changes.
+	 *
+	 * This function uses the `diff-match-patch` library to calculate the differences between the `originalText` and `text` strings. It returns an object containing the following properties:
+	 *
+	 * - `rangeOffset`: The starting offset of the changed range.
+	 * - `rangeLength`: The length of the changed range.
+	 * - `rangeText`: The text to be inserted at the changed range.
+	 * - `originalText`: The original text.
+	 * - `targeText`: The target text.
+	 *
+	 * If the `originalText` and `text` are the same, the function returns `null`.
+	 *
+	 * @param {string} text - The target text to compare against the original text.
+	 * @param {string} originalText - The original text to compare against the target text.
+	 * @returns {Changes2DRange | null} - An object containing the details of the changes, or `null` if there are no changes.
+	 */
 	const getTextDifference2DRanges = useCallback(
 		(text: string, originalText: string): Changes2DRange | null => {
 			let rangeOffset = 0 // Start of the range (changed text)
 			let rangeLength = 0 // Length of the range (removed text)
-			let rangeText = '' // Text to insert
+			let rangeText = "" // Text to insert
 			let changes = 0
 			let deletions = 0
 			let additions = 0
 
 			if (originalText === text) return null
-			// const JsDiff = require('diff')
 			// const originalText = prevText.current
 			const diff = Diff.diffChars(originalText, text)
 			// prevText.current = text
@@ -122,16 +182,28 @@ function CodePlayer({ sourceCode }: CodePlayerProps) {
 						rangeLength -= part.value.length
 					}
 				}
-				rangeOffset = changes ? rangeOffset : (rangeOffset += rangeLength)
+				rangeOffset = changes ? rangeOffset : rangeOffset + rangeLength
 			})
 
-			const result = { rangeOffset, rangeLength, rangeText, originalText, targeText: text }
+			const result = {
+				rangeOffset,
+				rangeLength,
+				rangeText,
+				originalText,
+				targeText: text,
+			}
 			// console.log(result)
 			return result
 		},
-		[]
+		[],
 	)
 
+	/**
+	 * Converts a 2D range of changes into Monaco editor change operations.
+	 *
+	 * @param {Changes2DRange} changes - An object containing the details of the changes, including the range offset, range length, range text, original text, and target text.
+	 * @returns {MonacoEditorChangeOptions} - An object containing the Monaco editor change options, including the range and the replacement text.
+	 */
 	const convert2DChangesToMonacoOperations = useCallback(
 		({
 			rangeOffset,
@@ -176,7 +248,7 @@ function CodePlayer({ sourceCode }: CodePlayerProps) {
 				}
 			}
 
-			const monacoRange: editor.IIdentifiedSingleEditOperation['range'] = {
+			const monacoRange: editor.IIdentifiedSingleEditOperation["range"] = {
 				startLineNumber,
 				startColumn,
 				endLineNumber,
@@ -185,50 +257,80 @@ function CodePlayer({ sourceCode }: CodePlayerProps) {
 			// console.log('monacoRange', monacoRange)
 			return { range: monacoRange, text: rangeText, targetText: targeText }
 		},
-		[]
+		[],
 	)
 
+	/**
+	 * Updates the files displayed in the code editor based on the provided source text.
+	 *
+	 * @param sourceText - The source text containing information about the file to be updated.
+	 * @param init - A boolean flag indicating whether this is an initial update or not.
+	 * @returns Void
+	 */
 	const updateFiles = useCallback(
-		(sourceText: string, init: boolean = false) => {
+		(sourceText: string, init = false) => {
 			const { file, text } = JSON.parse(sourceText) as SrtText
 			const language = getLanguage(file)
-			const path = 'codePlayer/' + file
+			const path = `codePlayer/${file}`
 			if (init) {
 				if (files.current[path]) return
-				files.current[path] = { name: file, language, value: '', isChanged: false }
-				if (currentPathRef.current === '') currentPathRef.current = path
+				files.current[path] = {
+					name: file,
+					language,
+					value: "",
+					isChanged: false,
+				}
+				if (currentFilePathRef.current === "") {
+					currentFilePathRef.current = path
+					setCurrentFile(path)
+				}
 				return
 			}
-			// console.log('editorCurrentPath.current', editorCurrentPath.current)
-			if (editorCurrentPath.current !== currentPathRef.current) return
-			const pervFileText = editorRef.current ? editorRef.current.getValue() : ''
-			currentPathRef.current = path
-			files.current[path] = { name: file, language, value: text, isChanged: true }
+			const pervFileText = editorRef.current ? editorRef.current.getValue() : ""
+			currentFilePathRef.current = path
+			setCurrentFile(path)
+			console.log(
+				"currentFilePath.current",
+				currentFilePathRef.current,
+				"path",
+				path,
+			)
+			files.current[path] = {
+				name: file,
+				language,
+				value: text,
+				isChanged: true,
+			}
 			const diff = getTextDifference2DRanges(text, pervFileText)
 			if (!diff) return
 			const monacoOperation = convert2DChangesToMonacoOperations(diff)
 			handleEditorChange(monacoOperation)
 		},
-		[convert2DChangesToMonacoOperations, getTextDifference2DRanges, handleEditorChange]
+		[
+			convert2DChangesToMonacoOperations,
+			getLanguage,
+			getTextDifference2DRanges,
+			handleEditorChange,
+		],
 	)
 
 	useEffect(() => {
-		sourceCodeArray.forEach(element => {
+		for (const element of sourceCodeArray) {
 			updateFiles(element.text, true)
-		})
+		}
 		// console.log('files', files)
 	}, [sourceCodeArray, updateFiles])
 
 	useEffect(() => {
 		if (playerState !== 1) {
 			const time = currentTime * 1000
-			const newFilteredArray = sourceCodeArray.filter(element => {
+			const newFilteredArray = sourceCodeArray.filter((element) => {
 				return element.timeStart >= time
 			})
 			newFilteredArray.unshift(
 				sourceCodeArray.find(
-					element => element.timeStart <= time && element.timeEnd > time
-				) as SrtLine
+					(element) => element.timeStart <= time && element.timeEnd > time,
+				) as SrtLine,
 			)
 
 			setFilteredArray(newFilteredArray)
@@ -236,46 +338,52 @@ function CodePlayer({ sourceCode }: CodePlayerProps) {
 	}, [currentTime, playerState, sourceCodeArray])
 
 	useEffect(() => {
-		if (playerState !== PlayerState.PLAYING || prevVideoSpeed.current !== currentSpeed) {
-			timeoutArray.current.forEach(timeout => clearTimeout(timeout))
+		currentTimeRef.current = currentTime
+	}, [currentTime])
+
+	useEffect(() => {
+		if (
+			playerState !== PlayerState.PLAYING ||
+			prevVideoSpeed.current !== currentSpeed
+		) {
+			for (const timeout of timeoutArray.current) {
+				clearTimeout(timeout)
+			}
 		}
-		const time = currentTime * 1000
+
+		const time = currentTimeRef.current * 1000
 		if (filteredArray.length === 0) return
-		filteredArray.forEach((element, index) => {
-			if (element === undefined) return
+
+		for (const [index, element] of filteredArray.entries()) {
+			if (element === undefined) continue
 			if (index === 0) {
 				updateFiles(element.text)
 			}
 			if (playerState === PlayerState.PLAYING) {
 				timeoutArray.current.push(
-					setTimeout(() => {
-						updateFiles(element.text)
-					}, element.timeStart / currentSpeed - time)
+					setTimeout(
+						() => {
+							updateFiles(element.text)
+						},
+						element.timeStart / currentSpeed - time,
+					),
 				)
 			}
-		})
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [filteredArray, playerState, currentSpeed])
+		}
+	}, [filteredArray, playerState, currentSpeed, updateFiles])
 
 	useEffect(() => {
 		prevVideoSpeed.current = currentSpeed
 	}, [currentSpeed])
-	interface Changes2DRange {
-		rangeOffset: number
-		rangeLength: number
-		rangeText: string
-		originalText: string
-		targeText: string
-	}
 
 	return (
 		<>
 			<CodeEditor
-				key='code-player'
-				currenFile={currentPathRef.current}
+				key="code-player"
+				currenFile={currentFile}
 				files={files.current}
 				externalEditorRef={editorRef}
-				externalSelectedFile={editorCurrentPath}
+				externalMonacoRef={monacoRef}
 			/>
 		</>
 	)

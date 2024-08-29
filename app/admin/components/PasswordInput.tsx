@@ -1,14 +1,14 @@
-'use client'
-import { Tooltip } from 'flowbite-react'
-import React, { useState } from 'react'
+"use client"
+import { Tooltip } from "flowbite-react"
+import React, { useState } from "react"
 import {
 	HiInformationCircle,
 	HiOutlineEyeOff,
 	HiOutlineEye,
 	HiCheck,
 	HiOutlineX,
-} from 'react-icons/hi'
-import { RiFileCopyLine, RiLockPasswordFill } from 'react-icons/ri'
+} from "react-icons/hi"
+import { RiFileCopyLine, RiLockPasswordFill } from "react-icons/ri"
 
 interface Props {
 	verifyStrength?: boolean
@@ -22,11 +22,11 @@ type PasswordInputProps =
 	| (Props & { id: string; label: string })
 	| (Props & { id?: never; label?: never })
 
-const specialChars = '!@#$%^&*()-_=+{};:,<.>/?~`£€[]\\|"\''
+const specialChars = "!@#$%^&*()-_=+{};:,<.>/?~`£€[]\\|\"'"
 const regexSpecialCharacters = specialChars
-	.replace(']', '\\]')
-	.replace('-', '\\-')
-	.replace('/', '\\/')
+	.replace("]", "\\]")
+	.replace("-", "\\-")
+	.replace("/", "\\/")
 
 const regexCommonPattern = `A-Za-z0-9\\s${regexSpecialCharacters}`
 
@@ -40,24 +40,33 @@ const checkSpace = (password: string) => {
 }
 
 const checkUppercaseLetters = (password: string) => {
-	const regex = new RegExp(`^(?=(?:.*[A-Z]){2,})(?!.*(.)\\1{2})[${regexCommonPattern}]{2,}$`, 'gm')
+	const regex = new RegExp(
+		`^(?=(?:.*[A-Z]){2,})(?!.*(.)\\1{2})[${regexCommonPattern}]{2,}$`,
+		"gm",
+	)
 	return regex.test(password)
 }
 
 const checkLowercaseLetters = (password: string) => {
-	const regex = new RegExp(`^(?=(?:.*[a-z]){2,})(?!.*(.)\\1{2})[${regexCommonPattern}]{2,}$`, 'g')
+	const regex = new RegExp(
+		`^(?=(?:.*[a-z]){2,})(?!.*(.)\\1{2})[${regexCommonPattern}]{2,}$`,
+		"g",
+	)
 	return regex.test(password)
 }
 
 const checkNumbers = (password: string) => {
-	const regex = new RegExp(`^(?=(?:.*[0-9]){2,})(?!.*(.)\\1{2})[${regexCommonPattern}]{2,}$`, 'gm')
+	const regex = new RegExp(
+		`^(?=(?:.*[0-9]){2,})(?!.*(.)\\1{2})[${regexCommonPattern}]{2,}$`,
+		"gm",
+	)
 	return regex.test(password)
 }
 
 const checkSpecialChars = (password: string) => {
 	const regex = new RegExp(
 		`^(?=(?:.*[${regexSpecialCharacters}]){2,})(?!.*(.)\\1{2})[${regexCommonPattern}]{2,}$`,
-		'gm'
+		"gm",
 	)
 	return regex.test(password)
 }
@@ -93,21 +102,26 @@ const getPasswordScore = (password: string) => {
 
 const getColorFromScore = (score: number) => {
 	if (score >= 6) {
-		return 'bg-green-500'
+		return "bg-green-500"
 	}
 	if (score >= 3) {
-		return 'bg-yellow-300 dark:bg-yellow-400'
+		return "bg-yellow-300 dark:bg-yellow-400"
 	}
-	return 'bg-red-600 dark:bg-red-500'
+	return "bg-red-600 dark:bg-red-500"
 }
 
 const generatePassword = (length: number) => {
-	let result = ''
-	const uppercaseCharacters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-	const lowercaseCharacters = 'abcdefghijklmnopqrstuvwxyz'
-	const numbers = '0123456789'
+	let result = ""
+	const uppercaseCharacters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	const lowercaseCharacters = "abcdefghijklmnopqrstuvwxyz"
+	const numbers = "0123456789"
 	const specialCharacters = specialChars
-	const characters = [uppercaseCharacters, lowercaseCharacters, numbers, specialCharacters]
+	const characters = [
+		uppercaseCharacters,
+		lowercaseCharacters,
+		numbers,
+		specialCharacters,
+	]
 	const counterCharacters = [0, 0, 0, 0]
 	for (let i = 0; i < length; i++) {
 		const index = Math.floor(Math.random() * characters.length)
@@ -124,14 +138,12 @@ const generatePassword = (length: number) => {
 
 function PasswordProgress({ password }: { password: string }) {
 	return (
-		<div className='w-full bg-neutral-300 dark:bg-neutral-700 mt-2 relative h-1'>
+		<div className="w-full bg-neutral-300 dark:bg-neutral-700 mt-2 relative h-1">
 			<div
-				className={
-					'absolute left-0 top-0 h-full transition-width duration-200 ' +
-					getColorFromScore(getPasswordScore(password))
-				}
-				style={{ width: (getPasswordScore(password) / 6) * 100 + '%' }}
-			></div>
+				className={`absolute left-0 top-0 h-full transition-width duration-200 
+					${getColorFromScore(getPasswordScore(password))}`}
+				style={{ width: `${(getPasswordScore(password) / 6) * 100} %` }}
+			/>
 		</div>
 	)
 }
@@ -151,44 +163,48 @@ function PasswordInput({
 
 	return (
 		<>
-			<div className='w-full '>
+			<div className="w-full ">
 				{label && <label htmlFor={id}>{label}</label>}
 				<div
-					className={'w-full relative' + (verifyStrength ? ' grid grid-cols-[1fr_auto] gap-4' : '')}
+					className={`w-full relative${verifyStrength ? " grid grid-cols-[1fr_auto] gap-4" : ""}`}
 				>
-					<div className='relative'>
-						<div className='relative'>
+					<div className="relative">
+						<div className="relative">
 							<input
-								type={showPassword ? 'text' : 'password'}
-								name='password'
-								placeholder={showPlaceholder ? 'Password' : ''}
-								className={'w-full ' + (className ?? '')}
+								type={showPassword ? "text" : "password"}
+								name="password"
+								placeholder={showPlaceholder ? "Password" : ""}
+								className={`w-full ${className ?? ""}`}
 								value={password}
 								required={required}
-								onChange={e => setPassword(e.target.value)}
+								onChange={(e) => setPassword(e.target.value)}
 								id={id}
 								minLength={15}
 								maxLength={50}
 							/>
-							<div className='absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-1'>
+							<div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-1">
 								{verifyStrength && (
-									<Tooltip content='Requisiti password'>
+									<Tooltip content="Requisiti password">
 										<button
-											type='button'
-											className='p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded'
+											type="button"
+											className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
 											onClick={() => setShowInfo(!showInfo)}
 										>
 											<HiInformationCircle />
 										</button>
 									</Tooltip>
 								)}
-								<Tooltip content={showPassword ? 'Nascondi password' : 'Mostra password'}>
+								<Tooltip
+									content={
+										showPassword ? "Nascondi password" : "Mostra password"
+									}
+								>
 									<button
-										type='button'
-										className='p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded text-xl'
+										type="button"
+										className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded text-xl"
 										onClick={() => {
 											if (password.length <= 50) {
-												setShowPassword(p => !p)
+												setShowPassword((p) => !p)
 											}
 										}}
 									>
@@ -200,22 +216,22 @@ function PasswordInput({
 						{verifyStrength && <PasswordProgress password={password} />}
 					</div>
 					{verifyStrength && (
-						<div className='flex gap-2 items-stretch'>
-							<Tooltip content='Genera password'>
+						<div className="flex gap-2 items-stretch">
+							<Tooltip content="Genera password">
 								<button
-									type='button'
-									className='border-2 p-2 border-neutral-400 dark:border-neutral-600 h-full'
-									aria-label='Genera password'
+									type="button"
+									className="border-2 p-2 border-neutral-400 dark:border-neutral-600 h-full"
+									aria-label="Genera password"
 									onClick={() => setPassword(generatePassword(30))}
 								>
 									<RiLockPasswordFill />
 								</button>
 							</Tooltip>
-							<Tooltip content='Copia password'>
+							<Tooltip content="Copia password">
 								<button
-									type='button'
-									className='border-2 p-2 border-neutral-400 dark:border-neutral-600 h-full'
-									aria-label='Copia password'
+									type="button"
+									className="border-2 p-2 border-neutral-400 dark:border-neutral-600 h-full"
+									aria-label="Copia password"
 									onClick={() => navigator.clipboard.writeText(password)}
 								>
 									<RiFileCopyLine />
@@ -226,59 +242,59 @@ function PasswordInput({
 				</div>
 			</div>
 			{showInfo && verifyStrength && (
-				<div className='mt-2'>
+				<div className="mt-2">
 					<p>La password deve rispettare tutti i seguenti criteri</p>
 					<ul>
 						<li>
 							{checkLength(password) ? (
-								<HiCheck className='inline-block text-green-500' />
+								<HiCheck className="inline-block text-green-500" />
 							) : (
-								<HiOutlineX className='inline-block text-red-600 dark:text-red-500' />
-							)}{' '}
+								<HiOutlineX className="inline-block text-red-600 dark:text-red-500" />
+							)}{" "}
 							Deve avere una lunghezza da 15 a 50 caratteri.
 						</li>
 						<li>
 							{checkSpace(password) ? (
-								<HiCheck className='inline-block text-green-500' />
+								<HiCheck className="inline-block text-green-500" />
 							) : (
-								<HiOutlineX className='inline-block text-red-600 dark:text-red-500' />
-							)}{' '}
+								<HiOutlineX className="inline-block text-red-600 dark:text-red-500" />
+							)}{" "}
 							Non deve contenere spazi.
 						</li>
 						<li>
 							{checkUppercaseLetters(password) ? (
-								<HiCheck className='inline-block text-green-500' />
+								<HiCheck className="inline-block text-green-500" />
 							) : (
-								<HiOutlineX className='inline-block text-red-600 dark:text-red-500' />
-							)}{' '}
-							Deve contenere almeno 2 lettere maiuscole (non sono accettale le lettere accentate),
-							ma non più di 2 uguali consecutive.
+								<HiOutlineX className="inline-block text-red-600 dark:text-red-500" />
+							)}{" "}
+							Deve contenere almeno 2 lettere maiuscole (non sono accettale le
+							lettere accentate), ma non più di 2 uguali consecutive.
 						</li>
 						<li>
 							{checkLowercaseLetters(password) ? (
-								<HiCheck className='inline-block text-green-500' />
+								<HiCheck className="inline-block text-green-500" />
 							) : (
-								<HiOutlineX className='inline-block text-red-600 dark:text-red-500' />
-							)}{' '}
-							Deve contenere almeno 2 lettere miniscule (non sono accettale le lettere accentate),
-							ma non più di 2 uguali consecutive.
+								<HiOutlineX className="inline-block text-red-600 dark:text-red-500" />
+							)}{" "}
+							Deve contenere almeno 2 lettere miniscule (non sono accettale le
+							lettere accentate), ma non più di 2 uguali consecutive.
 						</li>
 						<li>
 							{checkNumbers(password) ? (
-								<HiCheck className='inline-block text-green-500' />
+								<HiCheck className="inline-block text-green-500" />
 							) : (
-								<HiOutlineX className='inline-block text-red-600 dark:text-red-500' />
-							)}{' '}
+								<HiOutlineX className="inline-block text-red-600 dark:text-red-500" />
+							)}{" "}
 							Deve contenere almeno 2 numeri, ma non più di 2 uguali.
 						</li>
 						<li>
 							{checkSpecialChars(password) ? (
-								<HiCheck className='inline-block text-green-500' />
+								<HiCheck className="inline-block text-green-500" />
 							) : (
-								<HiOutlineX className='inline-block text-red-600 dark:text-red-500' />
-							)}{' '}
-							Deve contenere almeno 2 caratteri speciali( {specialChars} ), ma non più di 2 uguali
-							consecutivi tra loro.
+								<HiOutlineX className="inline-block text-red-600 dark:text-red-500" />
+							)}{" "}
+							Deve contenere almeno 2 caratteri speciali( {specialChars} ), ma
+							non più di 2 uguali consecutivi tra loro.
 						</li>
 					</ul>
 				</div>
