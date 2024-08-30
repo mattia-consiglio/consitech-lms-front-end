@@ -1,6 +1,9 @@
 "use client"
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import CodeEditor, { type CodeEditorFilesMap } from "./CodeEditor"
+import CodeEditor, {
+	type MonacoFile,
+	type CodeEditorFilesMap,
+} from "./CodeEditor"
 import type { SrtLine } from "@/utils/types"
 import { useAppSelector } from "@/redux/store"
 import * as Diff from "diff"
@@ -39,15 +42,32 @@ interface MonacoEditorChangeOptions {
  * @property {number} rangeLength - The length of the changed range.
  * @property {string} rangeText - The new text that was inserted or replaced.
  * @property {string} originalText - The original text that was replaced.
- * @property {string} targeText - The text that the range was changed to.
+ * @property {string} targetText - The text that the range was changed to.
  */
 interface Changes2DRange {
 	rangeOffset: number
 	rangeLength: number
 	rangeText: string
 	originalText: string
-	targeText: string
+	targetText: string
 }
+/**
+ * The `CodePlayer` component is responsible for managing the code editor and synchronizing it with the video player.
+ * It handles updating the files displayed in the code editor based on the current time in the video player, and provides
+ * functionality to simulate file changes in the editor.
+ *
+ * The component uses the `CodeEditor` component to render the code editor, and manages the state of the files being
+ * displayed. It also uses the `useAppSelector` hook to access the current state of the video player, including the
+ * current time, player state, and current speed.
+ *
+ * The `updateFiles` function is used to update the files displayed in the code editor based on the provided source text.
+ * It determines the language mode of the file based on its extension, and updates the file's content and metadata in the
+ * `files` object. If the file has changed, it calculates the differences between the previous and current content, and
+ * uses the `handleEditorChange` function to simulate the changes in the editor.
+ *
+ * The component also manages the timeouts used to update the files in sync with the video player's current time and
+ * playback speed.
+ */
 function CodePlayer({ sourceCode }: Readonly<CodePlayerProps>) {
 	const currentFilePathRef = useRef("")
 	const [currentFile, setCurrentFile] = useState("")
@@ -60,13 +80,17 @@ function CodePlayer({ sourceCode }: Readonly<CodePlayerProps>) {
 		(state) => state.player,
 	)
 	const [filteredArray, setFilteredArray] = useState([] as SrtLine[])
-	const files = useRef({} as CodeEditorFilesMap)
+	const files = useRef(
+		{} as { [key: string]: { model: editor.ITextModel } & MonacoFile },
+	)
 	const changes = useRef({} as MonacoEditorChangeOptions)
-	const editorRef = useRef(null as unknown as editor.IStandaloneCodeEditor)
+	const [editorState, setEditorState] =
+		useState<editor.IStandaloneCodeEditor | null>(null)
 	const monacoRef = useRef(null as unknown as Monaco)
 	const isEditorChanged = useRef(false)
 	const prevVideoSpeed = useRef(1)
 	const currentTimeRef = useRef(currentTime)
+	const [toggleTabChange, setToggleTabChange] = useState(false)
 
 	/**
 	 * Determines the language mode for a given file based on its file extension.
@@ -92,12 +116,24 @@ function CodePlayer({ sourceCode }: Readonly<CodePlayerProps>) {
 
 	//simulate file onChange event with monaco editor with only changes not entire file
 	const handleEditorChange = useCallback(
-		({ range, text, targetText }: MonacoEditorChangeOptions) => {
-			// console.log('handleEditorChange', range, text)
-			if (!editorRef.current || !monacoRef.current || !range) return
-			const model = editorRef.current.getModel()
+		(
+			{ range, text, targetText }: MonacoEditorChangeOptions,
+			fileChanged = false,
+		) => {
+			if (!editorState || !monacoRef.current || !range) return
+			const file = files.current[currentFilePathRef.current]
+
+			const model = file.model
 			if (!model) return
-			// console.log(value)
+
+			if (fileChanged) {
+				editorState.executeEdits("", [
+					{
+						range: model.getFullModelRange(),
+						text: file?.value,
+					},
+				])
+			}
 
 			//create edit operation
 			const editOp: editor.IIdentifiedSingleEditOperation = {
@@ -105,22 +141,17 @@ function CodePlayer({ sourceCode }: Readonly<CodePlayerProps>) {
 				text: text,
 				forceMoveMarkers: false,
 			}
-			// console.log('editOp', editOp)
+			monacoRef.current.editor.setModelLanguage(model, file.language)
 
 			//push changes to editor
-			editorRef.current.pushUndoStop()
 			model.pushEditOperations([], [editOp], () => null)
-			if (editorRef.current.getValue() !== targetText) {
-				editorRef.current.setValue(targetText)
-			}
-			console.log("targetText", targetText)
-			const file = files.current[currentFilePathRef.current]
-			console.log("file", file)
-			if (model && file?.language) {
-				monacoRef.current.editor.setModelLanguage(model, file.language)
+
+			// ensure value is set
+			if (model.getValue() !== targetText) {
+				model.setValue(targetText)
 			}
 		},
-		[],
+		[editorState],
 	)
 
 	/**
@@ -132,7 +163,7 @@ function CodePlayer({ sourceCode }: Readonly<CodePlayerProps>) {
 	 * - `rangeLength`: The length of the changed range.
 	 * - `rangeText`: The text to be inserted at the changed range.
 	 * - `originalText`: The original text.
-	 * - `targeText`: The target text.
+	 * - `targetText`: The target text.
 	 *
 	 * If the `originalText` and `text` are the same, the function returns `null`.
 	 *
@@ -150,10 +181,7 @@ function CodePlayer({ sourceCode }: Readonly<CodePlayerProps>) {
 			let additions = 0
 
 			if (originalText === text) return null
-			// const originalText = prevText.current
 			const diff = Diff.diffChars(originalText, text)
-			// prevText.current = text
-			// console.log(diff)
 
 			diff.forEach((part, i) => {
 				const isLast = i === diff.length - 1
@@ -190,9 +218,8 @@ function CodePlayer({ sourceCode }: Readonly<CodePlayerProps>) {
 				rangeLength,
 				rangeText,
 				originalText,
-				targeText: text,
+				targetText: text,
 			}
-			// console.log(result)
 			return result
 		},
 		[],
@@ -210,7 +237,7 @@ function CodePlayer({ sourceCode }: Readonly<CodePlayerProps>) {
 			rangeLength,
 			rangeText,
 			originalText,
-			targeText,
+			targetText: targeText,
 		}: Changes2DRange): MonacoEditorChangeOptions => {
 			let start = rangeOffset
 			let end = rangeOffset + rangeLength
@@ -223,11 +250,8 @@ function CodePlayer({ sourceCode }: Readonly<CodePlayerProps>) {
 			//check if eol is /r/n or /n
 			const eolLength = originalText.match(eol)?.[0]?.length || 1
 
-			// const eolLength = originalText.replace(originalText, '')[0] === '\r' ? 2 : 1
-
 			for (let i = 0; i < lines.length; i++) {
 				const lineLength = lines[i].length + eolLength
-				// if (end === 0) break
 				if (start >= lineLength) {
 					start -= lineLength
 					startLineNumber++
@@ -254,7 +278,6 @@ function CodePlayer({ sourceCode }: Readonly<CodePlayerProps>) {
 				endLineNumber,
 				endColumn,
 			}
-			// console.log('monacoRange', monacoRange)
 			return { range: monacoRange, text: rangeText, targetText: targeText }
 		},
 		[],
@@ -267,6 +290,7 @@ function CodePlayer({ sourceCode }: Readonly<CodePlayerProps>) {
 	 * @param init - A boolean flag indicating whether this is an initial update or not.
 	 * @returns Void
 	 */
+
 	const updateFiles = useCallback(
 		(sourceText: string, init = false) => {
 			const { file, text } = JSON.parse(sourceText) as SrtText
@@ -274,10 +298,17 @@ function CodePlayer({ sourceCode }: Readonly<CodePlayerProps>) {
 			const path = `codePlayer/${file}`
 			if (init) {
 				if (files.current[path]) return
+				if (!monacoRef.current) return
+				const model = monacoRef.current.editor.createModel(
+					text,
+					language,
+					monacoRef.current.Uri.parse(path),
+				)
 				files.current[path] = {
+					model,
 					name: file,
 					language,
-					value: "",
+					value: text,
 					isChanged: false,
 				}
 				if (currentFilePathRef.current === "") {
@@ -286,16 +317,15 @@ function CodePlayer({ sourceCode }: Readonly<CodePlayerProps>) {
 				}
 				return
 			}
-			const pervFileText = editorRef.current ? editorRef.current.getValue() : ""
+			const model = editorState?.getModel()
+			if (!model) return
+			setToggleTabChange((prev) => !prev)
+			const pervFileText = model ? model.getValue() : ""
+			const fileChanged = currentFilePathRef.current !== path
 			currentFilePathRef.current = path
 			setCurrentFile(path)
-			console.log(
-				"currentFilePath.current",
-				currentFilePathRef.current,
-				"path",
-				path,
-			)
 			files.current[path] = {
+				model,
 				name: file,
 				language,
 				value: text,
@@ -304,10 +334,11 @@ function CodePlayer({ sourceCode }: Readonly<CodePlayerProps>) {
 			const diff = getTextDifference2DRanges(text, pervFileText)
 			if (!diff) return
 			const monacoOperation = convert2DChangesToMonacoOperations(diff)
-			handleEditorChange(monacoOperation)
+			handleEditorChange(monacoOperation, fileChanged)
 		},
 		[
 			convert2DChangesToMonacoOperations,
+			editorState,
 			getLanguage,
 			getTextDifference2DRanges,
 			handleEditorChange,
@@ -315,11 +346,11 @@ function CodePlayer({ sourceCode }: Readonly<CodePlayerProps>) {
 	)
 
 	useEffect(() => {
+		if (!editorState) return
 		for (const element of sourceCodeArray) {
 			updateFiles(element.text, true)
 		}
-		// console.log('files', files)
-	}, [sourceCodeArray, updateFiles])
+	}, [sourceCodeArray, updateFiles, editorState])
 
 	useEffect(() => {
 		if (playerState !== 1) {
@@ -382,8 +413,10 @@ function CodePlayer({ sourceCode }: Readonly<CodePlayerProps>) {
 				key="code-player"
 				currenFile={currentFile}
 				files={files.current}
-				externalEditorRef={editorRef}
+				externalEditor={editorState}
+				externalSetEditor={setEditorState}
 				externalMonacoRef={monacoRef}
+				toggleTabChange={toggleTabChange}
 			/>
 		</>
 	)

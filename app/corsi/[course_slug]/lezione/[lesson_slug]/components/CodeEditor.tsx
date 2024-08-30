@@ -14,15 +14,19 @@ export interface MonacoFile {
 	value: string
 	isChanged?: boolean
 }
-export interface CodeEditorFilesMap {
-	[key: string]: MonacoFile
+export type CodeEditorFilesMap = {
+	[key: string]: { model: editor.ITextModel } & MonacoFile
 }
 
 interface CodeEditorProps {
 	currenFile: string
 	files: CodeEditorFilesMap
-	externalEditorRef?: React.MutableRefObject<editor.IStandaloneCodeEditor>
+	externalEditor?: editor.IStandaloneCodeEditor | null
+	externalSetEditor?: React.Dispatch<
+		React.SetStateAction<editor.IStandaloneCodeEditor | null>
+	>
 	externalMonacoRef?: React.MutableRefObject<Monaco>
+	toggleTabChange?: boolean
 }
 
 const fileIcons: { [key: string]: ReactElement } = {
@@ -35,26 +39,28 @@ const fileIcons: { [key: string]: ReactElement } = {
 export default function CodeEditor({
 	files,
 	currenFile,
-	externalEditorRef,
+	externalEditor,
+	externalSetEditor,
 	externalMonacoRef,
+	toggleTabChange,
 }: Readonly<CodeEditorProps>) {
 	const [fileName, setFileName] = useState(currenFile)
-	const prevFileName = useRef(currenFile)
-	const localEditorRef = useRef(null as unknown as editor.IStandaloneCodeEditor)
-	const editorRef = externalEditorRef ?? localEditorRef
+	const [localEditorState, setLocalEditorState] =
+		useState<editor.IStandaloneCodeEditor | null>(null)
+	const editorState =
+		externalEditor !== undefined ? externalEditor : localEditorState
+	const setEditorState =
+		externalSetEditor !== undefined ? externalSetEditor : setLocalEditorState
 	const localMonacoRef = useRef(null as unknown as Monaco)
 	const monacoRef = externalMonacoRef ?? localMonacoRef
 
-	const file = files ? files[fileName] : null
+	console.log("files in CodeEditor", files)
 	const dispatch = useAppDispatch()
-	// const prevChanges = useRef(changes)
 
-	// const file = fileName ? localFiles[fileName] : null
-
+	// biome-ignore lint/correctness/useExhaustiveDependencies: Needed for updating the tab on video play
 	useEffect(() => {
-		console.log("currenFile in useEffect", currenFile)
 		setFileName(currenFile)
-	}, [currenFile])
+	}, [currenFile, toggleTabChange])
 
 	/**
 	 * Handles the change of the selected file in the code editor's tab bar.
@@ -66,10 +72,11 @@ export default function CodeEditor({
 		setFileName(tabFile)
 		if (!files) return
 		const file = files[tabFile]
-		editorRef.current?.setValue(file?.value)
-		const model = editorRef.current.getModel()
-		if (model && file?.language) {
+		if (editorState) {
+			const model = file.model
+			editorState.setModel(model)
 			monacoRef.current.editor.setModelLanguage(model, file.language)
+			model.setValue(file.value)
 		}
 	}
 
@@ -90,11 +97,11 @@ export default function CodeEditor({
 		emmetHTML(monaco)
 		emmetCSS(monaco)
 		emmetJSX(monaco)
-		editorRef.current = editor
+		setEditorState(editor)
 		monacoRef.current = monaco
-		const model = editor.getModel()
-		if (model && file?.language) {
-			monaco.editor.setModelLanguage(model, file.language)
+		const file = files[fileName]
+		if (file) {
+			editor.setModel(file.model)
 		}
 	}
 
@@ -132,13 +139,8 @@ export default function CodeEditor({
 				<Editor
 					height="100%"
 					width="100%"
-					// language={file?.language ? file.language : "auto"}
-					path={currenFile}
+					// path={currenFile}
 					theme="vs-dark"
-					// value={file?.value}
-					// onChange={(value, event) => {
-					// 	console.log(event.changes[0].range)
-					// }}
 					onMount={handleEditorDidMount}
 				/>
 			</div>
