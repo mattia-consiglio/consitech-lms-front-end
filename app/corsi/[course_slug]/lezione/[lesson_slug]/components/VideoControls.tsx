@@ -1,6 +1,7 @@
 import { useAppSelector } from "@/redux/store"
-import React, {
-	MutableRefObject,
+import type React from "react"
+import {
+	type MutableRefObject,
 	useCallback,
 	useEffect,
 	useMemo,
@@ -19,7 +20,7 @@ import {
 	MdOutlineCheck,
 	MdOutlineFullscreenExit,
 } from "react-icons/md"
-import { BufferStyle, PlayerState } from "./VideoPlayer"
+import { type BufferStyle, PlayerState } from "./VideoPlayer"
 
 interface VideoProgressBarProps {
 	duration: number
@@ -47,6 +48,7 @@ function PlayIcon() {
 			width="1em"
 			viewBox="0 0 79 79"
 		>
+			<title>Play</title>
 			<polygon points="73.71 39.5 5.29 0 5.29 79 73.71 39.5" />
 		</svg>
 	)
@@ -63,6 +65,7 @@ function PauseIcon() {
 			viewBox="0 0 79 79"
 			xmlns="http://www.w3.org/2000/svg"
 		>
+			<title>Pause</title>
 			<g>
 				<rect x="5" width="24" height="79" />
 				<rect x="50.5" width="24" height="79" />
@@ -120,13 +123,13 @@ export default function VideoControls({
 	const isAnimating = useRef(false)
 	const isProgressBarHovering = useRef(false)
 
-	function getCursorPosition(e: MouseEvent) {
+	const getCursorPosition = useCallback((e: MouseEvent) => {
 		if (!progressBar.current) return 0
 		const rect = progressBar.current.getBoundingClientRect()
 		const offsetX = e.clientX - rect.left
 		const percentage = Math.min(Math.max(0, (offsetX / rect.width) * 100), 100)
 		return percentage
-	}
+	}, [])
 	const seek = useCallback(
 		(inputSeconds?: number) => {
 			const seconds = inputSeconds ?? (HoverPercentage.current / 100) * duration
@@ -171,7 +174,7 @@ export default function VideoControls({
 				seek()
 			}
 		},
-		[duration, seek],
+		[duration, getCursorPosition, seek],
 	)
 
 	function handleMouseLeave(e: React.MouseEvent<HTMLDivElement>) {
@@ -207,7 +210,7 @@ export default function VideoControls({
 		keepControlsVisible()
 	}, [keepControlsVisible])
 
-	function toggleAnimation() {
+	const toggleAnimation = useCallback(() => {
 		if (!iconCircle.current) return
 
 		if (isAnimating.current) {
@@ -226,7 +229,7 @@ export default function VideoControls({
 			iconCircle.current.classList.add("animate")
 			isAnimating.current = true
 		}
-	}
+	}, [])
 
 	const playPause = useCallback(() => {
 		if (playerState === PlayerState.PLAYING) {
@@ -235,7 +238,7 @@ export default function VideoControls({
 			player?.play()
 		}
 		toggleAnimation()
-	}, [player, playerState])
+	}, [player, playerState, toggleAnimation])
 
 	function seekBackward() {
 		if (player) seek(Math.max(player.currentTime - 5, 0))
@@ -409,7 +412,7 @@ export default function VideoControls({
 					<div
 						className={`circle${isHovering || isDragging.current ? " active" : ""}`}
 						style={{ left: `${(currentTime / duration) * 100}%` }}
-					></div>
+					/>
 					<div
 						className="progress"
 						style={{ width: `${(currentTime / duration) * 100}%` }}
@@ -420,7 +423,7 @@ export default function VideoControls({
 							width: `${HoverPercentage.current}%`,
 							visibility: isHovering ? "visible" : "hidden",
 						}}
-					></div>
+					/>
 
 					<div
 						className="time-hover-text"
