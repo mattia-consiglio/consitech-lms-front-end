@@ -1,7 +1,5 @@
 import React from 'react'
 import Subheader from './Subheader'
-import { Breadcrumb, BreadcrumbItem } from 'flowbite-react'
-import { HiHome } from 'react-icons/hi'
 import { IconType } from 'react-icons/lib'
 import ContentWrapper from './ContentWrapper'
 
@@ -22,7 +20,7 @@ export default function MainWrapper({
 	subheaderTitle,
 	className,
 	breadcrumbItems,
-}: MainWrapperProps) {
+}: Readonly<MainWrapperProps>) {
 	return (
 		<main className={className}>
 			{subheaderTitle && <Subheader title={subheaderTitle} breadcrumbItems={breadcrumbItems} />}

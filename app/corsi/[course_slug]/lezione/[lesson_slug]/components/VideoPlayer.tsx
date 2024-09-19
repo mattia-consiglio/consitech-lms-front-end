@@ -1,16 +1,17 @@
-'use client'
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import VideoControls from './VideoControls'
-import '../videoPlayer.scss'
-import { useAppDispatch, useAppSelector } from '@/redux/store'
+"use client"
+import type React from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import VideoControls from "./VideoControls"
+import "../videoPlayer.scss"
+import { useAppDispatch, useAppSelector } from "@/redux/store"
 import {
 	setCurrentTime,
 	setIsBuffering,
 	setPlayerIsInFocus,
 	setPlayerState,
 	setVideoSpeed,
-} from '@/redux/reducers/playerReducer'
-import { MediaVideo } from '@/utils/types'
+} from "@/redux/reducers/playerReducer"
+import type { MediaVideo } from "@/utils/types"
 
 interface VideoPlayerProps {
 	video: MediaVideo
@@ -18,9 +19,9 @@ interface VideoPlayerProps {
 
 function generateVideoResolutionSources(video: MediaVideo) {
 	if (!video.resolutions) return
-	const videoUrlBase = video.url.replace(/\.mp4$/, '')
-	return video.resolutions.map(resolution => {
-		return videoUrlBase + '_' + resolution.name + '.mp4'
+	const videoUrlBase = video.url.replace(/\.mp4$/, "")
+	return video.resolutions.map((resolution) => {
+		return `${videoUrlBase}_${resolution.name}.mp4`
 	})
 }
 
@@ -38,13 +39,18 @@ export interface BufferStyle {
 
 export default function VideoPlayer({ video }: VideoPlayerProps) {
 	const sources = useMemo(() => generateVideoResolutionSources(video), [video])
-	const qualities = useMemo(() => video.resolutions?.map(resolution => resolution.name), [video])
+	const qualities = useMemo(
+		() => video.resolutions?.map((resolution) => resolution.name),
+		[video],
+	)
 	const [videoSource, setVideoSource] = useState(sources?.[0] || video.url)
-	const [currentQuality, setCurrentQuality] = useState(qualities?.[0] || '')
+	const [currentQuality, setCurrentQuality] = useState(qualities?.[0] || "")
 	const player = useRef<HTMLVideoElement>(null)
 	const intervalID = useRef<NodeJS.Timeout>()
 	const playerWrapper = useRef<HTMLDivElement>(null)
-	const { currentTime, playerState, isBuffering } = useAppSelector(state => state.player)
+	const { currentTime, playerState, isBuffering } = useAppSelector(
+		(state) => state.player,
+	)
 	const dispatch = useAppDispatch()
 	const isPlayedOnce = useRef(false)
 	const qualityChanged = useRef(false)
@@ -111,10 +117,10 @@ export default function VideoPlayer({ video }: VideoPlayerProps) {
 		playerWrapper.current?.requestFullscreen()
 		setIsFullscreen(true)
 		setHideControls(true)
-	}, [playerWrapper])
+	}, [])
 
 	const closeFullscreen = useCallback((manually = false) => {
-		if (document.fullscreenElement?.id !== 'videoPlayerWrapper' || manually) {
+		if (document.fullscreenElement?.id !== "videoPlayerWrapper" || manually) {
 			if (manually) {
 				document.exitFullscreen()
 			}
@@ -123,7 +129,7 @@ export default function VideoPlayer({ video }: VideoPlayerProps) {
 	}, [])
 
 	const toggleFullscreen = useCallback(() => {
-		if (document.fullscreenElement?.id === 'videoPlayerWrapper') {
+		if (document.fullscreenElement?.id === "videoPlayerWrapper") {
 			closeFullscreen(true)
 		} else {
 			openFullscreen()
@@ -133,7 +139,8 @@ export default function VideoPlayer({ video }: VideoPlayerProps) {
 	const getBuffer = useCallback(
 		(setBuffing = false) => {
 			if (player.current) {
-				if (player.current.buffered.length && setBuffing) dispatch(setIsBuffering(true))
+				if (player.current.buffered.length && setBuffing)
+					dispatch(setIsBuffering(true))
 				const buffer: BufferStyle[] = []
 				for (let i = 0; i < player.current.buffered.length; i++) {
 					const start = player.current.buffered.start(i)
@@ -148,42 +155,45 @@ export default function VideoPlayer({ video }: VideoPlayerProps) {
 				setBuffer(buffer)
 			}
 		},
-		[dispatch]
+		[dispatch],
 	)
 
-	const handleHideControls = useCallback((e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
-		const { clientX, clientY } = e
-		const { x, y } = lastMousePosition.current
-		const distance = Math.sqrt(Math.pow(clientX - x, 2) + Math.pow(clientY - y, 2))
+	const handleHideControls = useCallback(
+		(e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+			const { clientX, clientY } = e
+			const { x, y } = lastMousePosition.current
+			const distance = Math.sqrt((clientX - x) ** 2 + (clientY - y) ** 2)
 
-		fullscreenTimeout.current && clearTimeout(fullscreenTimeout.current)
-		if (distance > 20) {
-			setHideControls(false)
-			lastMousePosition.current = { x: clientX, y: clientY }
-		}
+			fullscreenTimeout.current && clearTimeout(fullscreenTimeout.current)
+			if (distance > 20) {
+				setHideControls(false)
+				lastMousePosition.current = { x: clientX, y: clientY }
+			}
 
-		fullscreenTimeout.current = setTimeout(() => {
-			!shouldKeepControlsVisible.current && setHideControls(true)
-			lastMousePosition.current = { x: clientX, y: clientY }
-		}, 1000)
-	}, [])
+			fullscreenTimeout.current = setTimeout(() => {
+				!shouldKeepControlsVisible.current && setHideControls(true)
+				lastMousePosition.current = { x: clientX, y: clientY }
+			}, 1000)
+		},
+		[],
+	)
 
 	return (
-		<div className='flex flex-col gap-3'>
+		<div className="flex flex-col gap-3">
 			<div
-				className={'flex flex-col gap-3 video-player-wrapper' + (hideControls ? ' hide' : '')}
+				className={`flex flex-col gap-3 video-player-wrapper${hideControls ? " hide" : ""}`}
 				ref={playerWrapper}
-				id='videoPlayerWrapper'
-				role='region'
-				aria-label='Video player'
+				id="videoPlayerWrapper"
+				role="region"
+				aria-label="Video player"
 				onFocus={() => {
 					addVideoFocus()
 				}}
-				onMouseMove={e => handleHideControls(e)}
+				onMouseMove={(e) => handleHideControls(e)}
 			>
 				<video
 					ref={player}
-					id='player'
+					id="player"
 					onCanPlay={() => {
 						dispatch(setIsBuffering(false))
 						if (playerState === PlayerState.PLAYING && qualityChanged.current) {
@@ -192,7 +202,8 @@ export default function VideoPlayer({ video }: VideoPlayerProps) {
 						}
 					}}
 					onPlay={() => {
-						playerState !== PlayerState.PLAYING && onStateChange(PlayerState.PLAYING)
+						playerState !== PlayerState.PLAYING &&
+							onStateChange(PlayerState.PLAYING)
 						getBuffer()
 					}}
 					onPause={() => {
@@ -224,7 +235,10 @@ export default function VideoPlayer({ video }: VideoPlayerProps) {
 						getBuffer()
 					}}
 					src={videoSource}
-				></video>
+				>
+					<track kind="captions" src="" label="English" srcLang="en" default />
+					Your browser does not support the video tag.
+				</video>
 
 				<VideoControls
 					duration={video.duration}

@@ -10,7 +10,8 @@ export class API {
 		endpoint: string,
 		method: string,
 		body?: any,
-		contentType?: string | null
+		contentType?: string | null,
+		signal?: AbortSignal
 	): Promise<T> {
 		endpoint = endpoint.indexOf('/') === 0 ? endpoint.substring(1) : endpoint
 		endpoint = endpoint.indexOf('/') === endpoint.length - 1 ? endpoint.substring(0, -1) : endpoint
@@ -44,6 +45,7 @@ export class API {
 					? JSON.stringify(body)
 					: body
 				: undefined,
+			signal,
 		}
 
 		const res = await fetch(`${this.baseURL}/${endpoint}`, options)
@@ -58,20 +60,20 @@ export class API {
 		}
 	}
 
-	static async get<T>(endpoint: string): Promise<T> {
-		return await API.request<T>(endpoint, 'GET')
+	static async get<T>(endpoint: string, signal?: AbortSignal): Promise<T> {
+		return await API.request<T>(endpoint, 'GET', undefined, undefined, signal)
 	}
 
-	static async post<T>(endpoint: string, body: any, contentType?: string | null): Promise<T> {
-		return await API.request<T>(endpoint, 'POST', body, contentType)
+	static async post<T>(endpoint: string, body: any, contentType?: string | null, signal?: AbortSignal): Promise<T> {
+		return await API.request<T>(endpoint, 'POST', body, contentType, signal)
 	}
 
-	static async put<T>(endpoint: string, body: any, contentType?: string | null): Promise<T> {
-		return await API.request<T>(endpoint, 'PUT', body, contentType)
+	static async put<T>(endpoint: string, body: any, contentType?: string | null, signal?: AbortSignal): Promise<T> {
+		return await API.request<T>(endpoint, 'PUT', body, contentType, signal)
 	}
 
-	static async delete(endpoint: string): Promise<void> {
-		const result = await API.request<void>(endpoint, 'DELETE')
+	static async delete(endpoint: string, signal?: AbortSignal): Promise<void> {
+		const result = await API.request<void>(endpoint, 'DELETE', undefined, undefined, signal)
 		return result
 	}
 }
