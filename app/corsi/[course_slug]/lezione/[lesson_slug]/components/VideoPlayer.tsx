@@ -48,9 +48,7 @@ export default function VideoPlayer({ video }: VideoPlayerProps) {
 	const player = useRef<HTMLVideoElement>(null)
 	const intervalID = useRef<NodeJS.Timeout>()
 	const playerWrapper = useRef<HTMLDivElement>(null)
-	const { currentTime, playerState, isBuffering } = useAppSelector(
-		(state) => state.player,
-	)
+	const { currentTime, playerState } = useAppSelector((state) => state.player)
 	const dispatch = useAppDispatch()
 	const isPlayedOnce = useRef(false)
 	const qualityChanged = useRef(false)
@@ -164,14 +162,14 @@ export default function VideoPlayer({ video }: VideoPlayerProps) {
 			const { x, y } = lastMousePosition.current
 			const distance = Math.sqrt((clientX - x) ** 2 + (clientY - y) ** 2)
 
-			fullscreenTimeout.current && clearTimeout(fullscreenTimeout.current)
+			if (fullscreenTimeout.current) clearTimeout(fullscreenTimeout.current)
 			if (distance > 20) {
 				setHideControls(false)
 				lastMousePosition.current = { x: clientX, y: clientY }
 			}
 
 			fullscreenTimeout.current = setTimeout(() => {
-				!shouldKeepControlsVisible.current && setHideControls(true)
+				if (!shouldKeepControlsVisible.current) setHideControls(true)
 				lastMousePosition.current = { x: clientX, y: clientY }
 			}, 1000)
 		},
@@ -184,7 +182,6 @@ export default function VideoPlayer({ video }: VideoPlayerProps) {
 				className={`flex flex-col gap-3 video-player-wrapper${hideControls ? " hide" : ""}`}
 				ref={playerWrapper}
 				id="videoPlayerWrapper"
-				role="region"
 				aria-label="Video player"
 				onFocus={() => {
 					addVideoFocus()
@@ -202,7 +199,7 @@ export default function VideoPlayer({ video }: VideoPlayerProps) {
 						}
 					}}
 					onPlay={() => {
-						playerState !== PlayerState.PLAYING &&
+						if (playerState !== PlayerState.PLAYING)
 							onStateChange(PlayerState.PLAYING)
 						getBuffer()
 					}}

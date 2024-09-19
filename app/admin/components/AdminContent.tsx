@@ -1,127 +1,148 @@
-'use client'
-import MainWrapper from '@/app/components/MainWrapper'
-import { customButtonTheme, customSpinnerTheme } from '@/app/flowbite.themes'
-import { API } from '@/utils/api'
+"use client"
+import MainWrapper from "@/app/components/MainWrapper"
+import { customButtonTheme, customSpinnerTheme } from "@/app/flowbite.themes"
+import { API } from "@/utils/api"
 import {
-	ChangeEvent,
-	Course,
-	Language,
-	Lesson,
+	type ChangeEvent,
+	type Course,
+	type Language,
+	type Lesson,
 	MediaType,
-	MediaVideo,
+	type MediaVideo,
 	PublishStatus,
-	SEO,
-	SrtLine,
-} from '@/utils/types'
-import { Button, Modal, Spinner } from 'flowbite-react'
-import { usePathname, useRouter } from 'next/navigation'
-import React, { FormEvent, Suspense, useCallback, useEffect, useRef, useState } from 'react'
-import { HiOutlinePlusSm, HiOutlineRefresh } from 'react-icons/hi'
-import SEOComponent from './SEOComponent'
-import adminStyles from '@/app/admin/styles/admin.module.scss'
-import Image from 'next/image'
-import toast from 'react-hot-toast'
-import MediaManager from '@/app/admin/media/components/MediaManager'
-import { useAppDispatch, useAppSelector } from '@/redux/store'
-import { generateSlug } from '@/utils/utils'
-import Tiptap from './TipTap'
-import { MediaImage } from '@/utils/types'
-import { IoPencilSharp, IoPlaySharp, IoTrashSharp } from 'react-icons/io5'
-import { LiaExternalLinkAltSolid } from 'react-icons/lia'
-import { setSelectedMedia } from '@/redux/reducers/mediaReducer'
-import { formatTime } from '@/app/corsi/[course_slug]/lezione/[lesson_slug]/VideoControls'
+	type SEO,
+	type SrtLine,
+	type MediaImage,
+} from "@/utils/types"
+import { Button, Modal, Spinner } from "flowbite-react"
+import { usePathname, useRouter } from "next/navigation"
+import type React from "react"
+import {
+	type FormEvent,
+	Suspense,
+	useCallback,
+	useEffect,
+	useRef,
+	useState,
+} from "react"
+import { HiOutlinePlusSm, HiOutlineRefresh } from "react-icons/hi"
+import SEOComponent from "./SEOComponent"
+import adminStyles from "@/app/admin/styles/admin.module.scss"
+import Image from "next/image"
+import toast from "react-hot-toast"
+import MediaManager from "@/app/admin/media/components/MediaManager"
+import { useAppDispatch, useAppSelector } from "@/redux/store"
+import { generateSlug } from "@/utils/utils"
+import Tiptap from "./TipTap"
+
+import { IoPencilSharp, IoPlaySharp, IoTrashSharp } from "react-icons/io5"
+import { LiaExternalLinkAltSolid } from "react-icons/lia"
+import { setSelectedMedia } from "@/redux/reducers/mediaReducer"
+import { formatTime } from "@/app/corsi/[course_slug]/lezione/[lesson_slug]/components/VideoControls"
 
 interface AdminCourseProps {
 	contentId: string
 }
 
-export default function AdminContent({ contentId }: AdminCourseProps) {
+export default function AdminContent({
+	contentId,
+}: Readonly<AdminCourseProps>) {
 	const pathname = usePathname()
-	const contentType: 'corsi' | 'lezioni' = pathname.split('/')[2] as 'corsi' | 'lezioni'
+	const contentType: "corsi" | "lezioni" = pathname.split("/")[2] as
+		| "corsi"
+		| "lezioni"
 	const [content, setContent] = useState<Course | Lesson>(
-		contentType === 'corsi'
+		contentType === "corsi"
 			? ({
-					title: '',
-					description: '',
-					slug: '',
+					title: "",
+					description: "",
+					slug: "",
 					publishStatus: PublishStatus.DRAFT,
 					thumbnail: null,
 					displayOrder: 0,
 					mainLanguage: {} as Language,
 					seo: {
-						title: '',
-						description: '',
+						title: "",
+						description: "",
 					} as SEO,
 					enrolledStudents: 0,
-			  } as Course)
+				} as Course)
 			: ({
-					title: '',
-					description: '',
-					slug: '',
+					title: "",
+					description: "",
+					slug: "",
 					publishStatus: PublishStatus.DRAFT,
 					thumbnail: null,
 					displayOrder: 0,
 					mainLanguage: {} as Language,
-					liveEditor: '',
+					liveEditor: "",
 					video: null,
-					videoThumbnail: '',
-					content: '',
+					videoThumbnail: "",
+					content: "",
 					seo: {
-						title: '',
-						description: '',
+						title: "",
+						description: "",
 					} as SEO,
 					course: {
-						id: '',
+						id: "",
 					} as Course,
-			  } as Lesson & { liveEditor: string })
+				} as Lesson & { liveEditor: string }),
 	)
 	const router = useRouter()
 	const [loading, setLoading] = useState(false)
-	const [error, setError] = useState<string>()
+
 	const [openModal, setOpenModal] = useState(false)
 	const [languages, setLanguages] = useState<Language[]>([])
 	const [saved, setSaved] = useState(true)
 	const [courses, setCourses] = useState<Course[]>([])
 	const [isContentLoaded, setIsContentLoaded] = useState(false)
-	const { title, description, slug, publishStatus, thumbnail, displayOrder, mainLanguage } = content
+	const {
+		title,
+		description,
+		slug,
+		publishStatus,
+		thumbnail,
+		displayOrder,
+		mainLanguage,
+	} = content
 	const [mediaType, setMediaType] = useState<MediaType>()
-	const selectedMedia = useAppSelector(state => state.media.selected)
+	const selectedMedia = useAppSelector((state) => state.media.selected)
 	const dispatch = useAppDispatch()
 	const srtFileRef = useRef<HTMLInputElement>(null)
 
 	const getContent = useCallback(async () => {
-		if (contentId === 'new') {
+		if (contentId === "new") {
 			return
 		}
 		API.get<Course | Lesson>(
-			contentType === 'corsi' ? `courses/${contentId}` : `lessons/${contentId}`
+			contentType === "corsi" ? `courses/${contentId}` : `lessons/${contentId}`,
 		)
-			.then(response => {
+			.then((response) => {
 				setContent(response)
 			})
 
-			.catch(error => {
-				setError(error.message)
+			.catch((error) => {
+				toast.error(`Error retrieval content: ${error.message}`)
 			})
 	}, [contentId, contentType])
 
 	const getLanguages = useCallback(async () => {
-		API.get<Language[]>('languages')
-			.then(response => {
+		API.get<Language[]>("languages")
+			.then((response) => {
 				setLanguages(response)
 			})
-			.catch(error => {
-				toast.error('Error retrieval languages: ' + error.message)
+			.catch((error) => {
+				toast.error(`Error retrieval languages: ${error.message}`)
 			})
 	}, [])
 
 	const getCourses = useCallback(async () => {
-		API.get<Course[]>('courses/list')
-			.then(response => {
+		API.get<Course[]>("courses/list")
+			.then((response) => {
 				setCourses(response)
 			})
-			.catch(error => {
-				toast.error('Error retrieval courses: ' + error.message)
+			.catch((error) => {
+				toast.error(`Error retrieval courses: ${error.message}`)
 			})
 			.finally(() => {
 				setLoading(false)
@@ -134,12 +155,10 @@ export default function AdminContent({ contentId }: AdminCourseProps) {
 			const doActions = () => {
 				if (e) {
 					window.close()
+				} else if (contentType === "corsi") {
+					router.push("/admin/corsi/new")
 				} else {
-					if (contentType === 'corsi') {
-						router.push(`/admin/corsi/new`)
-					} else {
-						router.push(`/admin/lezioni/new`)
-					}
+					router.push("/admin/lezioni/new")
 				}
 			}
 
@@ -151,11 +170,11 @@ export default function AdminContent({ contentId }: AdminCourseProps) {
 				e.preventDefault()
 			}
 
-			if (window.confirm('Ci sono modifiche non salvate. Continuare?')) {
+			if (window.confirm("Ci sono modifiche non salvate. Continuare?")) {
 				doActions()
 			}
 		},
-		[contentType, router, saved]
+		[contentType, router, saved],
 	)
 
 	useEffect(() => {
@@ -172,27 +191,35 @@ export default function AdminContent({ contentId }: AdminCourseProps) {
 
 	// Set the default language to the first one if the content is new
 	useEffect(() => {
-		if (contentId === 'new' && Object.keys(content.mainLanguage).length === 0 && languages.length) {
+		if (
+			contentId === "new" &&
+			Object.keys(content.mainLanguage).length === 0 &&
+			languages.length
+		) {
 			setSaved(false)
-			setContent({ ...content, publishStatus: PublishStatus.DRAFT, mainLanguage: languages[0] })
+			setContent({
+				...content,
+				publishStatus: PublishStatus.DRAFT,
+				mainLanguage: languages[0],
+			})
 		}
 	}, [content, contentId, languages])
 
 	useEffect(() => {
 		if (window) {
-			window.addEventListener('beforeunload', beforeLeave)
+			window.addEventListener("beforeunload", beforeLeave)
 			return () => {
-				window.removeEventListener('beforeunload', beforeLeave)
+				window.removeEventListener("beforeunload", beforeLeave)
 			}
 		}
 	}, [beforeLeave])
 
 	const handleChange = (e: ChangeEvent) => {
 		setSaved(false)
-		let value = e.target.value
+		const value = e.target.value
 		let key = e.target.name
-		if (key.startsWith('seo.')) {
-			key = e.target.name.split('.')[1]
+		if (key.startsWith("seo.")) {
+			key = e.target.name.split(".")[1]
 			setContent({
 				...content,
 				seo: { ...content.seo, [key]: value },
@@ -200,9 +227,9 @@ export default function AdminContent({ contentId }: AdminCourseProps) {
 			return
 		}
 
-		if (key === 'course') {
-			const course = courses.find(c => c.id === value) as Course
-			console.log('course', course)
+		if (key === "course") {
+			const course = courses.find((c) => c.id === value) as Course
+			console.log("course", course)
 			setContent({
 				...content,
 				course: course,
@@ -221,7 +248,7 @@ export default function AdminContent({ contentId }: AdminCourseProps) {
 
 		const saveContentPromise = async () => {
 			const contentPayload =
-				contentType === 'corsi'
+				contentType === "corsi"
 					? {
 							title,
 							slug,
@@ -229,7 +256,7 @@ export default function AdminContent({ contentId }: AdminCourseProps) {
 							publishStatus,
 							thumbnailId: thumbnail ? thumbnail.id : null,
 							mainLanguageId: mainLanguage.id,
-					  }
+						}
 					: {
 							title,
 							slug,
@@ -242,16 +269,19 @@ export default function AdminContent({ contentId }: AdminCourseProps) {
 							videoId: (content as Lesson).video?.id,
 							videoThumbnail: (content as Lesson).videoThumbnail,
 							content: (content as Lesson).content,
-					  }
+						}
 
-			console.log('contentPayload', contentPayload)
-			console.log('contentId', contentId)
-			if (contentId === 'new') {
-				return API.post<Course>(contentType === 'corsi' ? 'courses' : 'lessons', contentPayload)
-					.then(json => {
-						console.log('post', json)
+			console.log("contentPayload", contentPayload)
+			console.log("contentId", contentId)
+			if (contentId === "new") {
+				return API.post<Course>(
+					contentType === "corsi" ? "courses" : "lessons",
+					contentPayload,
+				)
+					.then((json) => {
+						console.log("post", json)
 						setContent(json)
-						if (contentType === 'corsi') {
+						if (contentType === "corsi") {
 							router.push(`/admin/corsi/${json.id}`)
 						} else {
 							router.push(`/admin/lezioni/${json.id}`)
@@ -260,18 +290,17 @@ export default function AdminContent({ contentId }: AdminCourseProps) {
 					.catch((err: Error) => {
 						throw err
 					})
-			} else {
-				return API.put<Course>(
-					`${contentType === 'corsi' ? 'courses' : 'lessons'}/${content.id}`,
-					contentPayload
-				)
-					.then(json => {
-						setContent(json)
-					})
-					.catch((err: Error) => {
-						throw err
-					})
 			}
+			return API.put<Course>(
+				`${contentType === "corsi" ? "courses" : "lessons"}/${content.id}`,
+				contentPayload,
+			)
+				.then((json) => {
+					setContent(json)
+				})
+				.catch((err: Error) => {
+					throw err
+				})
 		}
 
 		const saveSeoPromise = async () => {
@@ -281,7 +310,7 @@ export default function AdminContent({ contentId }: AdminCourseProps) {
 				ldJSON: content.seo.ldJSON,
 			}
 			return await API.put<SEO>(`seo/${content.seo.id}`, seoPayload)
-				.then(json => {
+				.then((json) => {
 					setContent({ ...content, seo: json })
 				})
 				.catch((err: Error) => {
@@ -290,34 +319,33 @@ export default function AdminContent({ contentId }: AdminCourseProps) {
 		}
 
 		const saveAll = async () => {
-			console.log('saveAll')
-			console.log('courseId', contentId)
-			if (contentId === 'new') {
+			console.log("saveAll")
+			console.log("courseId", contentId)
+			if (contentId === "new") {
 				return Promise.all([saveContentPromise()])
 					.then(() => {
 						setSaved(true)
 					})
-					.catch(err => {
-						throw err
-					})
-			} else {
-				return Promise.all([saveContentPromise(), saveSeoPromise()])
-					.then(() => {
-						setSaved(true)
-					})
-					.catch(err => {
+					.catch((err) => {
 						throw err
 					})
 			}
+			return Promise.all([saveContentPromise(), saveSeoPromise()])
+				.then(() => {
+					setSaved(true)
+				})
+				.catch((err) => {
+					throw err
+				})
 		}
 
 		toast
 			.promise(saveAll(), {
-				loading: 'Salvataggio in corso...',
-				success: 'Corso salvato correttamente!',
-				error: data => data.toString(),
+				loading: "Salvataggio in corso...",
+				success: "Corso salvato correttamente!",
+				error: (data) => data.toString(),
 			})
-			.catch(_ => {})
+			.catch(() => {})
 			.finally(() => {
 				setLoading(false)
 			})
@@ -325,7 +353,7 @@ export default function AdminContent({ contentId }: AdminCourseProps) {
 
 	// Save on Ctrl+S keyboard shortcut
 	const handleKeyboardSubmit = (e: KeyboardEvent) => {
-		if (e.ctrlKey && e.key === 's') {
+		if (e.ctrlKey && e.key === "s") {
 			e.preventDefault()
 
 			handleSubmit()
@@ -333,9 +361,9 @@ export default function AdminContent({ contentId }: AdminCourseProps) {
 	}
 
 	useEffect(() => {
-		document.addEventListener('keydown', handleKeyboardSubmit)
+		document.addEventListener("keydown", handleKeyboardSubmit)
 		return () => {
-			document.removeEventListener('keydown', handleKeyboardSubmit)
+			document.removeEventListener("keydown", handleKeyboardSubmit)
 		}
 	})
 
@@ -346,44 +374,51 @@ export default function AdminContent({ contentId }: AdminCourseProps) {
 
 	const parseSrtTimeInMs = (time: string) => {
 		const [hours, minutes, seconds, milliseconds] = time
-			.replaceAll(',', ':')
-			.split(':')
-			.map(parseFloat)
-		console.log('time', time, hours, minutes, seconds, milliseconds)
-		return hours * 60 * 60 * 1000 + minutes * 60 * 1000 + seconds * 1000 + milliseconds
+			.replaceAll(",", ":")
+			.split(":")
+			.map(Number.parseFloat)
+		console.log("time", time, hours, minutes, seconds, milliseconds)
+		return (
+			hours * 60 * 60 * 1000 +
+			minutes * 60 * 1000 +
+			seconds * 1000 +
+			milliseconds
+		)
 	}
 
 	const parseSRTFile = (e: FormEvent<HTMLInputElement>) => {
 		const file = (e.target as HTMLInputElement).files?.[0]
 		if (!file) return
-		console.log('file', file)
+		console.log("file", file)
 		const reader = new FileReader()
-		reader.onload = async e => {
+		reader.onload = async (e) => {
 			e.preventDefault()
 			const text = e.target?.result as string
-			console.log('text', text)
+			console.log("text", text)
 			const lineBreak = /\r\n\r\n\r\n|\n\n\n|\r\n\r\n|\n\n/
-			const lines = text.split(lineBreak).filter(line => line.trim() !== '')
-			console.log('lines', lines)
+			const lines = text.split(lineBreak).filter((line) => line.trim() !== "")
+			console.log("lines", lines)
 			const srtContent: SrtLine[] = []
-			lines.forEach(line => {
+			for (const line of lines) {
 				const lineBreak = /\r\n|\n/
 				const parts = line.split(lineBreak)
 				const sequence = srtContent.length
 					? srtContent[srtContent.length - 1].sequence + 1
-					: parseInt(parts[0])
-				const [timeStart, timeEnd] = parts[1].split(' --> ').map(parseSrtTimeInMs)
-				const text = parts[2] ? parts[2] : ''
+					: Number.parseInt(parts[0])
+				const [timeStart, timeEnd] = parts[1]
+					.split(" --> ")
+					.map(parseSrtTimeInMs)
+				const text = parts[2] ? parts[2] : ""
 				if (text === srtContent[srtContent.length - 1]?.text) {
 					srtContent[srtContent.length - 1].timeEnd = timeEnd
-					return
+					continue
 				}
 				srtContent.push({ sequence, timeStart, timeEnd, text })
-			})
-			console.log('content', srtContent)
+			}
+			console.log("content", srtContent)
 			const liveEditor = JSON.stringify(srtContent)
 			setContent({ ...content, liveEditor })
-			if (srtFileRef.current) srtFileRef.current.value = ''
+			if (srtFileRef.current) srtFileRef.current.value = ""
 		}
 		reader.readAsText(file)
 	}
@@ -396,82 +431,94 @@ export default function AdminContent({ contentId }: AdminCourseProps) {
 		setOpenModal(true)
 	}
 
+	let SEOJSX = <></>
+	if ("seo" in content) {
+		SEOJSX = <SEOComponent content={content} handleChange={handleChange} />
+	} else if (contentId !== "new") {
+		SEOJSX = <p>SEO in caricamento</p>
+	} else {
+		SEOJSX = <p>SEO non presente, verrà generato in automatico</p>
+	}
+
 	return (
 		<MainWrapper>
-			<Suspense fallback='Caricamento...'>
-				<span className='flex items-center mb-4 gap-4'>
-					<h1>{contentType === 'corsi' ? 'Corso' : 'Lezione'}</h1>
-					{contentId !== 'new' && (
+			<Suspense fallback="Caricamento...">
+				<span className="flex items-center mb-4 gap-4">
+					<h1>{contentType === "corsi" ? "Corso" : "Lezione"}</h1>
+					{contentId !== "new" && (
 						<a
 							href={
-								contentType === 'corsi'
+								contentType === "corsi"
 									? `/corsi/${content?.slug}`
 									: `/corsi/${(content as Lesson)?.course?.slug}/lezione/${content?.slug}`
 							}
-							target='_blank'
-							rel='noopener noreferrer'
-							className='text-primary font-bold'
+							target="_blank"
+							rel="noopener noreferrer"
+							className="text-primary font-bold"
 						>
-							<LiaExternalLinkAltSolid className='inline-block text-3xl' />
+							<LiaExternalLinkAltSolid className="inline-block text-3xl" />
 						</a>
 					)}
 				</span>
 				<form
 					onSubmit={handleSubmit}
-					className='w-full grid md:grid-cols-[1fr_auto] grid-cols-1 gap-4 items-start'
+					className="w-full grid md:grid-cols-[1fr_auto] grid-cols-1 gap-4 items-start"
 				>
 					{/* Col 1 */}
 					<div>
 						<input
-							type='text'
-							name='title'
-							value={title || ''}
+							type="text"
+							name="title"
+							value={title || ""}
 							onChange={handleChange}
-							className={adminStyles.input + ' mb-2'}
+							className={`${adminStyles.input} mb-2`}
 						/>
-						<div className='flex justify-between items-center gap-4 mb-4'>
-							<label htmlFor='slug'>Slug: </label>{' '}
+						<div className="flex justify-between items-center gap-4 mb-4">
+							<label htmlFor="slug">Slug: </label>{" "}
 							<input
-								type='text'
-								name='slug'
-								value={slug || ''}
+								type="text"
+								name="slug"
+								value={slug || ""}
 								onChange={handleChange}
 								onFocus={() => {
-									!slug && setContent({ ...content, slug: generateSlug(title) })
+									if (!slug)
+										setContent({ ...content, slug: generateSlug(title) })
 								}}
 								className={adminStyles.input}
-								id='slug'
+								id="slug"
 							/>
 							<Button
-								type='button'
+								type="button"
 								theme={customButtonTheme}
 								outline
-								onClick={() => setContent({ ...content, slug: generateSlug(title) })}
+								onClick={() =>
+									setContent({ ...content, slug: generateSlug(title) })
+								}
 							>
-								<HiOutlineRefresh title='Genera slug' />
+								<HiOutlineRefresh title="Genera slug" />
 							</Button>
 						</div>
 						<div>
-							<label htmlFor='description' className='block'>
+							<label htmlFor="description" className="block">
 								Descrizione
 							</label>
 							<textarea
-								name='description'
-								id='description'
+								name="description"
+								id="description"
 								className={adminStyles.input}
-								value={description || ''}
+								value={description || ""}
 								onChange={handleChange}
-							></textarea>
+							/>
 						</div>
-						{contentType === 'lezioni' && 'course' in content && (
+						{contentType === "lezioni" && "course" in content && (
 							<>
 								<div>
-									<label htmlFor='videoId'>Video: </label>{' '}
-									<div className='border-2 border-dashed border-neutral-400 dark:border-neutral-400 p-4 flex justify-between items-center'>
+									<label htmlFor="videoId">Video: </label>{" "}
+									<div className="border-2 border-dashed border-neutral-400 dark:border-neutral-400 p-4 flex justify-between items-center">
 										{content.video ? (
-											<div className='flex gap-2 items-center'>
-												<div className='flex items-center justify-center w-10 h-10  rounded-full bg-neutral-300 dark:bg-neutral-500'>
-													<IoPlaySharp className='text-xl' role='img' />
+											<div className="flex gap-2 items-center">
+												<div className="flex items-center justify-center w-10 h-10  rounded-full bg-neutral-300 dark:bg-neutral-500">
+													<IoPlaySharp className="text-xl" role="img" />
 												</div>
 												<span>
 													{content.video.alt}
@@ -481,10 +528,10 @@ export default function AdminContent({ contentId }: AdminCourseProps) {
 											</div>
 										) : (
 											<div>
-												{' '}
+												{" "}
 												Nessun video selezionato
 												<Button
-													type='button'
+													type="button"
 													outline
 													theme={customButtonTheme}
 													onClick={() => handleSelectVideo()}
@@ -495,24 +542,30 @@ export default function AdminContent({ contentId }: AdminCourseProps) {
 										)}
 
 										{content.video && (
-											<div className='flex gap-2'>
+											<div className="flex gap-2">
 												<button
-													type='button'
+													type="button"
 													onClick={() => {
 														handleSelectVideo(true)
 													}}
-													className='flex items-center justify-center w-8 h-8  hover:bg-neutral-200 hover:dark:bg-neutral-700'
+													className="flex items-center justify-center w-8 h-8  hover:bg-neutral-200 hover:dark:bg-neutral-700"
 												>
-													<IoPencilSharp className='text-xl' title='Modifica video' />
+													<IoPencilSharp
+														className="text-xl"
+														title="Modifica video"
+													/>
 												</button>
 												<button
-													type='button'
+													type="button"
 													onClick={() => {
 														setContent({ ...content, video: null })
 													}}
-													className='flex items-center justify-center w-8 h-8  hover:bg-red-500 hover:text-white hover:dark:bg-red-800'
+													className="flex items-center justify-center w-8 h-8  hover:bg-red-500 hover:text-white hover:dark:bg-red-800"
 												>
-													<IoTrashSharp className='text-xl' title='Rimuovi video' />
+													<IoTrashSharp
+														className="text-xl"
+														title="Rimuovi video"
+													/>
 												</button>
 											</div>
 										)}
@@ -520,57 +573,52 @@ export default function AdminContent({ contentId }: AdminCourseProps) {
 								</div>
 								<div>
 									<div>
-										<label htmlFor='liveEditor' className='block'>
+										<label htmlFor="liveEditor" className="block">
 											Live Editor
 										</label>
 										<input
-											type='file'
-											name='liveEditorSrt'
-											id='liveEditorSrt'
-											onInput={e => parseSRTFile(e)}
+											type="file"
+											name="liveEditorSrt"
+											id="liveEditorSrt"
+											onInput={(e) => parseSRTFile(e)}
 											ref={srtFileRef}
 										/>
 										<textarea
-											name='liveEditor'
-											id='liveEditor'
+											name="liveEditor"
+											id="liveEditor"
 											className={adminStyles.input}
-											value={content.liveEditor || ''}
+											value={content.liveEditor || ""}
 											onChange={handleChange}
-										></textarea>
+										/>
 									</div>
-									<label htmlFor='content' className='block'>
+									<label htmlFor="content" className="block">
 										Lezione
 									</label>
 									{isContentLoaded && (
-										<Tiptap content={(content as Lesson).content} onUpdate={setLessonContent} />
+										<Tiptap
+											content={content.content}
+											onUpdate={setLessonContent}
+										/>
 									)}
 								</div>
 							</>
 						)}
-						<div>
-							{'seo' in content ? (
-								<SEOComponent content={content} handleChange={handleChange} />
-							) : contentId !== 'new' ? (
-								<p>SEO in caricamento</p>
-							) : (
-								<p>SEO non presente, verrà generato in automatico</p>
-							)}
-						</div>
+						<div>{SEOJSX}</div>
 					</div>
 					{/* Col 2 */}
-					<div className='gap-2 flex flex-col md:sticky md:top-[81px]'>
+					<div className="gap-2 flex flex-col md:sticky md:top-[81px]">
 						<div>
-							<label htmlFor='publishStatus' className='block'>
+							<label htmlFor="publishStatus" className="block">
 								Stato pubblicazione
 							</label>
 							<select
-								name='publishStatus'
-								id='publishStatus'
+								name="publishStatus"
+								id="publishStatus"
 								onChange={handleChange}
 								className={adminStyles.input}
 								value={publishStatus || PublishStatus.DRAFT}
 							>
-								{Object.values(PublishStatus).map(status => (
+								{Object.values(PublishStatus).map((status) => (
 									<option key={status} value={status}>
 										{status}
 									</option>
@@ -578,37 +626,37 @@ export default function AdminContent({ contentId }: AdminCourseProps) {
 							</select>
 						</div>
 						<div>
-							<label htmlFor='languages' className='block'>
+							<label htmlFor="languages" className="block">
 								Lingua originale
 							</label>
 							<select
-								name='mainLanguageId'
-								id='languages'
+								name="mainLanguageId"
+								id="languages"
 								className={adminStyles.input}
-								value={mainLanguage ? mainLanguage.id : ''}
+								value={mainLanguage ? mainLanguage.id : ""}
 								onChange={handleChange}
 							>
-								{languages.map(language => (
+								{languages.map((language) => (
 									<option key={language.id} value={language.id}>
 										{language.language}
 									</option>
 								))}
 							</select>
 						</div>
-						{contentType === 'lezioni' && (
+						{contentType === "lezioni" && (
 							<div>
-								<label htmlFor='courses'>Corso</label>
+								<label htmlFor="courses">Corso</label>
 								<select
-									name='course'
-									id='courses'
+									name="course"
+									id="courses"
 									className={adminStyles.input}
-									value={('course' in content && content.course.id) || ''}
+									value={("course" in content && content.course.id) || ""}
 									onChange={handleChange}
 								>
-									<option key='' value=''>
+									<option key="" value="">
 										Seleziona corso
 									</option>
-									{courses.map(course => (
+									{courses.map((course) => (
 										<option key={course.id} value={course.id}>
 											{course.title}
 										</option>
@@ -617,15 +665,15 @@ export default function AdminContent({ contentId }: AdminCourseProps) {
 							</div>
 						)}
 						<button
-							type='button'
-							className='flex justify-center'
+							type="button"
+							className="flex justify-center"
 							onClick={() => {
 								setMediaType(MediaType.IMAGE)
 								setOpenModal(true)
 							}}
 						>
 							{thumbnail === null || thumbnail === undefined ? (
-								<div className='w-[100px] h-[100px] bg-primary flex justify-center items-center text-2xl font-bold'>
+								<div className="w-[100px] h-[100px] bg-primary flex justify-center items-center text-2xl font-bold">
 									<span>{displayOrder}</span>
 								</div>
 							) : (
@@ -634,13 +682,13 @@ export default function AdminContent({ contentId }: AdminCourseProps) {
 									alt={thumbnail.alt}
 									width={thumbnail.width}
 									height={thumbnail.height}
-									className='max-w-20 h-auto w-full object-contain'
+									className="max-w-20 h-auto w-full object-contain"
 								/>
 							)}
 						</button>
 						<div>
 							<Button
-								type='submit'
+								type="submit"
 								theme={customButtonTheme}
 								outline
 								fullSized
@@ -652,16 +700,24 @@ export default function AdminContent({ contentId }: AdminCourseProps) {
 									saved
 								}
 							>
-								<div className='flex justify-around items-center w-full'>
-									{loading && <Spinner theme={customSpinnerTheme} color='primary' />} Salva
+								<div className="flex justify-around items-center w-full">
+									{loading && (
+										<Spinner theme={customSpinnerTheme} color="primary" />
+									)}{" "}
+									Salva
 								</div>
 							</Button>
 						</div>
 						<div>
-							<Button theme={customButtonTheme} outline onClick={() => beforeLeave()}>
-								<span className='flex gap-x-2 items-center'>
+							<Button
+								theme={customButtonTheme}
+								outline
+								onClick={() => beforeLeave()}
+							>
+								<span className="flex gap-x-2 items-center">
 									<HiOutlinePlusSm />
-									Aggiungi {contentType === 'corsi' ? 'nuovo corso' : 'nuova lezione'}
+									Aggiungi{" "}
+									{contentType === "corsi" ? "nuovo corso" : "nuova lezione"}
 								</span>
 							</Button>
 						</div>
@@ -680,7 +736,10 @@ export default function AdminContent({ contentId }: AdminCourseProps) {
 							if (selectedMedia) {
 								setSaved(false)
 								if (mediaType === MediaType.IMAGE) {
-									setContent({ ...content, thumbnail: selectedMedia as MediaImage })
+									setContent({
+										...content,
+										thumbnail: selectedMedia as MediaImage,
+									})
 								} else {
 									setContent({ ...content, video: selectedMedia as MediaVideo })
 								}
@@ -692,7 +751,7 @@ export default function AdminContent({ contentId }: AdminCourseProps) {
 						Seleziona
 					</Button>
 					<Button
-						color='gray'
+						color="gray"
 						onClick={() => setOpenModal(false)}
 						outline
 						theme={customButtonTheme}

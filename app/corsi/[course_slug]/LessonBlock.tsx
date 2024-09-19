@@ -1,14 +1,14 @@
-import { titillium_web } from '@/app/fonts'
-import { Media } from '@/utils/types'
-import Image from 'next/image'
-import Link from 'next/link'
-import React from 'react'
-import { IoCaretForward } from 'react-icons/io5'
+import { titillium_web } from "@/app/fonts"
+import type { MediaImage } from "@/utils/types"
+import Image from "next/image"
+import Link from "next/link"
+import React from "react"
+import { IoCaretForward } from "react-icons/io5"
 
-interface LessonBlockProps {
+export interface LessonBlockProps {
 	title: string
 	description: string
-	img: Media | null
+	img: MediaImage | null
 	lessonSlug: string
 	courseSlug: string
 	displayOrder: number
@@ -32,15 +32,15 @@ export default function LessonBlock({
 	lessonSlug,
 	courseSlug,
 	displayOrder,
-}: LessonBlockProps) {
+}: Readonly<LessonBlockProps>) {
 	return (
 		<Link
-			href={'/corsi/' + courseSlug + '/lezione/' + lessonSlug}
-			className='group flex items-center justify-between border-b-2 border-transparent border-neutral-500 hover:border-neutral-300 hover:bg-neutral-100 dark:hover:border-neutral-600 dark:hover:bg-neutral-800 cursor-pointer p-4 transition-colors duration-250 ease-in-out'
+			href={`/corsi/${courseSlug}/lezione/${lessonSlug}`}
+			className="group flex items-center justify-between border-b-2 border-transparent border-neutral-500 hover:border-neutral-300 hover:bg-neutral-100 dark:hover:border-neutral-600 dark:hover:bg-neutral-800 cursor-pointer p-4 transition-colors duration-250 ease-in-out"
 		>
-			<div className='flex items-center'>
+			<div className="flex items-center">
 				{!img ? (
-					<div className='w-[90px] h-[90px] bg-primary flex justify-center items-center text-xl font-bold'>
+					<div className="w-[90px] h-[90px] bg-primary flex justify-center items-center text-xl font-bold">
 						<span>{displayOrder}</span>
 					</div>
 				) : (
@@ -49,18 +49,20 @@ export default function LessonBlock({
 						alt={img.alt}
 						width={img.width}
 						height={img.height}
-						className='max-w-24 h-auto w-full object-contain'
+						className="max-w-24 h-auto w-full object-contain"
 					/>
 				)}
-				<div className='ml-4'>
+				<div className="ml-4">
 					<h2 className={`${titillium_web.className}`}>{title}</h2>
-					<p className='text-neutral-500 dark:text-neutral-400'>{description}</p>
+					<p className="text-neutral-500 dark:text-neutral-400">
+						{description}
+					</p>
 				</div>
 			</div>
-			<div className='flex'>
+			<div className="flex">
 				<IoCaretForward
-					data-testid='caret-forward-icon'
-					className='text-2xl grow min-w-[24px] group-hover:text-neutral-500 dark:group-hover:text-neutral-400 transition-colors duration-250 ease-in-out'
+					data-testid="caret-forward-icon"
+					className="text-2xl grow min-w-[24px] group-hover:text-neutral-500 dark:group-hover:text-neutral-400 transition-colors duration-250 ease-in-out"
 				/>
 			</div>
 		</Link>

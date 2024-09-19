@@ -1,6 +1,6 @@
 "use client"
 import type React from "react"
-import { type ReactElement, useEffect, useRef, useState } from "react"
+import { type ReactElement, useEffect, useState } from "react"
 import { Editor, type Monaco } from "@monaco-editor/react"
 import { emmetCSS, emmetHTML, emmetJSX } from "emmet-monaco-es"
 import type { editor } from "monaco-editor"
@@ -25,7 +25,8 @@ interface CodeEditorProps {
 	externalSetEditor?: React.Dispatch<
 		React.SetStateAction<editor.IStandaloneCodeEditor | null>
 	>
-	externalMonacoRef?: React.MutableRefObject<Monaco>
+	externalMonaco?: Monaco | null
+	externalSetMonaco?: React.Dispatch<React.SetStateAction<Monaco | null>>
 	toggleTabChange?: boolean
 }
 
@@ -41,7 +42,8 @@ export default function CodeEditor({
 	currenFile,
 	externalEditor,
 	externalSetEditor,
-	externalMonacoRef,
+	externalMonaco,
+	externalSetMonaco,
 	toggleTabChange,
 }: Readonly<CodeEditorProps>) {
 	const [fileName, setFileName] = useState(currenFile)
@@ -49,10 +51,10 @@ export default function CodeEditor({
 		useState<editor.IStandaloneCodeEditor | null>(null)
 	const editorState =
 		externalEditor !== undefined ? externalEditor : localEditorState
-	const setEditorState =
-		externalSetEditor !== undefined ? externalSetEditor : setLocalEditorState
-	const localMonacoRef = useRef(null as unknown as Monaco)
-	const monacoRef = externalMonacoRef ?? localMonacoRef
+	const setEditorState = externalSetEditor ?? setLocalEditorState
+	const [localMonacoState, setLocalMonacoState] = useState<Monaco | null>(null)
+	const monacoState = externalMonaco ?? localMonacoState
+	const setMonacoState = externalSetMonaco ?? setLocalMonacoState
 
 	console.log("files in CodeEditor", files)
 	const dispatch = useAppDispatch()
@@ -72,10 +74,10 @@ export default function CodeEditor({
 		setFileName(tabFile)
 		if (!files) return
 		const file = files[tabFile]
-		if (editorState) {
+		if (editorState && monacoState) {
 			const model = file.model
 			editorState.setModel(model)
-			monacoRef.current.editor.setModelLanguage(model, file.language)
+			monacoState.editor.setModelLanguage(model, file.language)
 			model.setValue(file.value)
 		}
 	}
@@ -98,7 +100,7 @@ export default function CodeEditor({
 		emmetCSS(monaco)
 		emmetJSX(monaco)
 		setEditorState(editor)
-		monacoRef.current = monaco
+		setMonacoState(monaco)
 		const file = files[fileName]
 		if (file) {
 			editor.setModel(file.model)

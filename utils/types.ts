@@ -21,7 +21,7 @@ export enum PublishStatus {
 export interface AbstractContent {
 	id: string
 	mainLanguage: Language
-	translations: any[]
+	translations: SEOTranslation[]
 	title: string
 	slug: string
 	description: string
@@ -60,7 +60,7 @@ export interface Media {
 	alt: string
 	type: string | MediaType
 	uploadedAt: Date
-	parentId: string
+	parentId: string | null
 }
 
 export interface MediaImage extends Media {
@@ -81,13 +81,20 @@ export interface Language {
 	id: string
 	code: string
 	language: string
-	thumbnail: MediaImage
+	thumbnail: MediaImage | null
 }
 
 export interface SEO {
 	id: string
 	mainLanguage: Language
-	translations: any[]
+	translations: SEOTranslation[]
+	title: string
+	description: string
+	ldJSON: string
+}
+
+interface SEOTranslation {
+	language: Language
 	title: string
 	description: string
 	ldJSON: string

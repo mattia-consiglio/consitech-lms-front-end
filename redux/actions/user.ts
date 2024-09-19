@@ -1,6 +1,6 @@
 import { API } from '@/utils/api'
-import { AppDispatch, RootState } from '../store'
-import { User } from '@/utils/types'
+import type { AppDispatch, RootState } from '../store'
+import type { User } from '@/utils/types'
 import { setUser, setUserError, userLogin, userLogout } from '../reducers/userReducer'
 
 export const getUserAction = () => {

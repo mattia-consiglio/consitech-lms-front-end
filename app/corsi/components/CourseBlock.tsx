@@ -1,13 +1,20 @@
-'use client'
-import { titillium_web } from '@/app/fonts'
-import { Course, PublishStatus, UserRole } from '@/utils/types'
-import Image from 'next/image'
-import Link from 'next/link'
-import { redirect, useRouter } from 'next/navigation'
-import React from 'react'
-import { HiOutlinePencil } from 'react-icons/hi'
+"use client"
+import { titillium_web } from "@/app/fonts"
+import { PublishStatus, type UserRole, type MediaImage } from "@/utils/types"
+import Image from "next/image"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
+import React from "react"
+import { HiOutlinePencil } from "react-icons/hi"
 
-interface CourseBlockProps extends Course {
+interface CourseBlockProps {
+	title: string
+	description: string
+	slug: string
+	displayOrder: number
+	thumbnail: MediaImage | null
+	publishStatus: PublishStatus
+	id: string
 	role: UserRole
 }
 
@@ -37,16 +44,18 @@ export default function CourseBlock({
 	const router = useRouter()
 	return (
 		<Link
-			className={`border-3 border-transparent hover:border-neutral-300 hover:bg-neutral-100 dark:hover:border-neutral-700 dark:hover:bg-neutral-800 cursor-pointer p-4 transition-colors duration-250 ease-in-out relative group`}
-			href={'/corsi/' + slug}
+			className={
+				"border-3 border-transparent hover:border-neutral-300 hover:bg-neutral-100 dark:hover:border-neutral-700 dark:hover:bg-neutral-800 cursor-pointer p-4 transition-colors duration-250 ease-in-out relative group"
+			}
+			href={`/corsi/${slug}`}
 		>
 			<div
 				className={`flex flex-col items-center ${
-					publishStatus === PublishStatus.DRAFT ? 'opacity-50' : 'opacity-100'
+					publishStatus === PublishStatus.DRAFT ? "opacity-50" : "opacity-100"
 				}`}
 			>
 				{!thumbnailImage ? (
-					<div className='w-[100px] h-[100px] bg-primary flex justify-center items-center text-2xl font-bold'>
+					<div className="w-[100px] h-[100px] bg-primary flex justify-center items-center text-2xl font-bold">
 						<span>{displayOrder}</span>
 					</div>
 				) : (
@@ -55,24 +64,24 @@ export default function CourseBlock({
 						alt={thumbnailImage.alt}
 						width={thumbnailImage.width}
 						height={thumbnailImage.height}
-						className='max-w-[90px] h-auto w-full object-contain'
+						className="max-w-[90px] h-auto w-full object-contain"
 					/>
 				)}
 				<h2 className={`${titillium_web.className} mb-2 mt-3`}>{title}</h2>
-				<p className='text-center'>{description}</p>
+				<p className="text-center">{description}</p>
 			</div>
-			{role === 'ADMIN' && (
+			{role === "ADMIN" && (
 				<button
-					className='absolute top-4 right-4 w-10 h-10 flex items-center justify-center  opacity-0 group-hover:opacity-100 hover:bg-primary hover:text-white transition-all duration-250 ease-in-out'
-					type='button'
-					aria-label='Modifica corso'
-					onMouseEnter={e => {
+					className="absolute top-4 right-4 w-10 h-10 flex items-center justify-center  opacity-0 group-hover:opacity-100 hover:bg-primary hover:text-white transition-all duration-250 ease-in-out"
+					type="button"
+					aria-label="Modifica corso"
+					onMouseEnter={(e) => {
 						e.preventDefault()
-						router.prefetch('/admin/corsi/' + id)
+						router.prefetch(`/admin/corsi/${id}`)
 					}}
-					onClick={e => {
+					onClick={(e) => {
 						e.preventDefault()
-						router.push('/admin/corsi/' + id)
+						router.push(`/admin/corsi/${id}`)
 					}}
 				>
 					<HiOutlinePencil />

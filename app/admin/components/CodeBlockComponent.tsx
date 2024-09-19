@@ -1,6 +1,5 @@
 import style from '@/app/styles/mixins.module.scss'
 import { NodeViewContent, NodeViewWrapper } from '@tiptap/react'
-import exp from 'constants'
 import React from 'react'
 
 const CodeBlockComponent = ({
@@ -12,14 +11,20 @@ const CodeBlockComponent = ({
 }: {
 	node: { attrs: { language: string } }
 	updateAttributes: (attrs: { language: string }) => void
-	extension: any
+	extension: {
+		options: {
+			lowlight: {
+				listLanguages: () => string[]
+			}
+		}
+	}
 }) => (
 	<NodeViewWrapper className='relative'>
 		<select
 			contentEditable={false}
 			defaultValue={defaultLanguage}
 			onChange={event => updateAttributes({ language: event.target.value })}
-			className={'absolute right-2 top-2' + style.inputMixin}
+			className={`absolute right-2 top-2${style.inputMixin}`}
 		>
 			<option value='null'>auto</option>
 			<option disabled>—</option>

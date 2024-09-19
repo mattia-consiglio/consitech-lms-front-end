@@ -1,6 +1,5 @@
 import MainWrapper from "@/app/components/MainWrapper"
 import VideoPlayer from "./components/VideoPlayer"
-import dynamic from "next/dynamic"
 import { API } from "@/utils/api"
 import type { Lesson } from "@/utils/types"
 import DOMPurify from "isomorphic-dompurify"
@@ -9,10 +8,6 @@ import PathName from "@/app/components/PathName"
 import { redirect } from "next/navigation"
 import CodePlayer from "./components/CodePlayer"
 import CodeSandbox from "./components/CodeSandbox"
-
-const CodeEditor = dynamic(() => import("./components/CodeEditor"), {
-	ssr: false,
-})
 
 interface LessonsPageProps {
 	params: { course_slug: string; lesson_slug: string }

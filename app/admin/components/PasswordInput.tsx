@@ -24,9 +24,9 @@ type PasswordInputProps =
 
 const specialChars = "!@#$%^&*()-_=+{};:,<.>/?~`£€[]\\|\"'"
 const regexSpecialCharacters = specialChars
-	.replace("]", "\\]")
-	.replace("-", "\\-")
-	.replace("/", "\\/")
+	.replace(/"]"/, "\\]")
+	.replace(/"-"/g, "\\-")
+	.replace(/"\/"/g, "/")
 
 const regexCommonPattern = `A-Za-z0-9\\s${regexSpecialCharacters}`
 
@@ -110,7 +110,7 @@ const getColorFromScore = (score: number) => {
 	return "bg-red-600 dark:bg-red-500"
 }
 
-const generatePassword = (length: number) => {
+const generatePassword = (length: number): string => {
 	let result = ""
 	const uppercaseCharacters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	const lowercaseCharacters = "abcdefghijklmnopqrstuvwxyz"

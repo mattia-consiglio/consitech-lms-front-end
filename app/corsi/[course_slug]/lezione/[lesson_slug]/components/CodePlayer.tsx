@@ -1,9 +1,6 @@
 "use client"
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import CodeEditor, {
-	type MonacoFile,
-	type CodeEditorFilesMap,
-} from "./CodeEditor"
+import CodeEditor, { type MonacoFile } from "./CodeEditor"
 import type { SrtLine } from "@/utils/types"
 import { useAppSelector } from "@/redux/store"
 import * as Diff from "diff"
@@ -83,11 +80,9 @@ function CodePlayer({ sourceCode }: Readonly<CodePlayerProps>) {
 	const files = useRef(
 		{} as { [key: string]: { model: editor.ITextModel } & MonacoFile },
 	)
-	const changes = useRef({} as MonacoEditorChangeOptions)
 	const [editorState, setEditorState] =
 		useState<editor.IStandaloneCodeEditor | null>(null)
-	const monacoRef = useRef(null as unknown as Monaco)
-	const isEditorChanged = useRef(false)
+	const [monacoState, setMonacoState] = useState<Monaco | null>(null)
 	const prevVideoSpeed = useRef(1)
 	const currentTimeRef = useRef(currentTime)
 	const [toggleTabChange, setToggleTabChange] = useState(false)
@@ -120,7 +115,7 @@ function CodePlayer({ sourceCode }: Readonly<CodePlayerProps>) {
 			{ range, text, targetText }: MonacoEditorChangeOptions,
 			fileChanged = false,
 		) => {
-			if (!editorState || !monacoRef.current || !range) return
+			if (!editorState || !monacoState || !range) return
 			const file = files.current[currentFilePathRef.current]
 
 			const model = file.model
@@ -141,7 +136,7 @@ function CodePlayer({ sourceCode }: Readonly<CodePlayerProps>) {
 				text: text,
 				forceMoveMarkers: false,
 			}
-			monacoRef.current.editor.setModelLanguage(model, file.language)
+			monacoState.editor.setModelLanguage(model, file.language)
 
 			//push changes to editor
 			model.pushEditOperations([], [editOp], () => null)
@@ -151,7 +146,7 @@ function CodePlayer({ sourceCode }: Readonly<CodePlayerProps>) {
 				model.setValue(targetText)
 			}
 		},
-		[editorState],
+		[editorState, monacoState],
 	)
 
 	/**
@@ -298,11 +293,11 @@ function CodePlayer({ sourceCode }: Readonly<CodePlayerProps>) {
 			const path = `codePlayer/${file}`
 			if (init) {
 				if (files.current[path]) return
-				if (!monacoRef.current) return
-				const model = monacoRef.current.editor.createModel(
+				if (!monacoState) return
+				const model = monacoState.editor.createModel(
 					text,
 					language,
-					monacoRef.current.Uri.parse(path),
+					monacoState.Uri.parse(path),
 				)
 				files.current[path] = {
 					model,
@@ -342,6 +337,7 @@ function CodePlayer({ sourceCode }: Readonly<CodePlayerProps>) {
 			getLanguage,
 			getTextDifference2DRanges,
 			handleEditorChange,
+			monacoState,
 		],
 	)
 
@@ -408,17 +404,16 @@ function CodePlayer({ sourceCode }: Readonly<CodePlayerProps>) {
 	}, [currentSpeed])
 
 	return (
-		<>
-			<CodeEditor
-				key="code-player"
-				currenFile={currentFile}
-				files={files.current}
-				externalEditor={editorState}
-				externalSetEditor={setEditorState}
-				externalMonacoRef={monacoRef}
-				toggleTabChange={toggleTabChange}
-			/>
-		</>
+		<CodeEditor
+			key="code-player"
+			currenFile={currentFile}
+			files={files.current}
+			externalEditor={editorState}
+			externalSetEditor={setEditorState}
+			externalMonaco={monacoState}
+			externalSetMonaco={setMonacoState}
+			toggleTabChange={toggleTabChange}
+		/>
 	)
 }
 

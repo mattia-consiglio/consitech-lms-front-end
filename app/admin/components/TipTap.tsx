@@ -1,24 +1,22 @@
-'use client'
+"use client"
 
 // Docs https://tiptap.dev/docs/editor/introduction
 
-import { Color } from '@tiptap/extension-color'
-import ListItem from '@tiptap/extension-list-item'
-import TextStyle from '@tiptap/extension-text-style'
-import Link from '@tiptap/extension-link'
-import Image from '@tiptap/extension-image'
-import TextAlign from '@tiptap/extension-text-align'
+import { Color } from "@tiptap/extension-color"
+import ListItem from "@tiptap/extension-list-item"
+import TextStyle from "@tiptap/extension-text-style"
+import Link from "@tiptap/extension-link"
+import Image from "@tiptap/extension-image"
+import TextAlign from "@tiptap/extension-text-align"
 import {
-	Editor,
+	type Editor,
 	EditorContent,
-	EditorProvider,
 	ReactNodeViewRenderer,
-	useCurrentEditor,
 	useEditor,
-} from '@tiptap/react'
-import StarterKit from '@tiptap/starter-kit'
-import React, { useCallback, useEffect } from 'react'
-import '@/app/styles/tiptapEditor.scss'
+} from "@tiptap/react"
+import StarterKit from "@tiptap/starter-kit"
+import React, { useCallback } from "react"
+import "@/app/styles/tiptapEditor.scss"
 import {
 	RiAlignCenter,
 	RiAlignJustify,
@@ -48,14 +46,14 @@ import {
 	RiSeparator,
 	RiStrikethrough,
 	RiUnderline,
-} from 'react-icons/ri'
-import Underline from '@tiptap/extension-underline'
-import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
-import 'highlight.js/scss/atom-one-dark.scss'
+} from "react-icons/ri"
+import Underline from "@tiptap/extension-underline"
+import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight"
+import "highlight.js/scss/atom-one-dark.scss"
 // load all highlight.js languages
-import { common, createLowlight } from 'lowlight'
-import CodeBlockComponent from './CodeBlockComponent'
-import adminStyles from '@/app/admin/styles/admin.module.scss'
+import { common, createLowlight } from "lowlight"
+import CodeBlockComponent from "./CodeBlockComponent"
+import adminStyles from "@/app/admin/styles/admin.module.scss"
 
 const lowlight = createLowlight(common)
 
@@ -72,258 +70,260 @@ interface Funcs {
  */
 const MenuBar = ({ editor, addImage, setLink }: Funcs) => {
 	return (
-		<div className='tiptap-menu_bar'>
+		<div className="tiptap-menu_bar">
 			<button
 				onClick={() => editor.chain().focus().undo().run()}
 				disabled={!editor.can().chain().focus().undo().run()}
-				type='button'
-				aria-label='Annulla'
-				title='Annulla'
+				type="button"
+				aria-label="Annulla"
+				title="Annulla"
 			>
 				<RiArrowGoBackLine />
 			</button>
 			<button
 				onClick={() => editor.chain().focus().redo().run()}
 				disabled={!editor.can().chain().focus().redo().run()}
-				type='button'
-				aria-label='Ripeti'
-				title='Ripeti'
+				type="button"
+				aria-label="Ripeti"
+				title="Ripeti"
 			>
 				<RiArrowGoForwardLine />
 			</button>
 			<button
 				onClick={() => editor.chain().focus().toggleBold().run()}
 				disabled={!editor.can().chain().focus().toggleBold().run()}
-				className={editor.isActive('bold') ? 'is-active' : ''}
-				type='button'
-				aria-label='grassetto'
-				title='grassetto'
+				className={editor.isActive("bold") ? "is-active" : ""}
+				type="button"
+				aria-label="grassetto"
+				title="grassetto"
 			>
 				<RiBold />
 			</button>
 			<button
 				onClick={() => editor.chain().focus().toggleItalic().run()}
 				disabled={!editor.can().chain().focus().toggleItalic().run()}
-				className={editor.isActive('italic') ? 'is-active' : ''}
-				type='button'
-				aria-label='corsivo'
-				title='corsivo'
+				className={editor.isActive("italic") ? "is-active" : ""}
+				type="button"
+				aria-label="corsivo"
+				title="corsivo"
 			>
 				<RiItalic />
 			</button>
 			<button
 				onClick={() => editor.chain().focus().toggleUnderline().run()}
 				disabled={!editor.can().chain().focus().toggleUnderline().run()}
-				className={editor.isActive('italic') ? 'is-active' : ''}
-				type='button'
-				aria-label='Sottolineato'
-				title='Sottolineato'
+				className={editor.isActive("italic") ? "is-active" : ""}
+				type="button"
+				aria-label="Sottolineato"
+				title="Sottolineato"
 			>
 				<RiUnderline />
 			</button>
 			<button
 				onClick={() => editor.chain().focus().toggleStrike().run()}
 				disabled={!editor.can().chain().focus().toggleStrike().run()}
-				className={editor.isActive('strike') ? 'is-active' : ''}
-				type='button'
-				aria-label='barrato'
-				title='barrato'
+				className={editor.isActive("strike") ? "is-active" : ""}
+				type="button"
+				aria-label="barrato"
+				title="barrato"
 			>
 				<RiStrikethrough />
 			</button>
 			<button
 				onClick={() => editor.chain().focus().toggleCode().run()}
 				disabled={!editor.can().chain().focus().toggleCode().run()}
-				className={editor.isActive('code') ? 'is-active' : ''}
-				type='button'
-				aria-label='codice inline'
-				title='codice inline'
+				className={editor.isActive("code") ? "is-active" : ""}
+				type="button"
+				aria-label="codice inline"
+				title="codice inline"
 			>
 				<RiCodeLine />
 			</button>
 			<button
-				onClick={() => editor.chain().focus().unsetAllMarks().clearNodes().run()}
-				type='button'
-				aria-label='rimuovi formattazione'
-				title='rimuovi formattazione'
+				onClick={() =>
+					editor.chain().focus().unsetAllMarks().clearNodes().run()
+				}
+				type="button"
+				aria-label="rimuovi formattazione"
+				title="rimuovi formattazione"
 			>
 				<RiFormatClear />
 			</button>
 			<button
 				onClick={() => editor.chain().focus().setParagraph().run()}
-				className={editor.isActive('paragraph') ? 'is-active' : ''}
-				type='button'
-				aria-label='paragrafo'
-				title='paragrafo'
+				className={editor.isActive("paragraph") ? "is-active" : ""}
+				type="button"
+				aria-label="paragrafo"
+				title="paragrafo"
 			>
 				<RiParagraph />
 			</button>
 			<button
 				onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-				className={editor.isActive('heading', { level: 1 }) ? 'is-active' : ''}
-				type='button'
-				aria-label='intestazione 1'
-				title='intestazione 1'
+				className={editor.isActive("heading", { level: 1 }) ? "is-active" : ""}
+				type="button"
+				aria-label="intestazione 1"
+				title="intestazione 1"
 			>
 				<RiH1 />
 			</button>
 			<button
 				onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-				className={editor.isActive('heading', { level: 2 }) ? 'is-active' : ''}
-				type='button'
-				aria-label='intestazione 2'
-				title='intestazione 2'
+				className={editor.isActive("heading", { level: 2 }) ? "is-active" : ""}
+				type="button"
+				aria-label="intestazione 2"
+				title="intestazione 2"
 			>
 				<RiH2 />
 			</button>
 			<button
 				onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-				className={editor.isActive('heading', { level: 3 }) ? 'is-active' : ''}
-				type='button'
-				aria-label='intestazione 3'
-				title='intestazione 3'
+				className={editor.isActive("heading", { level: 3 }) ? "is-active" : ""}
+				type="button"
+				aria-label="intestazione 3"
+				title="intestazione 3"
 			>
 				<RiH3 />
 			</button>
 			<button
 				onClick={() => editor.chain().focus().toggleHeading({ level: 4 }).run()}
-				className={editor.isActive('heading', { level: 4 }) ? 'is-active' : ''}
-				type='button'
-				aria-label='intestazione 4'
-				title='intestazione 4'
+				className={editor.isActive("heading", { level: 4 }) ? "is-active" : ""}
+				type="button"
+				aria-label="intestazione 4"
+				title="intestazione 4"
 			>
 				<RiH4 />
 			</button>
 			<button
 				onClick={() => editor.chain().focus().toggleHeading({ level: 5 }).run()}
-				className={editor.isActive('heading', { level: 5 }) ? 'is-active' : ''}
-				type='button'
-				aria-label='intestazione 5'
-				title='intestazione 5'
+				className={editor.isActive("heading", { level: 5 }) ? "is-active" : ""}
+				type="button"
+				aria-label="intestazione 5"
+				title="intestazione 5"
 			>
 				<RiH5 />
 			</button>
 			<button
 				onClick={() => editor.chain().focus().toggleHeading({ level: 6 }).run()}
-				className={editor.isActive('heading', { level: 6 }) ? 'is-active' : ''}
-				type='button'
-				aria-label='intestazione 6'
-				title='intestazione 6'
+				className={editor.isActive("heading", { level: 6 }) ? "is-active" : ""}
+				type="button"
+				aria-label="intestazione 6"
+				title="intestazione 6"
 			>
 				<RiH6 />
 			</button>
 			<button
 				onClick={() => editor.chain().focus().toggleBulletList().run()}
-				className={editor.isActive('bulletList') ? 'is-active' : ''}
-				type='button'
-				aria-label='elenco non ordinato'
-				title='elenco non ordinato'
+				className={editor.isActive("bulletList") ? "is-active" : ""}
+				type="button"
+				aria-label="elenco non ordinato"
+				title="elenco non ordinato"
 			>
 				<RiListUnordered />
 			</button>
 			<button
 				onClick={() => editor.chain().focus().toggleOrderedList().run()}
-				className={editor.isActive('orderedList') ? 'is-active' : ''}
-				type='button'
-				aria-label='elenco ordinato'
-				title='elenco ordinato'
+				className={editor.isActive("orderedList") ? "is-active" : ""}
+				type="button"
+				aria-label="elenco ordinato"
+				title="elenco ordinato"
 			>
 				<RiListOrdered2 />
 			</button>
 			<button
 				onClick={() => editor.chain().focus().toggleCodeBlock().run()}
-				className={editor.isActive('codeBlock') ? 'is-active' : ''}
-				type='button'
-				aria-label='blocco codice'
-				title='blocco codice'
+				className={editor.isActive("codeBlock") ? "is-active" : ""}
+				type="button"
+				aria-label="blocco codice"
+				title="blocco codice"
 			>
 				<RiCodeBlock />
 			</button>
 			<button
 				onClick={() => editor.chain().focus().toggleBlockquote().run()}
-				className={editor.isActive('blockquote') ? 'is-active' : ''}
-				type='button'
-				aria-label='citazione'
-				title='citazione'
+				className={editor.isActive("blockquote") ? "is-active" : ""}
+				type="button"
+				aria-label="citazione"
+				title="citazione"
 			>
 				<RiDoubleQuotesL />
 			</button>
 			<button
 				onClick={() => editor.chain().focus().setHorizontalRule().run()}
-				type='button'
-				aria-label='riga orizzontale'
-				title='riga orizzontale'
+				type="button"
+				aria-label="riga orizzontale"
+				title="riga orizzontale"
 			>
 				<RiSeparator />
 			</button>
 			<button
 				onClick={() => editor.chain().focus().setHardBreak().run()}
-				type='button'
-				aria-label='a capo forzato'
-				title='a capo forzato'
+				type="button"
+				aria-label="a capo forzato"
+				title="a capo forzato"
 			>
 				<RiCornerDownRightLine />
 			</button>
 
 			<button
 				onClick={() => setLink()}
-				className={editor.isActive('link') ? 'is-active' : ''}
-				type='button'
-				aria-label='Aggiungi link'
-				title='Aggiungi link'
+				className={editor.isActive("link") ? "is-active" : ""}
+				type="button"
+				aria-label="Aggiungi link"
+				title="Aggiungi link"
 			>
 				<RiLink />
 			</button>
 			<button
 				onClick={() => editor.chain().focus().unsetLink().run()}
-				disabled={!editor.isActive('link')}
-				type='button'
-				aria-label='Rimuovi link'
-				title='Rimuovi link'
+				disabled={!editor.isActive("link")}
+				type="button"
+				aria-label="Rimuovi link"
+				title="Rimuovi link"
 			>
 				<RiLinkUnlinkM />
 			</button>
 			<button
 				onClick={addImage}
-				type='button'
-				aria-label='Aggiungi immagine'
-				title='Aggiungi immagine'
+				type="button"
+				aria-label="Aggiungi immagine"
+				title="Aggiungi immagine"
 			>
 				<RiImageAddFill />
 			</button>
 			<button
-				onClick={() => editor.chain().focus().setTextAlign('left').run()}
-				className={editor.isActive({ textAlign: 'left' }) ? 'is-active' : ''}
-				type='button'
-				aria-label='Allineamento a sinistra'
-				title='Allineamento a sinistra'
+				onClick={() => editor.chain().focus().setTextAlign("left").run()}
+				className={editor.isActive({ textAlign: "left" }) ? "is-active" : ""}
+				type="button"
+				aria-label="Allineamento a sinistra"
+				title="Allineamento a sinistra"
 			>
 				<RiAlignLeft />
 			</button>
 			<button
-				onClick={() => editor.chain().focus().setTextAlign('center').run()}
-				className={editor.isActive({ textAlign: 'center' }) ? 'is-active' : ''}
-				type='button'
-				aria-label='Allineamento al centro'
-				title='Allineamento al centro'
+				onClick={() => editor.chain().focus().setTextAlign("center").run()}
+				className={editor.isActive({ textAlign: "center" }) ? "is-active" : ""}
+				type="button"
+				aria-label="Allineamento al centro"
+				title="Allineamento al centro"
 			>
 				<RiAlignCenter />
 			</button>
 			<button
-				onClick={() => editor.chain().focus().setTextAlign('right').run()}
-				className={editor.isActive({ textAlign: 'right' }) ? 'is-active' : ''}
-				type='button'
-				aria-label='Allineamento a destra'
-				title='Allineamento a destra'
+				onClick={() => editor.chain().focus().setTextAlign("right").run()}
+				className={editor.isActive({ textAlign: "right" }) ? "is-active" : ""}
+				type="button"
+				aria-label="Allineamento a destra"
+				title="Allineamento a destra"
 			>
 				<RiAlignRight />
 			</button>
 			<button
-				onClick={() => editor.chain().focus().setTextAlign('justify').run()}
-				className={editor.isActive({ textAlign: 'justify' }) ? 'is-active' : ''}
-				type='button'
-				aria-label='Allineamento giustificato'
-				title='Allineamento giustificato'
+				onClick={() => editor.chain().focus().setTextAlign("justify").run()}
+				className={editor.isActive({ textAlign: "justify" }) ? "is-active" : ""}
+				type="button"
+				aria-label="Allineamento giustificato"
+				title="Allineamento giustificato"
 			>
 				<RiAlignJustify />
 			</button>
@@ -341,7 +341,7 @@ const extensions = [
 		},
 	}).configure({
 		lowlight,
-		defaultLanguage: 'plaintext',
+		defaultLanguage: "plaintext",
 	}),
 	Link.configure({
 		openOnClick: false,
@@ -349,21 +349,21 @@ const extensions = [
 	}),
 	Image,
 	TextAlign.configure({
-		types: ['heading', 'paragraph', 'image', 'img'],
+		types: ["heading", "paragraph", "image", "img"],
 	}),
 	StarterKit.configure({
 		bulletList: {
 			keepMarks: true,
 			keepAttributes: false, // TODO : Making this as `false` because marks are not preserved when I try to preserve attrs, awaiting a bit of help
 			HTMLAttributes: {
-				class: 'list-disc list-inside pl-2',
+				class: "list-disc list-inside pl-2",
 			},
 		},
 		orderedList: {
 			keepMarks: true,
 			keepAttributes: false, // TODO : Making this as `false` because marks are not preserved when I try to preserve attrs, awaiting a bit of help
 			HTMLAttributes: {
-				class: 'list-decimal list-inside pl-2',
+				class: "list-decimal list-inside pl-2",
 			},
 		},
 		codeBlock: false,
@@ -394,7 +394,7 @@ const Tiptap = ({ content, onUpdate: setContent }: Props) => {
 	})
 
 	const addImage = useCallback(() => {
-		const url = window.prompt('URL')
+		const url = window.prompt("URL")
 
 		if (url) {
 			editor?.chain().focus().setImage({ src: url }).run()
@@ -402,8 +402,8 @@ const Tiptap = ({ content, onUpdate: setContent }: Props) => {
 	}, [editor])
 
 	const setLink = useCallback(() => {
-		const previousUrl = editor?.getAttributes('link').href
-		const url = window.prompt('URL', previousUrl)
+		const previousUrl = editor?.getAttributes("link").href
+		const url = window.prompt("URL", previousUrl)
 
 		// cancelled
 		if (url === null) {
@@ -411,14 +411,14 @@ const Tiptap = ({ content, onUpdate: setContent }: Props) => {
 		}
 
 		// empty
-		if (url === '') {
-			editor?.chain().focus().extendMarkRange('link').unsetLink().run()
+		if (url === "") {
+			editor?.chain().focus().extendMarkRange("link").unsetLink().run()
 
 			return
 		}
 
 		// update link
-		editor?.chain().focus().extendMarkRange('link').setLink({ href: url }).run()
+		editor?.chain().focus().extendMarkRange("link").setLink({ href: url }).run()
 	}, [editor])
 
 	const funcs: Funcs = {
