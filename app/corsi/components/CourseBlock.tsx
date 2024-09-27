@@ -12,7 +12,7 @@ interface CourseBlockProps {
 	description: string
 	slug: string
 	displayOrder: number
-	thumbnail: MediaImage | null
+	thumbnailImage: MediaImage | null
 	publishStatus: PublishStatus
 	id: string
 	role: UserRole
@@ -36,12 +36,14 @@ export default function CourseBlock({
 	description,
 	slug,
 	displayOrder,
-	thumbnail: thumbnailImage,
+	thumbnailImage,
 	role,
 	publishStatus,
 	id,
 }: Readonly<CourseBlockProps>) {
 	const router = useRouter()
+	console.log({thumbnailImage});
+	
 	return (
 		<Link
 			className={

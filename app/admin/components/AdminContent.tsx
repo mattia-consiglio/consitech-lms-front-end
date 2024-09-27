@@ -58,7 +58,7 @@ export default function AdminContent({
 					description: "",
 					slug: "",
 					publishStatus: PublishStatus.DRAFT,
-					thumbnail: null,
+					thumbnailImage: null,
 					displayOrder: 0,
 					mainLanguage: {} as Language,
 					seo: {
@@ -72,7 +72,7 @@ export default function AdminContent({
 					description: "",
 					slug: "",
 					publishStatus: PublishStatus.DRAFT,
-					thumbnail: null,
+					thumbnailImage: null,
 					displayOrder: 0,
 					mainLanguage: {} as Language,
 					liveEditor: "",
@@ -101,7 +101,7 @@ export default function AdminContent({
 		description,
 		slug,
 		publishStatus,
-		thumbnail,
+		thumbnailImage: thumbnail,
 		displayOrder,
 		mainLanguage,
 	} = content
@@ -738,7 +738,7 @@ export default function AdminContent({
 								if (mediaType === MediaType.IMAGE) {
 									setContent({
 										...content,
-										thumbnail: selectedMedia as MediaImage,
+										thumbnailImage: selectedMedia as MediaImage,
 									})
 								} else {
 									setContent({ ...content, video: selectedMedia as MediaVideo })

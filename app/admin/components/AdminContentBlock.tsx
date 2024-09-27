@@ -22,7 +22,7 @@ export default function AdminContentBlock({
 		title,
 		description,
 		displayOrder,
-		thumbnail: thumbnailImage,
+		thumbnailImage,
 		publishStatus,
 		id,
 	} = content
