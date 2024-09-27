@@ -233,10 +233,8 @@ export default function MediaManager({
 									</p>
 									<p>
 										Risoluzioni:{" "}
-										{selected &&
-										"resolutions" in selected &&
-										selected.resolutions &&
-										selected.resolutions.length
+										{"resolutions" in selected &&
+										selected.resolutions?.length
 											? selected.resolutions.flatMap((resolution, index) => {
 													return index < selected.resolutions.length - 1
 														? `${resolution.name}, `

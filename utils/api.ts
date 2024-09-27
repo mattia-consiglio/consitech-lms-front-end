@@ -21,7 +21,7 @@ export class API {
 		const origin =
 			typeof window !== 'undefined' && window.location.origin
 				? window.location.origin
-				: OriginUrl || ''
+				: OriginUrl ?? ''
 
 		if (contentType === undefined) {
 			contentType = 'application/json'
