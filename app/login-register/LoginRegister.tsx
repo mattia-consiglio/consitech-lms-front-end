@@ -37,9 +37,7 @@ export default function LoginRegister({
 		searchParams?.tab && !Array.isArray(searchParams.tab)
 			? searchParams.tab
 			: null
-	// console.log(tabQuery)
 
-	// let activeTab = getInitalTab(tabQuery)
 	const tabsRef = useRef<TabsRef>(null)
 	const [activeTab, setActiveTab] = useState(getInitialTab(tabQuery))
 

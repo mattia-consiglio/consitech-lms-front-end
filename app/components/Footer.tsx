@@ -58,19 +58,22 @@ export default function MyFooter() {
 							href="https://www.linkedin.com/in/mattiaconsiglio/"
 							target="_bank"
 							icon={BsLinkedin}
-							className="dark:text-neutral-400"
+							title="Linkedin"
+							className="dark:text-neutral-300"
 						/>
 						<FooterIcon
 							href="https://github.com/mattia-consiglio"
 							target="_bank"
 							icon={BsGithub}
-							className="dark:text-neutral-400"
+							title="Github"
+							className="dark:text-neutral-300"
 						/>
 						<FooterIcon
 							href="https://www.facebook.com/mattiaconsiglio96/"
 							target="_bank"
 							icon={BsFacebook}
-							className="dark:text-neutral-400"
+							title="Facebook"
+							className="dark:text-neutral-300"
 						/>
 					</div>
 				</div>

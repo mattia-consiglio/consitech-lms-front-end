@@ -56,7 +56,6 @@ export default function CodeEditor({
 	const monacoState = externalMonaco ?? localMonacoState
 	const setMonacoState = externalSetMonaco ?? setLocalMonacoState
 
-	console.log("files in CodeEditor", files)
 	const dispatch = useAppDispatch()
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: Needed for updating the tab on video play

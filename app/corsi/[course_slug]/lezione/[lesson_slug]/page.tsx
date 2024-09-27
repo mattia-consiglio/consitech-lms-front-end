@@ -13,7 +13,9 @@ interface LessonsPageProps {
 	params: { course_slug: string; lesson_slug: string }
 }
 
-export default async function LessonsPage({ params }: LessonsPageProps) {
+export default async function LessonsPage({
+	params,
+}: Readonly<LessonsPageProps>) {
 	const response = await API.get<Lesson>(
 		`public/lessons/slug/${params.lesson_slug}`,
 	).catch(() => {

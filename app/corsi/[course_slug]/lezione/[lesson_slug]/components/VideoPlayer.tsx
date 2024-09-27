@@ -43,7 +43,7 @@ export default function VideoPlayer({ video }: VideoPlayerProps) {
 		() => video.resolutions?.map((resolution) => resolution.name),
 		[video],
 	)
-	const [videoSource, setVideoSource] = useState(sources?.[0] || video.url)
+	const [videoSource, setVideoSource] = useState(sources?.[0] ?? video.url)
 	const [currentQuality, setCurrentQuality] = useState(qualities?.[0] || "")
 	const player = useRef<HTMLVideoElement>(null)
 	const intervalID = useRef<NodeJS.Timeout>()
@@ -233,7 +233,7 @@ export default function VideoPlayer({ video }: VideoPlayerProps) {
 					}}
 					src={videoSource}
 				>
-					<track kind="captions" src="" label="English" srcLang="en" default />
+					<track kind="captions" src="" label="Italian" srcLang="it" default />
 					Your browser does not support the video tag.
 				</video>
 

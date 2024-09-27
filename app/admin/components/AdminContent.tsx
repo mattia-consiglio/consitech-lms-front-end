@@ -431,7 +431,7 @@ export default function AdminContent({
 		setOpenModal(true)
 	}
 
-	let SEOJSX = <></>
+	let SEOJSX: JSX.Element
 	if ("seo" in content) {
 		SEOJSX = <SEOComponent content={content} handleChange={handleChange} />
 	} else if (contentId !== "new") {

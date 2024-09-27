@@ -1,6 +1,6 @@
-import type React from 'react'
-import { useState } from 'react'
-import './videoPlayer.scss'
+import type React from "react"
+import { useState } from "react"
+import "./videoPlayer.scss"
 
 interface VideoProgressBarProps {
 	duration: number
@@ -8,8 +8,14 @@ interface VideoProgressBarProps {
 	onSeek: (percentage: number) => void
 }
 
-export default function VideoProgressBar({ duration, currentTime, onSeek }: VideoProgressBarProps) {
-	const [currentTimeText, setCurrentTimeText] = useState(formatTime(currentTime))
+export default function VideoProgressBar({
+	duration,
+	currentTime,
+	onSeek,
+}: VideoProgressBarProps) {
+	const [currentTimeText, setCurrentTimeText] = useState(
+		formatTime(currentTime),
+	)
 	const [hoverPercentage, setHoverPercentage] = useState(0)
 	const [isHovering, setIsHovering] = useState(false)
 
@@ -17,11 +23,13 @@ export default function VideoProgressBar({ duration, currentTime, onSeek }: Vide
 		const time = (perc / 100) * duration
 		const minutes = Math.floor(time / 60)
 		const seconds = Math.floor(time % 60)
-		return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`
+		return `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`
 	}
 
 	function getCursorPosition(e: React.MouseEvent<HTMLDivElement>) {
-		const target = e.currentTarget.closest('.progress-bar-wrapper') as HTMLDivElement
+		const target = e.currentTarget.closest(
+			".progress-bar-wrapper",
+		) as HTMLDivElement
 		const percentage = (e.nativeEvent.offsetX / target.offsetWidth) * 100
 		return percentage
 	}
@@ -39,8 +47,10 @@ export default function VideoProgressBar({ duration, currentTime, onSeek }: Vide
 	}
 
 	return (
+		// biome-ignore lint/a11y/useKeyWithClickEvents: keyboard events handled elsewhere
+		// biome-ignore lint/a11y/useKeyWithMouseEvents: <explanation>
 		<div
-			className='progress-bar-wrapper'
+			className="progress-bar-wrapper"
 			onMouseMove={handleMouseHover}
 			onMouseOver={handleMouseHover}
 			onMouseLeave={handleMouseLeave}
@@ -49,14 +59,20 @@ export default function VideoProgressBar({ duration, currentTime, onSeek }: Vide
 				onSeek(seconds)
 			}}
 		>
-			<div className='progress' style={{ width: `${(currentTime / duration) * 100}%` }} />
-			<div className='circle' style={{ left: `${(currentTime / duration) * 100}%` }}></div>
+			<div
+				className="progress"
+				style={{ width: `${(currentTime / duration) * 100}%` }}
+			/>
+			<div
+				className="circle"
+				style={{ left: `${(currentTime / duration) * 100}%` }}
+			/>
 			{/* <div className='time-text'>{currentTimeText}</div> */}
 			<div
-				className='time-hover-text'
+				className="time-hover-text"
 				style={{
 					left: `${hoverPercentage}%`,
-					visibility: isHovering ? 'visible' : 'hidden',
+					visibility: isHovering ? "visible" : "hidden",
 				}}
 			>
 				{currentTimeText}
