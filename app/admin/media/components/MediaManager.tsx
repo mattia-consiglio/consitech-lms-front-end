@@ -31,7 +31,7 @@ interface MediaManagerProps {
 export default function MediaManager({
 	displayTitle = true,
 	mediaType,
-}: MediaManagerProps) {
+}: Readonly<MediaManagerProps>) {
 	const selected = useAppSelector((state) => state.media.selected)
 	const dispatch = useAppDispatch()
 	const [search, setSearch] = useState("")
@@ -109,12 +109,12 @@ export default function MediaManager({
 	}
 
 	const handleUpdate = (m: Media | null) => {
-		if (!m || !m.alt) {
+		if (!m?.alt) {
 			return
 		}
 
 		API.put<Media>(`media/${m.id}`, {
-			alt: m.alt === null ? "" : m.alt,
+			alt: m.alt ?? "",
 		})
 			.then(() => {
 				toast.success("Media aggiornato con successo")
