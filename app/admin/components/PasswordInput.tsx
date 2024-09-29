@@ -24,9 +24,10 @@ type PasswordInputProps =
 
 const specialChars = "!@#$%^&*()-_=+{};:,<.>/?~`£€[]\\|\"'"
 const regexSpecialCharacters = specialChars
-	.replace(/"]"/, "\\]")
-	.replace(/"-"/g, "\\-")
-	.replace(/"\/"/g, "/")
+	.replace(/\\/g, "\\\\")
+	.replace(/]/, "\\]")
+	.replace(/-/g, "\\-")
+	.replace(/\//g, "\\/")
 
 const regexCommonPattern = `A-Za-z0-9\\s${regexSpecialCharacters}`
 
@@ -42,7 +43,7 @@ const checkSpace = (password: string) => {
 const checkUppercaseLetters = (password: string) => {
 	const regex = new RegExp(
 		`^(?=(?:.*[A-Z]){2,})(?!.*(.)\\1{2})[${regexCommonPattern}]{2,}$`,
-		"gm",
+		"g",
 	)
 	return regex.test(password)
 }
@@ -58,7 +59,7 @@ const checkLowercaseLetters = (password: string) => {
 const checkNumbers = (password: string) => {
 	const regex = new RegExp(
 		`^(?=(?:.*[0-9]){2,})(?!.*(.)\\1{2})[${regexCommonPattern}]{2,}$`,
-		"gm",
+		"g",
 	)
 	return regex.test(password)
 }
@@ -66,7 +67,7 @@ const checkNumbers = (password: string) => {
 const checkSpecialChars = (password: string) => {
 	const regex = new RegExp(
 		`^(?=(?:.*[${regexSpecialCharacters}]){2,})(?!.*(.)\\1{2})[${regexCommonPattern}]{2,}$`,
-		"gm",
+		"g",
 	)
 	return regex.test(password)
 }
@@ -86,65 +87,103 @@ const booleanToNumber = (bool: boolean) => {
 	return bool ? 1 : 0
 }
 
-const getPasswordScore = (password: string) => {
-	if (password.length === 0) {
-		return 0
-	}
-	const score =
-		booleanToNumber(checkLength(password)) +
-		booleanToNumber(checkSpace(password)) +
-		booleanToNumber(checkUppercaseLetters(password)) +
-		booleanToNumber(checkLowercaseLetters(password)) +
-		booleanToNumber(checkNumbers(password)) +
-		booleanToNumber(checkSpecialChars(password))
-	return score
-}
-
-const getColorFromScore = (score: number) => {
-	if (score >= 6) {
-		return "bg-green-500"
-	}
-	if (score >= 3) {
-		return "bg-yellow-300 dark:bg-yellow-400"
-	}
-	return "bg-red-600 dark:bg-red-500"
-}
-
 const generatePassword = (length: number): string => {
 	let result = ""
 	const uppercaseCharacters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	const lowercaseCharacters = "abcdefghijklmnopqrstuvwxyz"
 	const numbers = "0123456789"
 	const specialCharacters = specialChars
-	const characters = [
-		uppercaseCharacters,
-		lowercaseCharacters,
-		numbers,
-		specialCharacters,
-	]
 	const counterCharacters = [0, 0, 0, 0]
-	for (let i = 0; i < length; i++) {
-		const index = Math.floor(Math.random() * characters.length)
-		const characterSet = characters[index]
-		const char = characterSet[Math.floor(Math.random() * characterSet.length)]
+
+	const generateChar = (charSet: string, lastChar: string) => {
+		const cleanCharSet = charSet.replace(lastChar, "")
+		return cleanCharSet[Math.floor(Math.random() * cleanCharSet.length)]
+	}
+
+	const generateIndex = () => {
+		if (result.length >= length - 8) {
+			for (let i = 0; i < counterCharacters.length; i++) {
+				if (counterCharacters[i] < 2) {
+					return i
+				}
+			}
+		}
+		return Math.floor(Math.random() * 4)
+	}
+
+	while (result.length < length) {
+		const index = generateIndex()
+		const charSet = [
+			uppercaseCharacters,
+			lowercaseCharacters,
+			numbers,
+			specialCharacters,
+		][index]
+		const char = generateChar(charSet, result[result.length - 1])
+
 		counterCharacters[index]++
 		result += char
 	}
-	if (!checkPassword(result)) {
-		return generatePassword(length)
-	}
+
 	return result
 }
 
-function PasswordProgress({ password }: { password: string }) {
+function PasswordProgress({ password }: Readonly<{ password: string }>) {
+	const getColorFromScore = (score: number) => {
+		if (score >= 6) {
+			return "bg-green-500"
+		}
+		if (score >= 3) {
+			return "bg-yellow-300 dark:bg-yellow-400"
+		}
+		return "bg-red-600 dark:bg-red-500"
+	}
+
+	const getPasswordScore = (password: string) => {
+		if (password.length === 0) {
+			return 0
+		}
+
+		const score =
+			booleanToNumber(checkLength(password)) +
+			booleanToNumber(checkSpace(password)) +
+			booleanToNumber(checkUppercaseLetters(password)) +
+			booleanToNumber(checkLowercaseLetters(password)) +
+			booleanToNumber(checkNumbers(password)) +
+			booleanToNumber(checkSpecialChars(password))
+
+		return score
+	}
+	const score = getPasswordScore(password)
+	const color = getColorFromScore(score)
 	return (
 		<div className="w-full bg-neutral-300 dark:bg-neutral-700 mt-2 relative h-1">
 			<div
 				className={`absolute left-0 top-0 h-full transition-width duration-200 
-					${getColorFromScore(getPasswordScore(password))}`}
-				style={{ width: `${(getPasswordScore(password) / 6) * 100} %` }}
+					${color}`}
+				style={{ width: `${(score / 6) * 100}%` }}
 			/>
 		</div>
+	)
+}
+
+interface PasswordReqisiteProps {
+	check: boolean
+	text: string
+}
+
+function PasswordRequisite({ check, text }: PasswordReqisiteProps) {
+	return (
+		<li className="flex gap-2">
+			<span>
+				{check ? (
+					<HiCheck className="inline-block text-green-500" />
+				) : (
+					<HiOutlineX className="inline-block text-red-600 dark:text-red-500" />
+				)}
+			</span>
+			<span>{text} </span>
+		</li>
 	)
 }
 
@@ -245,57 +284,38 @@ function PasswordInput({
 				<div className="mt-2">
 					<p>La password deve rispettare tutti i seguenti criteri</p>
 					<ul>
-						<li>
-							{checkLength(password) ? (
-								<HiCheck className="inline-block text-green-500" />
-							) : (
-								<HiOutlineX className="inline-block text-red-600 dark:text-red-500" />
-							)}{" "}
-							Deve avere una lunghezza da 15 a 50 caratteri.
-						</li>
-						<li>
-							{checkSpace(password) ? (
-								<HiCheck className="inline-block text-green-500" />
-							) : (
-								<HiOutlineX className="inline-block text-red-600 dark:text-red-500" />
-							)}{" "}
-							Non deve contenere spazi.
-						</li>
-						<li>
-							{checkUppercaseLetters(password) ? (
-								<HiCheck className="inline-block text-green-500" />
-							) : (
-								<HiOutlineX className="inline-block text-red-600 dark:text-red-500" />
-							)}{" "}
-							Deve contenere almeno 2 lettere maiuscole (non sono accettale le
-							lettere accentate), ma non più di 2 uguali consecutive.
-						</li>
-						<li>
-							{checkLowercaseLetters(password) ? (
-								<HiCheck className="inline-block text-green-500" />
-							) : (
-								<HiOutlineX className="inline-block text-red-600 dark:text-red-500" />
-							)}{" "}
-							Deve contenere almeno 2 lettere miniscule (non sono accettale le
-							lettere accentate), ma non più di 2 uguali consecutive.
-						</li>
-						<li>
-							{checkNumbers(password) ? (
-								<HiCheck className="inline-block text-green-500" />
-							) : (
-								<HiOutlineX className="inline-block text-red-600 dark:text-red-500" />
-							)}{" "}
-							Deve contenere almeno 2 numeri, ma non più di 2 uguali.
-						</li>
-						<li>
-							{checkSpecialChars(password) ? (
-								<HiCheck className="inline-block text-green-500" />
-							) : (
-								<HiOutlineX className="inline-block text-red-600 dark:text-red-500" />
-							)}{" "}
-							Deve contenere almeno 2 caratteri speciali( {specialChars} ), ma
-							non più di 2 uguali consecutivi tra loro.
-						</li>
+						<PasswordRequisite
+							check={checkLength(password)}
+							text="Deve avere una lunghezza da 15 a 50 caratteri."
+						/>
+						<PasswordRequisite
+							check={checkSpace(password)}
+							text="Non deve contenere spazi."
+						/>
+						<PasswordRequisite
+							check={checkUppercaseLetters(password)}
+							text="Deve contenere almeno 2 lettere maiuscole (non sono accettale le
+							lettere accentate), ma non più di 2 uguali consecutive."
+						/>
+						<PasswordRequisite
+							check={checkLowercaseLetters(password)}
+							text="Deve contenere almeno 2 lettere miniscule (non sono accettale le
+							lettere accentate), ma non più di 2 uguali consecutive."
+						/>
+						<PasswordRequisite
+							check={checkLowercaseLetters(password)}
+							text="Deve contenere almeno 2 lettere miniscule (non sono accettale le
+							lettere accentate), ma non più di 2 uguali consecutive."
+						/>
+						<PasswordRequisite
+							check={checkNumbers(password)}
+							text="Deve contenere almeno 2 numeri, ma non più di 2 uguali."
+						/>
+						<PasswordRequisite
+							check={checkSpecialChars(password)}
+							text={`Deve contenere almeno 2 caratteri speciali( ${specialChars} ), ma
+							non più di 2 uguali consecutivi tra loro.`}
+						/>
 					</ul>
 				</div>
 			)}
