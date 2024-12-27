@@ -84,7 +84,8 @@ export const checkPassword = (password: string) => {
 }
 
 const booleanToNumber = (bool: boolean) => {
-	return bool ? 1 : 0
+	if (bool) return 1
+	return 0
 }
 
 const generatePassword = (length: number): string => {
@@ -172,7 +173,7 @@ interface PasswordReqisiteProps {
 	text: string
 }
 
-function PasswordRequisite({ check, text }: PasswordReqisiteProps) {
+function PasswordRequisite({ check, text }: Readonly<PasswordReqisiteProps>) {
 	return (
 		<li className="flex gap-2">
 			<span>
@@ -246,8 +247,16 @@ function PasswordInput({
 												setShowPassword((p) => !p)
 											}
 										}}
+										aria-label={
+											showPassword ? "Nascondi password" : "Mostra password"
+										}
+										data-testid="password-visibility-toggle"
 									>
-										{showPassword ? <HiOutlineEyeOff /> : <HiOutlineEye />}
+										{showPassword ? (
+											<HiOutlineEyeOff name="Nascondi password" />
+										) : (
+											<HiOutlineEye name="Mostra password" />
+										)}
 									</button>
 								</Tooltip>
 							</div>

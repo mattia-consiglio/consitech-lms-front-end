@@ -14,6 +14,10 @@ import {
 	IoPauseSharp,
 	IoPlaySharp,
 	IoSettingsSharp,
+	IoVolumeHigh,
+	IoVolumeLow,
+	IoVolumeMedium,
+	IoVolumeMute,
 } from "react-icons/io5"
 import {
 	MdFullscreen,
@@ -35,6 +39,10 @@ interface VideoProgressBarProps {
 	toggleFullscreen: () => void
 	closeFullscreen: () => void
 	shouldKeepControlsVisible: MutableRefObject<boolean>
+	volume: number
+	isMuted: boolean
+	onVolumeChange: (volume: number) => void
+	onToggleMute: () => void
 }
 
 function PlayIcon() {
@@ -99,6 +107,10 @@ export default function VideoControls({
 	toggleFullscreen,
 	closeFullscreen,
 	shouldKeepControlsVisible,
+	volume,
+	isMuted,
+	onVolumeChange,
+	onToggleMute,
 }: Readonly<VideoProgressBarProps>) {
 	const { currentTime, playerState, isInFocus, currentSpeed, isBuffering } =
 		useAppSelector((state) => state.player)
@@ -247,6 +259,35 @@ export default function VideoControls({
 		if (player) seek(Math.min(player.currentTime + 5, duration))
 	}
 
+	const [isVolumeSliderVisible, setIsVolumeSliderVisible] = useState(false)
+	const volumeSliderRef = useRef<HTMLDivElement>(null)
+	const [isDraggingVolume, setIsDraggingVolume] = useState(false)
+
+	const handleVolumeMouseMove = useCallback(
+		(e: MouseEvent) => {
+			if (!volumeSliderRef.current) return
+			const rect = volumeSliderRef.current.getBoundingClientRect()
+			const offsetX = e.clientX - rect.left
+			const percentage = Math.min(Math.max(0, (offsetX / rect.width) * 100), 100)
+			onVolumeChange(percentage / 100)
+		},
+		[onVolumeChange]
+	)
+
+	const handleVolumeMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+		e.stopPropagation()
+		setIsDraggingVolume(true)
+		handleVolumeMouseMove(e.nativeEvent)
+		window.addEventListener("mousemove", handleVolumeMouseMove)
+		window.addEventListener("mouseup", handleVolumeMouseUp)
+	}
+
+	const handleVolumeMouseUp = useCallback(() => {
+		setIsDraggingVolume(false)
+		window.removeEventListener("mousemove", handleVolumeMouseMove)
+		window.removeEventListener("mouseup", handleVolumeMouseUp)
+	}, [handleVolumeMouseMove])
+
 	function handleKeydown(e: KeyboardEvent) {
 		if (!playerControls.current) return
 		if (!isInFocus) return
@@ -279,6 +320,19 @@ export default function VideoControls({
 				e.preventDefault()
 				setIsOptionsOpen(true)
 				isOptionsOpenRef.current = true
+				break
+			case "m":
+			case "M":
+				e.preventDefault()
+				onToggleMute()
+				break
+			case "ArrowUp":
+				e.preventDefault()
+				onVolumeChange(Math.min(volume + 0.1, 1))
+				break
+			case "ArrowDown":
+				e.preventDefault()
+				onVolumeChange(Math.max(volume - 0.1, 0))
 				break
 		}
 	}
@@ -342,6 +396,13 @@ export default function VideoControls({
 		isOptionsOpenRef.current = false
 		setCurrentOptionMenu("main")
 	}
+
+	const VolumeIcon = useMemo(() => {
+		if (isMuted || volume === 0) return IoVolumeMute
+		if (volume < 0.33) return IoVolumeLow
+		if (volume < 0.66) return IoVolumeMedium
+		return IoVolumeHigh
+	}, [volume, isMuted])
 
 	return (
 		<>
@@ -498,167 +559,104 @@ export default function VideoControls({
 						>
 							5s <IoChevronForwardSharp />
 						</button>
+						<div
+							className="volume-control relative"
+							onClick={(e) => e.stopPropagation()}
+						>
+							<div
+								className="volume-control-wrapper flex items-center"
+								onMouseEnter={() => setIsVolumeSliderVisible(true)}
+								onMouseLeave={() => !isDraggingVolume && setIsVolumeSliderVisible(false)}
+								onClick={(e) => e.stopPropagation()}
+							>
+								<button
+									className="text-xl"
+									onClick={(e) => {
+										e.stopPropagation()
+										onToggleMute()
+									}}
+									onDoubleClick={(e) => e.stopPropagation()}
+									onMouseOver={() => keepControlsVisible(true)}
+									onMouseLeave={() => keepControlsVisible(false)}
+								>
+									<VolumeIcon />
+								</button>
+								<div
+									className={`volume-slider-container ml-2 overflow-hidden transition-all duration-200 ease-out  ${
+										isVolumeSliderVisible || isDraggingVolume ? "w-12 px-2 -mx-2" : "w-0 px-0"
+									}`}
+									onClick={(e) => e.stopPropagation()}
+								>
+									<div
+										ref={volumeSliderRef}
+										className="volume-slider h-1 bg-white/30 relative cursor-pointer rounded-full"
+										onClick={(e) => {
+											e.stopPropagation()
+											handleVolumeMouseMove(e.nativeEvent)
+										}}
+										onMouseDown={(e) => {
+											e.stopPropagation()
+											handleVolumeMouseDown(e)
+										}}
+									>
+										<div
+											className="absolute left-0 h-full bg-primary rounded-full"
+											style={{ width: `${(isMuted ? 0 : volume) * 100}%` }}
+										/>
+										<div
+											className="absolute w-3 h-3 bg-primary rounded-full top-1/2 -translate-y-1/2"
+											style={{
+												left: `${(isMuted ? 0 : volume) * 100}%`,
+												transform: 'translate(-50%, -50%)'
+											}}
+										/>
+									</div>
+								</div>
+							</div>
+						</div>
 						<div>
 							{formatTime(currentTime)} / {formatTime(duration)}
 						</div>
 					</div>
 					<div className="right">
+						
 						<button
+							className="text-xl"
 							onClick={(e) => {
 								e.stopPropagation()
+								setIsOptionsOpen(!isOptionsOpen)
+								isOptionsOpenRef.current = !isOptionsOpenRef.current
+								setCurrentOptionMenu("main")
+								keepControlsVisible()
+							}}
+							onDoubleClick={(e) => {
+								e.stopPropagation()
+							}}
+							onMouseOver={() => {
+								keepControlsVisible(true)
+							}}
+							onMouseLeave={() => {
+								keepControlsVisible(false)
 							}}
 						>
-							{/* <IoLogoClosedCaptioning /> */}
+							<IoSettingsSharp />
 						</button>
-						<div className="flex items-center relative gap-2">
-							<div
-								className={`options-menu absolute bottom-7 bg-neutral-800 right-0${
-									isOptionsOpen ? " block" : " hidden"
-								}`}
-								role="menu"
-							>
-								{currentOptionMenu === "main" && (
-									<ul
-										tabIndex={0}
-										role="menu"
-										aria-label="Opzioni"
-										aria-orientation="vertical"
-										aria-hidden={isOptionsOpen}
-									>
-										{/* <li>Sottotitoli</li> */}
-										<li
-											onClick={(e) => {
-												e.stopPropagation()
-												setCurrentOptionMenu("speed")
-											}}
-											role="menuitem"
-											tabIndex={0}
-											onKeyDown={(e) => {
-												if (e.key === "Enter" || e.key === " ") {
-													e.preventDefault()
-													setCurrentOptionMenu("speed")
-												}
-											}}
-										>
-											Velocità riproduzione
-										</li>
-										<li
-											onClick={(e) => {
-												e.stopPropagation()
-												setCurrentOptionMenu("quality")
-											}}
-											role="menuitem"
-											tabIndex={0}
-											onKeyDown={(e) => {
-												if (e.key === "Enter" || e.key === " ") {
-													e.preventDefault()
-													setCurrentOptionMenu("quality")
-												}
-											}}
-										>
-											Qualità
-										</li>
-									</ul>
-								)}
-								{currentOptionMenu === "quality" && (
-									<ul>
-										{goBackOption}
-										{qualities?.map((quality) => (
-											<li
-												key={quality}
-												className={`flex items-center${
-													currentQuality === quality
-														? " justify-between text-primary"
-														: " justify-end"
-												}`}
-												onClick={(e) => setVideoQuality(e, quality)}
-												role="menuitem"
-												tabIndex={0}
-												onKeyDown={(e: React.KeyboardEvent<HTMLLIElement>) => {
-													if (e.key === "Enter" || e.key === " ") {
-														e.preventDefault()
-														setVideoQuality(
-															e as unknown as React.MouseEvent<HTMLLIElement>,
-															quality,
-														)
-													}
-												}}
-											>
-												{currentQuality === quality && <MdOutlineCheck />}
-												{quality}
-											</li>
-										))}
-									</ul>
-								)}
-								{currentOptionMenu === "speed" && (
-									<ul>
-										{goBackOption}
-										{availableSpeeds.map((speed) => (
-											<li
-												key={`videoSpeed_${speed}`}
-												className={`flex items-center${
-													currentSpeed === speed
-														? " justify-between text-primary"
-														: " justify-end"
-												}`}
-												onClick={(e) => setVideoSpeed(e, speed)}
-												role="menuitem"
-												tabIndex={0}
-												onKeyDown={(e) => {
-													if (e.key === "Enter" || e.key === " ") {
-														e.preventDefault()
-														setVideoSpeed(
-															e as unknown as React.MouseEvent<HTMLLIElement>,
-															speed,
-														)
-													}
-												}}
-											>
-												{currentSpeed === speed ? <MdOutlineCheck /> : <div />}
-												{`${speed}x`}
-											</li>
-										))}
-									</ul>
-								)}
-							</div>
-							<button
-								className="text-xl"
-								onClick={(e) => {
-									e.stopPropagation()
-									setIsOptionsOpen(!isOptionsOpen)
-									isOptionsOpenRef.current = !isOptionsOpenRef.current
-									setCurrentOptionMenu("main")
-									keepControlsVisible()
-								}}
-								onDoubleClick={(e) => {
-									e.stopPropagation()
-								}}
-								onMouseOver={() => {
-									keepControlsVisible(true)
-								}}
-								onMouseLeave={() => {
-									keepControlsVisible(false)
-								}}
-							>
-								<IoSettingsSharp />
-							</button>
-							<button
-								className="text-xl"
-								onClick={(e) => {
-									e.stopPropagation()
-									toggleFullscreen()
-									closeOpenedOptions()
-								}}
-								onMouseOver={() => {
-									keepControlsVisible(true)
-								}}
-								onMouseLeave={() => {
-									keepControlsVisible(false)
-								}}
-							>
-								{isFullscreen ? <MdOutlineFullscreenExit /> : <MdFullscreen />}
-							</button>
-						</div>
+						<button
+							className="text-xl"
+							onClick={(e) => {
+								e.stopPropagation()
+								toggleFullscreen()
+								closeOpenedOptions()
+							}}
+							onMouseOver={() => {
+								keepControlsVisible(true)
+							}}
+							onMouseLeave={() => {
+								keepControlsVisible(false)
+							}}
+						>
+							{isFullscreen ? <MdOutlineFullscreenExit /> : <MdFullscreen />}
+						</button>
 					</div>
 				</div>
 			</div>

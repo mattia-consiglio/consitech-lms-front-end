@@ -235,6 +235,46 @@ $primary-color: theme('colors.primary');
 				}
 			}
 		}
+
+		.volume-control {
+			position: relative;
+			margin-right: 0.5rem;
+
+			.volume-control-wrapper {
+				position: relative;
+				display: flex;
+				align-items: center;
+			}
+
+			.volume-slider-container {
+				position: relative;
+				height: 24px;
+				display: flex;
+				align-items: center;
+			}
+
+			.volume-slider {
+				width: 100%;
+				
+				&:hover {
+					.volume-thumb {
+						transform: scale(1.2);
+					}
+				}
+			}
+
+			.volume-slider {
+				z-index: 50;
+				
+				&.hidden {
+					display: none;
+				}
+			}
+
+			button {
+				z-index: 40;
+			}
+		}
 	}
 
 	&:hover {
