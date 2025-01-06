@@ -5,7 +5,7 @@ import Footer from './components/Footer'
 import { Flowbite } from 'flowbite-react'
 import StoreProvider from '@/redux/StoreProvider'
 import ToasterWrapper from './ToasterWrapper'
-import { getCookie } from './actions'
+import { cookies } from 'next/headers'
 import './styles/globals.scss'
 
 export const metadata: Metadata = {
@@ -18,10 +18,10 @@ export default async function RootLayout({
 }: Readonly<{
 	children: React.ReactNode
 }>) {
-	const theme = await getCookie('theme')
+	const cookieStore = await cookies()
+	const theme = cookieStore.get('theme')
 	return (
 		<html lang='it' className={theme?.value === 'dark' ? 'dark' : ''}>
-			<head></head>
 			<Flowbite>
 				<body
 					className={`${inconsolata.className} bg-body_light dark:bg-body_dark text-invert_light dark:text-invert_dark selection:bg-primary_lighter selection:text-invert_light dark:selection:bg-primary_darker dark:selection:text-invert_dark`}

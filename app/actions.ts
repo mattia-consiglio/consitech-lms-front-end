@@ -4,16 +4,18 @@ import { redirect } from 'next/navigation'
 
 export async function setCookie(name: string, value: string, expiresIn = 1000 * 60 * 60) {
 	const expires = new Date(Date.now() + expiresIn)
-	cookies().set(name, value, { expires })
+	const cookieStore = await cookies()
+	cookieStore.set(name, value, { expires })
 }
 
 export async function getCookie(name: string) {
-	const cookie = cookies().get(name)
+	const cookieStore = await cookies()
+	const cookie = cookieStore.get(name)
 	return cookie
 }
 
 export async function removeCookie(name: string) {
-	cookies().delete(name)
+	(await cookies()).delete(name)
 }
 
 export async function getAuthAndRedirectLogin() {

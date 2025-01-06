@@ -94,6 +94,56 @@ function formatPercTime(perc: number, duration: number) {
 	return formatTime(time)
 }
 
+interface MenuOptionProps {
+	label: string
+	onInteraction: (
+		e:
+			| React.MouseEvent<HTMLButtonElement>
+			| React.KeyboardEvent<HTMLButtonElement>,
+	) => void
+	currentSettingValue: string | number
+	options?: string[] | number[] | null
+	option?: string | number
+}
+
+function MenuOption({
+	label,
+	onInteraction,
+	currentSettingValue,
+	options,
+	option,
+}: Readonly<MenuOptionProps>) {
+	return (
+		<>
+			{((options && options.length > 0) || option) && (
+				<button
+					type="button"
+					onClick={onInteraction}
+					className="flex w-full items-center justify-between cursor-pointer hover:bg-white/10 px-2 py-1 rounded"
+					onKeyDown={(e) => {
+						if (e.key === "Enter" || e.key === " ") {
+							e.preventDefault()
+							onInteraction(e)
+						}
+					}}
+					data-type="menu-option"
+				>
+					<span>{label}</span>
+					{options && (
+						<div className="flex items-center gap-2">
+							<span className="text-sm bg-white/10 px-2 py-1 rounded-md">
+								{currentSettingValue}
+							</span>
+							<IoChevronForwardSharp />
+						</div>
+					)}
+					{option === currentSettingValue && <MdOutlineCheck />}
+				</button>
+			)}
+		</>
+	)
+}
+
 export default function VideoControls({
 	duration,
 	player,
@@ -268,10 +318,13 @@ export default function VideoControls({
 			if (!volumeSliderRef.current) return
 			const rect = volumeSliderRef.current.getBoundingClientRect()
 			const offsetX = e.clientX - rect.left
-			const percentage = Math.min(Math.max(0, (offsetX / rect.width) * 100), 100)
+			const percentage = Math.min(
+				Math.max(0, (offsetX / rect.width) * 100),
+				100,
+			)
 			onVolumeChange(percentage / 100)
 		},
-		[onVolumeChange]
+		[onVolumeChange],
 	)
 
 	const handleVolumeMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -353,32 +406,39 @@ export default function VideoControls({
 
 	const goBackOption = useMemo(
 		() => (
-			<li
-				onClick={(e) => {
-					e.stopPropagation()
-					setCurrentOptionMenu("main")
-				}}
-				className="flex items-center gap-2 cursor-pointer"
-				role="menuitem"
-				aria-roledescription="menuitem"
-				tabIndex={0}
-				onKeyDown={(e) => {
-					if (e.key === "Enter" || e.key === " ") {
-						e.preventDefault()
+			<>
+				<button
+					type="button"
+					onClick={(e) => {
+						e.stopPropagation()
 						setCurrentOptionMenu("main")
-					}
-				}}
-			>
-				<IoChevronBackSharp /> Indietro
-			</li>
+					}}
+					className="flex items-center gap-2 cursor-pointer"
+					role="menuitem"
+					aria-roledescription="menuitem"
+					tabIndex={0}
+					onKeyDown={(e) => {
+						if (e.key === "Enter" || e.key === " ") {
+							e.preventDefault()
+							setCurrentOptionMenu("main")
+						}
+					}}
+				>
+					<IoChevronBackSharp /> Indietro
+				</button>
+				<hr className="w-full border-white/20" />
+			</>
 		),
 		[],
 	)
 
 	const setVideoQuality = (
-		e: React.MouseEvent<HTMLLIElement, MouseEvent>,
+		e:
+			| React.MouseEvent<HTMLButtonElement, MouseEvent>
+			| React.KeyboardEvent<HTMLButtonElement>,
 		quality: string,
 	) => {
+		e.preventDefault()
 		e.stopPropagation()
 		changeQuality(quality)
 		setIsOptionsOpen(false)
@@ -387,9 +447,12 @@ export default function VideoControls({
 	}
 
 	const setVideoSpeed = (
-		e: React.MouseEvent<HTMLLIElement, MouseEvent>,
+		e:
+			| React.MouseEvent<HTMLButtonElement, MouseEvent>
+			| React.KeyboardEvent<HTMLButtonElement>,
 		speed: number,
 	) => {
+		e.preventDefault()
 		e.stopPropagation()
 		changeSpeed(speed)
 		setIsOptionsOpen(false)
@@ -440,6 +503,16 @@ export default function VideoControls({
 					e.stopPropagation()
 					toggleFullscreen()
 				}}
+				onKeyDown={(e) => {
+					if (e.key === "Enter" || e.key === " ") {
+						e.preventDefault()
+						e.stopPropagation()
+					}
+				}}
+				onMouseOver={() => keepControlsVisible(true)}
+				onMouseLeave={() => keepControlsVisible(false)}
+				onFocus={() => keepControlsVisible(true)}
+				onBlur={() => keepControlsVisible(false)}
 			>
 				<div
 					className="progress-bar-wrapper"
@@ -450,13 +523,19 @@ export default function VideoControls({
 					ref={progressBar}
 					style={{ opacity: isDragging.current ? 1 : "" }}
 					aria-roledescription="progressbar"
-					role="slider"
-					tabIndex={0}
 					aria-valuemin={0}
 					aria-valuemax={duration}
 					aria-valuenow={currentTime}
 					aria-valuetext={currentTimeText}
 					aria-label={`${currentTimeText}/${durationText}`}
+					onKeyDown={(e) => {
+						if (e.key === "Enter" || e.key === " ") {
+							e.preventDefault()
+							e.stopPropagation()
+						}
+					}}
+					onFocus={() => keepControlsVisible(true)}
+					onBlur={() => keepControlsVisible(false)}
 				>
 					<div className="buffer-wrapper">
 						{buffer.map(({ left, width }) => (
@@ -499,6 +578,7 @@ export default function VideoControls({
 				<div className="controls text-white">
 					<div className="left">
 						<button
+							type="button"
 							onClick={(e) => {
 								e.stopPropagation()
 								seekBackward()
@@ -511,6 +591,12 @@ export default function VideoControls({
 							onMouseOver={() => {
 								keepControlsVisible(true)
 							}}
+							onFocus={() => {
+								keepControlsVisible(true)
+							}}
+							onBlur={() => {
+								keepControlsVisible(false)
+							}}
 							onMouseLeave={() => {
 								keepControlsVisible(false)
 							}}
@@ -518,6 +604,7 @@ export default function VideoControls({
 							<IoChevronBackSharp /> 5s
 						</button>
 						<button
+							type="button"
 							onClick={(e) => {
 								e.stopPropagation()
 								playPause()
@@ -533,6 +620,12 @@ export default function VideoControls({
 							onMouseLeave={() => {
 								keepControlsVisible(false)
 							}}
+							onFocus={() => {
+								keepControlsVisible(true)
+							}}
+							onBlur={() => {
+								keepControlsVisible(false)
+							}}
 						>
 							{playerState === PlayerState.PLAYING ? (
 								<IoPauseSharp />
@@ -541,6 +634,7 @@ export default function VideoControls({
 							)}
 						</button>
 						<button
+							type="button"
 							onClick={(e) => {
 								e.stopPropagation()
 								seekForward()
@@ -556,36 +650,73 @@ export default function VideoControls({
 							onMouseLeave={() => {
 								keepControlsVisible(false)
 							}}
+							onFocus={() => {
+								keepControlsVisible(true)
+							}}
+							onBlur={() => {
+								keepControlsVisible(false)
+							}}
 						>
 							5s <IoChevronForwardSharp />
 						</button>
 						<div
 							className="volume-control relative"
 							onClick={(e) => e.stopPropagation()}
+							onKeyDown={(e) => {
+								if (e.key === "Enter" || e.key === " ") {
+									e.preventDefault()
+									e.stopPropagation()
+								}
+							}}
 						>
 							<div
 								className="volume-control-wrapper flex items-center"
 								onMouseEnter={() => setIsVolumeSliderVisible(true)}
-								onMouseLeave={() => !isDraggingVolume && setIsVolumeSliderVisible(false)}
+								onMouseLeave={() =>
+									!isDraggingVolume && setIsVolumeSliderVisible(false)
+								}
 								onClick={(e) => e.stopPropagation()}
+								onKeyDown={(e) => {
+									if (e.key === "Enter" || e.key === " ") {
+										e.preventDefault()
+										e.stopPropagation()
+									}
+								}}
 							>
 								<button
+									type="button"
 									className="text-xl"
 									onClick={(e) => {
 										e.stopPropagation()
 										onToggleMute()
 									}}
+									onKeyDown={(e) => {
+										if (e.key === "Enter" || e.key === " ") {
+											e.preventDefault()
+											onToggleMute()
+										}
+									}}
 									onDoubleClick={(e) => e.stopPropagation()}
 									onMouseOver={() => keepControlsVisible(true)}
 									onMouseLeave={() => keepControlsVisible(false)}
+									onFocus={() => keepControlsVisible(true)}
+									onBlur={() => keepControlsVisible(false)}
 								>
 									<VolumeIcon />
 								</button>
 								<div
-									className={`volume-slider-container ml-2 overflow-hidden transition-all duration-200 ease-out  ${
-										isVolumeSliderVisible || isDraggingVolume ? "w-12 px-2 -mx-2" : "w-0 px-0"
+									className={`volume-slider-container overflow-hidden transition-all duration-200 ease-out  ${
+										isVolumeSliderVisible || isDraggingVolume
+											? "w-14 px-2 "
+											: "w-0 px-0"
 									}`}
 									onClick={(e) => e.stopPropagation()}
+									onKeyDown={(e) => {
+										if (e.key === "Enter" || e.key === " ") {
+											e.preventDefault()
+											e.stopPropagation()
+										}
+									}}
 								>
 									<div
 										ref={volumeSliderRef}
@@ -593,6 +724,13 @@ export default function VideoControls({
 										onClick={(e) => {
 											e.stopPropagation()
 											handleVolumeMouseMove(e.nativeEvent)
+										}}
+										onKeyDown={(e) => {
+											if (e.key === "Enter" || e.key === " ") {
+												e.preventDefault()
+												e.stopPropagation()
+												handleVolumeMouseMove(e as unknown as MouseEvent)
+											}
 										}}
 										onMouseDown={(e) => {
 											e.stopPropagation()
@@ -607,7 +745,7 @@ export default function VideoControls({
 											className="absolute w-3 h-3 bg-primary rounded-full top-1/2 -translate-y-1/2"
 											style={{
 												left: `${(isMuted ? 0 : volume) * 100}%`,
-												transform: 'translate(-50%, -50%)'
+												transform: "translate(-50%, -50%)",
 											}}
 										/>
 									</div>
@@ -619,8 +757,89 @@ export default function VideoControls({
 						</div>
 					</div>
 					<div className="right">
-						
+						{isOptionsOpen && (
+							<div
+								className="settings-menu absolute bottom-full right-0 bg-black/80 rounded-lg p-2 mb-2"
+								onClick={(e) => e.stopPropagation()}
+								onKeyDown={(e) => {
+									const menuItems = e.currentTarget.querySelectorAll(
+										'[data-type="menu-option"]',
+									)
+									console.log(menuItems)
+									const currentIndex = Array.from(menuItems).findIndex(
+										(item) => document.activeElement === item,
+									)
+
+									switch (e.key) {
+										case "ArrowDown":
+											e.preventDefault()
+											if (currentIndex < menuItems.length - 1) {
+												;(menuItems[currentIndex + 1] as HTMLElement).focus()
+											} else {
+												;(menuItems[0] as HTMLElement).focus()
+											}
+											break
+										case "ArrowUp":
+											e.preventDefault()
+											if (currentIndex > 0) {
+												;(menuItems[currentIndex - 1] as HTMLElement).focus()
+											} else {
+												;(
+													menuItems[menuItems.length - 1] as HTMLElement
+												).focus()
+											}
+											break
+									}
+								}}
+							>
+								{currentOptionMenu === "main" && (
+									<div className="space-y-2 max-w-48">
+										<MenuOption
+											label="Qualità"
+											onInteraction={() => setCurrentOptionMenu("quality")}
+											currentSettingValue={currentQuality}
+											options={qualities}
+										/>
+										<MenuOption
+											label="Velocità"
+											onInteraction={() => setCurrentOptionMenu("speed")}
+											currentSettingValue={`${currentSpeed}x`}
+											options={availableSpeeds}
+										/>
+									</div>
+								)}
+								{currentOptionMenu === "quality" && (
+									<div className="space-y-2 max-w-48">
+										{goBackOption}
+										{qualities?.map((quality) => (
+											<MenuOption
+												label={quality}
+												onInteraction={(e) => setVideoQuality(e, quality)}
+												currentSettingValue={currentQuality}
+												option={quality}
+												key={`quality-option-${quality}`}
+											/>
+										))}
+									</div>
+								)}
+								{currentOptionMenu === "speed" && (
+									<div className="space-y-2 max-w-48">
+										{goBackOption}
+										{availableSpeeds.map((speed) => (
+											<MenuOption
+												label={`${speed}x`}
+												onInteraction={(e) => setVideoSpeed(e, speed)}
+												currentSettingValue={currentSpeed}
+												option={speed}
+												key={`speed-option-${speed}`}
+											/>
+										))}
+									</div>
+								)}
+							</div>
+						)}
 						<button
+							type="button"
 							className="text-xl"
 							onClick={(e) => {
 								e.stopPropagation()
@@ -628,6 +847,21 @@ export default function VideoControls({
 								isOptionsOpenRef.current = !isOptionsOpenRef.current
 								setCurrentOptionMenu("main")
 								keepControlsVisible()
+								setTimeout(() => {
+									const firstMenuItem = document.querySelector(
+										'[role="menuitem"]',
+									) as HTMLElement
+									firstMenuItem?.focus()
+								}, 0)
+							}}
+							onKeyDown={(e) => {
+								if (e.key === "Enter" || e.key === " ") {
+									e.preventDefault()
+									setIsOptionsOpen(!isOptionsOpen)
+									isOptionsOpenRef.current = !isOptionsOpenRef.current
+									setCurrentOptionMenu("main")
+									keepControlsVisible()
+								}
 							}}
 							onDoubleClick={(e) => {
 								e.stopPropagation()
@@ -638,20 +872,40 @@ export default function VideoControls({
 							onMouseLeave={() => {
 								keepControlsVisible(false)
 							}}
+							onFocus={() => {
+								keepControlsVisible(true)
+							}}
+							onBlur={() => {
+								keepControlsVisible(false)
+							}}
 						>
 							<IoSettingsSharp />
 						</button>
 						<button
+							type="button"
 							className="text-xl"
 							onClick={(e) => {
 								e.stopPropagation()
 								toggleFullscreen()
 								closeOpenedOptions()
 							}}
+							onKeyDown={(e) => {
+								if (e.key === "Enter" || e.key === " ") {
+									e.preventDefault()
+									toggleFullscreen()
+									closeOpenedOptions()
+								}
+							}}
 							onMouseOver={() => {
 								keepControlsVisible(true)
 							}}
 							onMouseLeave={() => {
+								keepControlsVisible(false)
+							}}
+							onFocus={() => {
+								keepControlsVisible(true)
+							}}
+							onBlur={() => {
 								keepControlsVisible(false)
 							}}
 						>

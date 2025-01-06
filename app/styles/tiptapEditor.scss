@@ -1,9 +1,9 @@
 .tiptap {
+	padding: 0.75rem;
+
 	> * + * {
 		margin-top: 0.75em;
 	}
-
-	padding: 0.75rem;
 
 	code {
 		background-color: rgba(#0d0d0d, 0.7);

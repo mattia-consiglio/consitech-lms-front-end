@@ -8,15 +8,16 @@ import { redirect } from "next/navigation"
 
 export default async function CourseSingle({
 	params,
-}: Readonly<{ params: { course_slug: string } }>) {
+}: Readonly<{ params: Promise<{ course_slug: string }> }>) {
+	const { course_slug } = await params
 	const course = await API.get<Course>(
-		`public/courses/slug/${params.course_slug}`,
+		`public/courses/slug/${course_slug}`,
 	).catch(() => {
 		redirect("/404")
 	})
 
 	const lessons = await API.get<Lesson[]>(
-		`public/courses/slug/${params.course_slug}/lessons`,
+		`public/courses/slug/${course_slug}/lessons`,
 	).catch(() => [])
 
 	return (
@@ -35,7 +36,7 @@ export default async function CourseSingle({
 					description={lesson.description}
 					img={lesson.thumbnailImage}
 					lessonSlug={lesson.slug}
-					courseSlug={params.course_slug}
+					courseSlug={course_slug}
 					displayOrder={lesson.displayOrder}
 				/>
 			))}

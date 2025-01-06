@@ -1,6 +1,6 @@
-@import '../../styles/mixins.module.scss';
+@use '../../styles/mixins.module.scss';
 @mixin admin-input-mixin {
-	@include inputMixin();
+	@include mixins.inputMixin();
 	border-width: 2px;
 	// border-color: currentColor;
 	width: 100%;

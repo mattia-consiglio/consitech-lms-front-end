@@ -10,14 +10,15 @@ import CodePlayer from "./components/CodePlayer"
 import CodeSandbox from "./components/CodeSandbox"
 
 interface LessonsPageProps {
-	params: { course_slug: string; lesson_slug: string }
+	params: Promise<{ course_slug: string; lesson_slug: string }>
 }
 
 export default async function LessonsPage({
 	params,
 }: Readonly<LessonsPageProps>) {
+	const { lesson_slug } = await params
 	const response = await API.get<Lesson>(
-		`public/lessons/slug/${params.lesson_slug}`,
+		`public/lessons/slug/${lesson_slug}`,
 	).catch(() => {
 		return redirect("/404")
 	})

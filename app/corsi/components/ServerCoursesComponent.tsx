@@ -10,7 +10,7 @@ import { API } from "@/utils/api"
 import { cookies } from "next/headers"
 
 export default async function ServerCorsesComponent() {
-	const nextCookies = cookies()
+	const nextCookies = await cookies()
 	const token = nextCookies.get("token")?.value
 	const response = await API.get<User>("users/me")
 		.then((res) => res)

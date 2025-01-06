@@ -1,7 +1,7 @@
+@use 'mixins.module.scss';
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-@import 'mixins.module.scss';
 
 :root {
 }
@@ -50,10 +50,10 @@ body {
 	}
 
 	h1 {
-		@include h1;
+		@include mixins.h1;
 	}
 	h2 {
-		@include h2;
+		@include mixins.h2;
 	}
 
 	main {
@@ -70,12 +70,12 @@ body {
 		&[type='password'],
 		&[type='email'],
 		&[type='search'] {
-			@include inputMixin();
+			@include mixins.inputMixin();
 		}
 	}
 	textarea,
 	select {
-		@include inputMixin();
+		@include mixins.inputMixin();
 	}
 
 	select {
