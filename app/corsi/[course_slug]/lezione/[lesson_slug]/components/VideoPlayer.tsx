@@ -47,10 +47,13 @@ export default function VideoPlayer({ video }: Readonly<VideoPlayerProps>) {
 		[video],
 	)
 	const [videoSource, setVideoSource] = useState(sources?.[0] ?? video.url)
+	const [previousSource, setPreviousSource] = useState("")
+	const [isTransitioning, setIsTransitioning] = useState(false)
 	const [currentQuality, setCurrentQuality] = useState("Auto")
 	const [isAutoQuality, setIsAutoQuality] = useState(true)
 	const lastQualityCheck = useRef(Date.now())
 	const player = useRef<HTMLVideoElement>(null)
+	const backupPlayer = useRef<HTMLVideoElement>(null)
 	const intervalID = useRef<NodeJS.Timeout>()
 	const playerWrapper = useRef<HTMLDivElement>(null)
 	const { playerState } = useAppSelector((state) => state.player)
@@ -92,16 +95,50 @@ export default function VideoPlayer({ video }: Readonly<VideoPlayerProps>) {
 		}
 	}
 
-	const handleCanPlay = useCallback(
-		(currentTime: number, wasPlaying: boolean) => {
+	const handleSourceChange = useCallback(
+		(newSource: string) => {
 			if (player.current) {
-				player.current.currentTime = currentTime
-				if (wasPlaying) {
-					player.current.play()
+				const currentTime = player.current.currentTime
+				const wasPlaying = !player.current.paused
+
+				// Salva lo stato corrente nel backup player
+				if (backupPlayer.current) {
+					backupPlayer.current.src = videoSource
+					backupPlayer.current.currentTime = currentTime
+					backupPlayer.current.style.opacity = "1"
 				}
+
+				// Mostra lo spinner durante il caricamento
+				dispatch(setIsBuffering(true))
+
+				// Imposta il nuovo source
+				setPreviousSource(videoSource)
+				setVideoSource(newSource)
+				setIsTransitioning(true)
+				qualityChanged.current = true
+
+				const handleQualityChange = () => {
+					if (player.current) {
+						player.current.currentTime = currentTime
+						if (wasPlaying) {
+							player.current.play()
+						}
+						// Fade out del backup player e nascondi lo spinner
+						if (backupPlayer.current) {
+							backupPlayer.current.style.opacity = "0"
+							setTimeout(() => {
+								setIsTransitioning(false)
+								dispatch(setIsBuffering(false))
+							}, 300)
+						}
+					}
+					player.current?.removeEventListener("canplay", handleQualityChange)
+				}
+
+				player.current.addEventListener("canplay", handleQualityChange)
 			}
 		},
-		[],
+		[videoSource, dispatch],
 	)
 
 	const checkBandwidth = useCallback(async () => {
@@ -148,24 +185,14 @@ export default function VideoPlayer({ video }: Readonly<VideoPlayerProps>) {
 			if (
 				sources[targetQualityIndex] &&
 				sources[targetQualityIndex] !== videoSource &&
-				player.current.readyState > 0
+				player.current?.readyState > 0
 			) {
-				const currentTime = player.current.currentTime
-				const wasPlaying = !player.current?.paused
-				setVideoSource(sources[targetQualityIndex])
-				qualityChanged.current = true
-
-				const handleQualityChange = () => {
-					handleCanPlay(currentTime, wasPlaying)
-					player.current?.removeEventListener("canplay", handleQualityChange)
-				}
-
-				player.current?.addEventListener("canplay", handleQualityChange)
+				handleSourceChange(sources[targetQualityIndex])
 			}
 		} catch (error) {
 			console.error("Error checking bandwidth:", error)
 		}
-	}, [isAutoQuality, qualities, sources, videoSource, handleCanPlay])
+	}, [isAutoQuality, qualities, sources, videoSource, handleSourceChange])
 
 	useEffect(() => {
 		if (isAutoQuality) {
@@ -186,29 +213,16 @@ export default function VideoPlayer({ video }: Readonly<VideoPlayerProps>) {
 		if (quality === "Auto" && !isAutoQuality) {
 			setIsAutoQuality(true)
 			setCurrentQuality("Auto")
-			// Start with current quality, then let bandwidth check adjust if needed
 			checkBandwidth()
 			return
 		}
 
 		setIsAutoQuality(false)
-		const qualityIndex = qualities.indexOf(quality) - 1 // -1 to compensate for "Auto"
+		const qualityIndex = qualities.indexOf(quality) - 1
 
 		if (qualityIndex >= 0 && sources?.[qualityIndex]) {
-			const currentTime = player.current?.currentTime ?? 0
-			const wasPlaying = !player.current?.paused
-
 			setCurrentQuality(quality)
-			setVideoSource(sources[qualityIndex])
-			qualityChanged.current = true
-
-			// Wait for the video to be ready before setting time and playing
-			const handleQualityChange = () => {
-				handleCanPlay(currentTime, wasPlaying)
-				player.current?.removeEventListener("canplay", handleQualityChange)
-			}
-
-			player.current?.addEventListener("canplay", handleQualityChange)
+			handleSourceChange(sources[qualityIndex])
 		}
 	}
 
@@ -332,69 +346,82 @@ export default function VideoPlayer({ video }: Readonly<VideoPlayerProps>) {
 				ref={playerWrapper}
 				id="videoPlayerWrapper"
 				aria-label="Video player"
-				onFocus={() => {
-					addVideoFocus()
-				}}
-				onMouseMove={(e) => handleHideControls(e)}
+				onFocus={addVideoFocus}
+				onMouseMove={handleHideControls}
 				onDragStart={(e) => e.preventDefault()}
 			>
-				<video
-					ref={player}
-					id="player"
-					className="w-full h-full"
-					controlsList="nodownload"
-					onContextMenu={(e) => e.preventDefault()}
-					disablePictureInPicture
-					disableRemotePlayback
-					style={{ userSelect: "none", WebkitUserSelect: "none" }}
-					draggable={false}
-					crossOrigin="anonymous"
-					playsInline
-					onCanPlay={() => {
-						dispatch(setIsBuffering(false))
-						if (playerState === PlayerState.PLAYING && qualityChanged.current) {
-							player.current?.play()
-							qualityChanged.current = false
-						}
-					}}
-					onPlay={() => {
-						if (playerState !== PlayerState.PLAYING)
-							onStateChange(PlayerState.PLAYING)
-						getBuffer()
-					}}
-					onPause={() => {
-						onStateChange(PlayerState.PAUSED)
-						getBuffer()
-					}}
-					onSeeked={() => {
-						getBuffer()
-					}}
-					onWaiting={() => {
-						getBuffer(true)
-					}}
-					onEnded={() => {
-						onStateChange(PlayerState.ENDED)
-					}}
-					onLoadedData={() => {
-						getBuffer()
-					}}
-					onLoadedMetadata={() => {
-						getBuffer()
-					}}
-					onLoadStart={() => {
-						getBuffer()
-					}}
-					onProgress={() => {
-						getBuffer()
-					}}
-					onPlaying={() => {
-						getBuffer()
-					}}
-					src={videoSource}
-				>
-					<track kind="captions" label="Italian" srcLang="it" default />
-					Your browser does not support the video tag.
-				</video>
+				<div className="relative">
+					{isTransitioning && (
+						<video
+							ref={backupPlayer}
+							className="absolute inset-0 w-full h-full transition-opacity duration-300"
+							src={previousSource}
+							muted
+							playsInline
+							style={{ opacity: 1 }}
+						/>
+					)}
+					<video
+						ref={player}
+						id="player"
+						className="w-full h-full"
+						controlsList="nodownload"
+						onContextMenu={(e) => e.preventDefault()}
+						disablePictureInPicture
+						disableRemotePlayback
+						style={{ userSelect: "none", WebkitUserSelect: "none" }}
+						draggable={false}
+						crossOrigin="anonymous"
+						playsInline
+						onCanPlay={() => {
+							dispatch(setIsBuffering(false))
+							if (
+								playerState === PlayerState.PLAYING &&
+								qualityChanged.current
+							) {
+								player.current?.play()
+								qualityChanged.current = false
+							}
+						}}
+						onPlay={() => {
+							if (playerState !== PlayerState.PLAYING)
+								onStateChange(PlayerState.PLAYING)
+							getBuffer()
+						}}
+						onPause={() => {
+							onStateChange(PlayerState.PAUSED)
+							getBuffer()
+						}}
+						onSeeked={() => {
+							getBuffer()
+						}}
+						onWaiting={() => {
+							getBuffer(true)
+						}}
+						onEnded={() => {
+							onStateChange(PlayerState.ENDED)
+						}}
+						onLoadedData={() => {
+							getBuffer()
+						}}
+						onLoadedMetadata={() => {
+							getBuffer()
+						}}
+						onLoadStart={() => {
+							getBuffer()
+						}}
+						onProgress={() => {
+							getBuffer()
+						}}
+						onPlaying={() => {
+							getBuffer()
+						}}
+						src={videoSource}
+					>
+						<track kind="captions" label="Italian" srcLang="it" default />
+						Your browser does not support the video tag.
+					</video>
+				</div>
 
 				<VideoControls
 					duration={player.current?.duration || 0}

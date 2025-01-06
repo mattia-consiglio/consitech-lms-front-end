@@ -254,18 +254,16 @@ $primary-color: theme('colors.primary');
 			}
 
 			.volume-slider {
-				width: 100%;
-				
+				width: 52px;
+				min-width: 52px;
+				z-index: 50;
+
 				&:hover {
 					.volume-thumb {
 						transform: scale(1.2);
 					}
 				}
-			}
 
-			.volume-slider {
-				z-index: 50;
-				
 				&.hidden {
 					display: none;
 				}

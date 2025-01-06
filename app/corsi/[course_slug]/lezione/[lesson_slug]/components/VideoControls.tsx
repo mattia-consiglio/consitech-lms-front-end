@@ -705,9 +705,9 @@ export default function VideoControls({
 									<VolumeIcon />
 								</button>
 								<div
-									className={`volume-slider-container overflow-hidden transition-all duration-200 ease-out  ${
+									className={`volume-slider-container overflow-hidden transition-all duration-250 ease-out ${
 										isVolumeSliderVisible || isDraggingVolume
-											? "w-14 px-2 "
+											? "w-[69px] "
 											: "w-0 px-0"
 									}`}
 									onClick={(e) => e.stopPropagation()}
@@ -720,7 +720,7 @@ export default function VideoControls({
 								>
 									<div
 										ref={volumeSliderRef}
-										className="volume-slider h-1 bg-white/30 relative cursor-pointer rounded-full"
+										className="volume-slider h-1 bg-white/30 relative cursor-pointer rounded-full mx-2"
 										onClick={(e) => {
 											e.stopPropagation()
 											handleVolumeMouseMove(e.nativeEvent)
