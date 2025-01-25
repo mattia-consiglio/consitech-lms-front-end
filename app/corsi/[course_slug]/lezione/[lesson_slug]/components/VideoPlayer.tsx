@@ -3,18 +3,22 @@ import type React from "react"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import VideoControls from "./VideoControls"
 import "../videoPlayer.scss"
-import { useAppDispatch, useAppSelector } from "@/redux/store"
+import { useAppDispatch } from "@/redux/store"
 import {
-	setCurrentTime,
 	setIsBuffering,
 	setPlayerIsInFocus,
-	setPlayerState,
-	setVideoSpeed,
 } from "@/redux/reducers/playerReducer"
 import type { MediaVideo } from "@/utils/types"
+import { PlayerState } from "./playerTypes"
 
 interface VideoPlayerProps {
 	video: MediaVideo
+	setCurrentTime: (time: number) => void
+	setPlayerState: (state: PlayerState) => void
+	setCurrentSpeed: (speed: number) => void
+	playerState: PlayerState
+	currentTime: number
+	currentSpeed: number
 }
 
 function generateVideoResolutionSources(video: MediaVideo) {
@@ -25,19 +29,20 @@ function generateVideoResolutionSources(video: MediaVideo) {
 	})
 }
 
-export enum PlayerState {
-	UNSTARTED = -1,
-	ENDED = 0,
-	PLAYING = 1,
-	PAUSED = 2,
-}
-
 export interface BufferStyle {
 	left: string
 	width: string
 }
 
-export default function VideoPlayer({ video }: Readonly<VideoPlayerProps>) {
+export default function VideoPlayer({
+	video,
+	setCurrentTime,
+	setPlayerState,
+	setCurrentSpeed,
+	playerState,
+	currentTime,
+	currentSpeed,
+}: Readonly<VideoPlayerProps>) {
 	const sources = useMemo(() => generateVideoResolutionSources(video), [video])
 	const qualities = useMemo(
 		() => [
@@ -56,7 +61,6 @@ export default function VideoPlayer({ video }: Readonly<VideoPlayerProps>) {
 	const backupPlayer = useRef<HTMLVideoElement>(null)
 	const intervalID = useRef<NodeJS.Timeout>()
 	const playerWrapper = useRef<HTMLDivElement>(null)
-	const { playerState } = useAppSelector((state) => state.player)
 	const dispatch = useAppDispatch()
 	const isPlayedOnce = useRef(false)
 	const qualityChanged = useRef(false)
@@ -69,22 +73,22 @@ export default function VideoPlayer({ video }: Readonly<VideoPlayerProps>) {
 	const [volume, setVolume] = useState(1)
 	const [isMuted, setIsMuted] = useState(false)
 	const [componentMounted, setComponentMounted] = useState(false)
-
+	const prevPlayerState = useRef(playerState)
 	const seekTo = (seconds: number) => {
 		if (player.current) {
 			player.current.currentTime = seconds
-			dispatch(setCurrentTime(seconds))
+			setCurrentTime(seconds)
 		}
 	}
 
 	const onStateChange = (state: PlayerState) => {
-		dispatch(setPlayerState(state))
+		setPlayerState(state)
 		if (state === PlayerState.ENDED) {
 			setCurrentTime(0)
 		} else if (state === PlayerState.PLAYING) {
-			dispatch(setPlayerState(state))
+			setPlayerState(state)
 			intervalID.current = setInterval(() => {
-				dispatch(setCurrentTime(player.current?.currentTime ?? 0))
+				setCurrentTime(player.current?.currentTime ?? 0)
 			}, 150)
 
 			if (!isPlayedOnce.current) {
@@ -110,6 +114,8 @@ export default function VideoPlayer({ video }: Readonly<VideoPlayerProps>) {
 
 				// Mostra lo spinner durante il caricamento
 				dispatch(setIsBuffering(true))
+				prevPlayerState.current = playerState
+				setPlayerState(PlayerState.BUFFERING)
 
 				// Imposta il nuovo source
 				setPreviousSource(videoSource)
@@ -128,6 +134,7 @@ export default function VideoPlayer({ video }: Readonly<VideoPlayerProps>) {
 							backupPlayer.current.style.opacity = "0"
 							setTimeout(() => {
 								setIsTransitioning(false)
+								setPlayerState(prevPlayerState.current)
 								dispatch(setIsBuffering(false))
 							}, 300)
 						}
@@ -138,7 +145,7 @@ export default function VideoPlayer({ video }: Readonly<VideoPlayerProps>) {
 				player.current.addEventListener("canplay", handleQualityChange)
 			}
 		},
-		[videoSource, dispatch],
+		[dispatch, playerState, setPlayerState, videoSource],
 	)
 
 	const checkBandwidth = useCallback(async () => {
@@ -229,7 +236,7 @@ export default function VideoPlayer({ video }: Readonly<VideoPlayerProps>) {
 	const changeSpeed = (speed: number) => {
 		if (player.current) {
 			player.current.playbackRate = speed
-			dispatch(setVideoSpeed(speed))
+			setCurrentSpeed(speed)
 		}
 	}
 
@@ -424,7 +431,7 @@ export default function VideoPlayer({ video }: Readonly<VideoPlayerProps>) {
 				</div>
 
 				<VideoControls
-					duration={player.current?.duration || 0}
+					duration={player.current?.duration ?? 0}
 					player={player.current}
 					seekTo={seekTo}
 					qualities={qualities}
@@ -440,6 +447,10 @@ export default function VideoPlayer({ video }: Readonly<VideoPlayerProps>) {
 					isMuted={isMuted}
 					onVolumeChange={handleVolumeChange}
 					onToggleMute={toggleMute}
+					currentTime={currentTime}
+					playerState={playerState}
+					currentSpeed={currentSpeed}
+					setPlayerState={setPlayerState}
 				/>
 			</div>
 		</div>

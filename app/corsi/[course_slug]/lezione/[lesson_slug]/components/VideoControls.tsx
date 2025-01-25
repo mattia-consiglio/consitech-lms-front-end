@@ -24,7 +24,8 @@ import {
 	MdOutlineCheck,
 	MdOutlineFullscreenExit,
 } from "react-icons/md"
-import { type BufferStyle, PlayerState } from "./VideoPlayer"
+import { type BufferStyle } from "./VideoPlayer"
+import { PlayerState } from "./playerTypes"
 
 interface VideoProgressBarProps {
 	duration: number
@@ -43,6 +44,10 @@ interface VideoProgressBarProps {
 	isMuted: boolean
 	onVolumeChange: (volume: number) => void
 	onToggleMute: () => void
+	currentTime: number
+	playerState: PlayerState
+	currentSpeed: number
+	setPlayerState: (state: PlayerState) => void
 }
 
 function PlayIcon() {
@@ -161,9 +166,12 @@ export default function VideoControls({
 	isMuted,
 	onVolumeChange,
 	onToggleMute,
+	currentTime,
+	playerState,
+	currentSpeed,
+	setPlayerState,
 }: Readonly<VideoProgressBarProps>) {
-	const { currentTime, playerState, isInFocus, currentSpeed, isBuffering } =
-		useAppSelector((state) => state.player)
+	const { isInFocus, isBuffering } = useAppSelector((state) => state.player)
 	const playerControls = useRef<HTMLDivElement>(null)
 	const [currentTimeText, setCurrentTimeText] = useState(
 		formatPercTime(currentTime, duration),
@@ -184,6 +192,7 @@ export default function VideoControls({
 	const iconCircle = useRef<HTMLDivElement>(null)
 	const isAnimating = useRef(false)
 	const isProgressBarHovering = useRef(false)
+	const prevPlayerState = useRef(playerState)
 
 	const getCursorPosition = useCallback((e: MouseEvent) => {
 		if (!progressBar.current) return 0
@@ -233,10 +242,11 @@ export default function VideoControls({
 			setCurrentTimeText(formatPercTime(percentage, duration))
 			setIsHovering(true)
 			if (isDragging.current) {
+				setPlayerState(PlayerState.PAUSED)
 				seek()
 			}
 		},
-		[duration, getCursorPosition, seek],
+		[duration, getCursorPosition, seek, setPlayerState],
 	)
 
 	function handleMouseLeave(e: React.MouseEvent<HTMLDivElement>) {
@@ -255,6 +265,8 @@ export default function VideoControls({
 		const nativeEvent = e.nativeEvent
 		handleMouseMove(nativeEvent)
 		closeOpenedOptions()
+		prevPlayerState.current = playerState
+		setPlayerState(PlayerState.PAUSED)
 		window.addEventListener("mousemove", handleMouseMove)
 		window.addEventListener("mouseup", handleMouseUp)
 	}
@@ -265,7 +277,9 @@ export default function VideoControls({
 		window.removeEventListener("mousemove", handleMouseMove)
 		window.removeEventListener("mouseup", handleMouseUp)
 		seek()
-	}, [handleMouseMove, seek])
+		setPlayerState(prevPlayerState.current)
+		prevPlayerState.current = playerState
+	}, [handleMouseMove, seek, playerState, setPlayerState])
 
 	const handleMoseOver = useCallback(() => {
 		isProgressBarHovering.current = true

@@ -24,5 +24,13 @@
 		"formatter": {
 			"trailingCommas": "none"
 		}
+	},
+	"linter": {
+		"enabled": true,
+		"rules": {
+			"style": {
+				"useImportType": "off"
+			}
+		}
 	}
 }
