@@ -6,7 +6,7 @@ import {
 	useState,
 	useCallback,
 	useMemo,
-	memo,
+	memo
 } from "react"
 import { Editor, type Monaco } from "@monaco-editor/react"
 import { emmetCSS, emmetHTML, emmetJSX } from "emmet-monaco-es"
@@ -41,7 +41,7 @@ const fileIcons: { [key: string]: ReactElement } = {
 	html: <SiHtml5 />,
 	css: <SiCss3 />,
 	js: <SiJavascript />,
-	ts: <SiTypescript />,
+	ts: <SiTypescript />
 }
 
 const CodeEditor = memo(
@@ -52,7 +52,7 @@ const CodeEditor = memo(
 		externalSetEditor,
 		externalMonaco,
 		externalSetMonaco,
-		toggleTabChange,
+		toggleTabChange
 	}: Readonly<CodeEditorProps>) => {
 		const [fileName, setFileName] = useState(currenFile)
 		const [localEditorState, setLocalEditorState] =
@@ -61,7 +61,7 @@ const CodeEditor = memo(
 			externalEditor !== undefined ? externalEditor : localEditorState
 		const setEditorState = externalSetEditor ?? setLocalEditorState
 		const [localMonacoState, setLocalMonacoState] = useState<Monaco | null>(
-			null,
+			null
 		)
 		const monacoState = externalMonaco ?? localMonacoState
 		const setMonacoState = externalSetMonaco ?? setLocalMonacoState
@@ -87,7 +87,7 @@ const CodeEditor = memo(
 					model.setValue(file.value)
 				}
 			},
-			[files, editorState, monacoState],
+			[files, editorState, monacoState]
 		)
 
 		const handleEditorDidMount = useCallback(
@@ -102,7 +102,7 @@ const CodeEditor = memo(
 					editor.setModel(file.model)
 				}
 			},
-			[files, fileName, setEditorState, setMonacoState],
+			[files, fileName, setEditorState, setMonacoState]
 		)
 
 		const removeVideoFocus = useCallback(() => {
@@ -145,7 +145,7 @@ const CodeEditor = memo(
 				</div>
 			</div>
 		)
-	},
+	}
 )
 
 CodeEditor.displayName = "CodeEditor"
